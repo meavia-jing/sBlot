@@ -1,0 +1,236 @@
+{
+	"results": {
+		"path_in": {
+			"clusters": [
+			"results/n1/areas_n1_0.txt",
+			"results/n2/areas_n2_0.txt",
+			"results/n3/areas_n3_0.txt",
+			"results/n4/areas_n4_0.txt",
+			"results/n5/areas_n5_0.txt",
+			"results/n6/areas_n6_0.txt",
+			"results/n7/areas_n7_0.txt"],
+			"stats": [
+			"results/n1/stats_n1_0.txt",
+			"results/n2/stats_n2_0.txt",
+			"results/n3/stats_n3_0.txt",
+			"results/n4/stats_n4_0.txt",
+			"results/n5/stats_n5_0.txt",
+			"results/n6/stats_n6_0.txt",
+			"results/n7/stats_n7_0.txt"]
+		},
+		"path_out": "results/plots"
+	}, 
+	"data": {
+		"features": "data/features/features.csv",
+		"feature_states": "data/features/feature_states.csv",
+	"projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m"}, 
+	"map": {
+		"geo": {
+            "map_projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m",
+			"base_map": {
+				"add": true,
+				"geojson_river": "data/map/rivers_lake.geojson",
+				"geojson_map": "data/map/land.geojson"
+			},
+			"extent": {
+				"x": [
+					-100000, 1500000
+				],
+				"y": [
+					1040000, 2000000
+				]
+			}
+		},
+		"content": {
+			"type": "consensus_map",
+			"plot_families": false,
+			"labels": "all",
+			"min_posterior_frequency": 0.9,
+			"burn_in": 0.2
+		},
+
+		"graphic": {
+				"languages": {
+				"size": 5,
+				"color": "#000000",
+				"label": true
+			},
+			"clusters": {
+				"size": "both",
+				"color": [
+					"#1b9e77",
+					"#d95f02",
+					"#7570b3",
+					"#e7298a",
+					"#66a61e"
+				],
+				"width": 1,
+				"alpha": 0.8
+			},
+			"families": {
+				"size": 180,
+				"color": [
+				"#b3e2cd",
+					"#f1e2cc",
+					"#cbd5e8",
+					"#f4cae4",
+					"#e6f5c9",
+					"#d3d3d3"
+				],
+				"buffer": 0.5,
+				"shape": 20
+		},
+		"base_map": {
+				"polygon": {
+					"color": "white",
+					"outline_color": "black",
+					"outline_width": 1
+				},
+				"line": {
+					"color": "skyblue",
+					"width": 1
+				}
+			}
+		},
+		"legend": {
+			"overview": {
+				"add": false,
+				"extent": {
+					"x": [
+						-2000000, 
+						2500000
+					],
+					"y": [
+						400000, 
+						4300000
+					]
+				},
+				"width": 3,
+				"height": 3,
+				"position": [
+					0.01,
+					0.63
+				]
+			},
+			"clusters": {
+				"add": false,
+				"position": [
+					0.005,
+					0.75
+				]
+			},
+			"lines": {
+				"add": false,
+				"position": [
+					0.005,
+					0.53
+				]
+			},
+			"families": {
+				"add": false,
+				"position": [
+					0.005,
+					0.30
+				]
+			},
+			"correspondence": {
+				"add": false,
+				"font_size": 12,
+				"table_height": 0.2,
+				"n_columns": 3,
+				"color_labels": true,
+				"show_all": true
+			}
+		},
+		"output": {
+			"width": 14,
+			"height": 10
+		}
+	},
+			"weight_plot": {
+		"content": {
+			"features": [],
+			"burn_in": 0.2
+		},
+		"legend": {
+			"labels": {
+				"add": true,
+				"names": [
+					"U",
+					"C",
+					"I"
+				],
+				"font_size": 6
+			},
+			"title": {
+				"add": true,
+				"font_size": 6,
+				"position": [
+					0,
+					1
+				]
+			}
+		},
+		"output": {
+			"width_subplot": 2,
+			"height_subplot": 2,
+			"format": "pdf",
+			"resolution": 300,
+			"n_columns": 5
+		}
+	},
+	"preference_plot": {
+		"content": {
+			"features": [],
+			"preference": ["area_0", "area_1", "area_2", "Albanian", "Greek", "Romance", "Slavic", "Turkish", "universal"],
+			"burn_in": 0.2
+		},
+		"legend": {
+			"labels": {
+				"add": true,
+				"font_size": 4
+			},
+			"title": {
+				"add": true,
+				"font_size": 6,
+				"position": [
+					0,
+					1
+				]
+			}
+		},
+		"output": {
+			"width_subplot": 3,
+			"height_subplot": 3,
+			"format": "pdf",
+			"resolution": 300,
+			"n_columns": 5
+		}
+	},
+	"pie_plot": {
+		"content": {
+			"burn_in": 0.2
+		},
+		"output": {
+			"width": 4,
+			"height": 2,
+			"spacing_horizontal": 0.01,
+			"spacing_vertical": 0.01,
+			"format": "pdf",
+			"resolution": 300
+	}},
+		
+	"dic_plot": {
+		"content": {
+			"burn_in": 0.4
+		}, 
+		"graphic": {
+			
+		"labels" : [ "K=1" , "K=2" , "K=3", "K=4", "K=5", "K=6", "K=7" ]},
+		
+		"output": {
+			"fig_width": 15,
+			"fig_height": 15
+		}
+	}
+}

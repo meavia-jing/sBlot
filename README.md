@@ -10,7 +10,7 @@ if the type == "consensus_map", plot languages with afrequency larger than min_p
 
 graphic >> clusters>> size<br>
 if the type of size is a number , plot line graph, all languages with the same point size.<br>
-if point_size = “point” plot point size according to frequency.<br>
-if point_size = "both" plot the point size accroding to frequency and the line graph.<br>
+if size = “point” plot point size according to frequency.<br>
+if size = "both" plot the point size accroding to frequency and the line graph.<br>
 
 

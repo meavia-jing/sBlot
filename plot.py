@@ -578,24 +578,35 @@ class Plot:
         ## plot the point plot
 
         cluster_freq, color_for_freq = self.get_point_weight_color(results, cfg_content, cfg_graphic)
-        if cfg_graphic['clusters']['size'] == "freqency":
+        if isinstance(cfg_graphic['clusters']['point_size'],str) and not(isinstance(cfg_graphic['clusters']['line_width'],str)):
             ## compare frequency of each laguage in each area and plot them on
             point_size = 80
             cluster_freq = cluster_freq * point_size
             ax.scatter(*locations_map_crs.T, s= cluster_freq.tolist(), color= color_for_freq)
-        elif cfg_graphic['clusters']['size'] == "both":
-            point_size = 80
-            cluster_freq = cluster_freq * point_size
-            ax.scatter(*locations_map_crs.T, s=cluster_freq.tolist(), color=color_for_freq)
             for i, cluster in enumerate(results.clusters):
                 # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
                 in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
-
                 current_color = cluster_colors[i]
-
                 for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color, lw=line_w[li] * cfg_graphic['clusters']['width'],
-                            alpha=line_w[li] * cfg_graphic['clusters']['alpha'])
+                    ax.plot(*lines[li].T, color=current_color, lw= cfg_graphic['clusters']['line_width'],
+                            alpha=cfg_graphic['clusters']['alpha'])
+                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
+                legend_clusters.append(line_legend)
+                # Label the languages in the clusters
+                if cfg_graphic['languages']['label']:
+                    current_color = "black"
+                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+        elif isinstance(cfg_graphic['clusters']['point_size'],str) and isinstance(cfg_graphic['clusters']['line_width'],str):
+            point_size = 80
+            cluster_freq = cluster_freq * point_size
+            ax.scatter(*locations_map_crs.T, s=cluster_freq.tolist(), color=color_for_freq)
+            wid_line = 1
+            for i, cluster in enumerate(results.clusters):
+                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
+                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+                current_color = cluster_colors[i]
+                for li in range(len(lines)):
+                    ax.plot(*lines[li].T, color=current_color, lw=line_w[li] * wid_line,alpha= line_w[li]*cfg_graphic['clusters']['alpha'])
                 line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
                 legend_clusters.append(line_legend)
                 # Label the languages in the clusters
@@ -603,6 +614,23 @@ class Plot:
                     current_color = "black"
                     cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
 
+        elif not(isinstance(cfg_graphic['clusters']['point_size'],str)) and isinstance(cfg_graphic['clusters']['line_width'],str):
+            wid_line = 1
+            for i, cluster in enumerate(results.clusters):
+                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
+                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+                current_color = cluster_colors[i]
+                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['point_size'], color=current_color)
+                for li in range(len(lines)):
+                    ax.plot(*lines[li].T, color=current_color, lw=line_w[li] * wid_line,
+                            alpha=line_w[li] * cfg_graphic['clusters']['alpha'])
+
+                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
+                legend_clusters.append(line_legend)
+                # Label the languages in the clusters
+                if cfg_graphic['languages']['label']:
+                    current_color = "black"
+                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
         else:
             for i, cluster in enumerate(results.clusters):
                 # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
@@ -610,11 +638,9 @@ class Plot:
 
                 current_color = cluster_colors[i]
 
-                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['size'], color=current_color)
+                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['point_size'], color=current_color)
                 for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color, lw=line_w[li] * cfg_graphic['clusters']['width'],
-                            alpha=line_w[li] * cfg_graphic['clusters']['alpha'])
-
+                    ax.plot(*lines[li].T, color=current_color, lw=cfg_graphic['clusters']['line_width'],alpha= cfg_graphic['clusters']['alpha'])
                 line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
                 legend_clusters.append(line_legend)
                 # Label the languages in the clusters
@@ -643,7 +669,7 @@ class Plot:
         cluster_labels = []
         cluster_freq, color_for_freq = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         ## plot the map accroding to the cgf_content['type']
-        if cfg_graphic['clusters']['size'] == "freqency":
+        if isinstance(cfg_graphic['clusters']['point_size'],str) and not(isinstance(cfg_graphic['clusters']['line_width'],str)):
             point_size = 80
             in_cluster = cluster_freq > cfg_content['min_posterior_frequency']
             con_cluster_freq = cluster_freq[cluster_freq > cfg_content['min_posterior_frequency']] * point_size
@@ -652,7 +678,22 @@ class Plot:
             else:
                 color_for_freq = np.asarray(color_for_freq)
                 ax.scatter(*locations_map_crs[in_cluster].T, s = con_cluster_freq.tolist(), color= color_for_freq[in_cluster])
-        elif cfg_graphic['clusters']['size'] == "both":
+            for i, cluster in enumerate(results.clusters):
+
+                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
+                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+                current_color = cluster_colors[i]
+                for li in range(len(lines)):
+                    ax.plot(*lines[li].T, color=current_color,lw= cfg_graphic['clusters']['line_width'],alpha= cfg_graphic['clusters']['alpha'])
+
+                # This adds small lines to the legend (one legend entry per cluster)
+                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
+                legend_clusters.append(line_legend)
+            # Label the languages in the clusters
+                if cfg_graphic['languages']['label']:
+                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+
+        elif isinstance(cfg_graphic['clusters']['point_size'],str) and isinstance(cfg_graphic['clusters']['line_width'],str):
             point_size = 80
             in_cluster = cluster_freq > cfg_content['min_posterior_frequency']
             con_cluster_freq = cluster_freq[cluster_freq > cfg_content['min_posterior_frequency']] * point_size
@@ -660,47 +701,61 @@ class Plot:
                 ax.scatter(*locations_map_crs[in_cluster].T, s=con_cluster_freq.tolist(), color=color_for_freq)
             else:
                 color_for_freq = np.asarray(color_for_freq)
-                ax.scatter(*locations_map_crs[in_cluster].T, s=con_cluster_freq.tolist(),
-                           color=color_for_freq[in_cluster])
+                ax.scatter(*locations_map_crs[in_cluster].T, s=con_cluster_freq.tolist(), color=color_for_freq[in_cluster])
             for i, cluster in enumerate(results.clusters):
 
                 # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
                 in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
                 current_color = cluster_colors[i]
+                wid_line = 1
                 for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color,
-                            lw=line_w[li] * cfg_graphic['clusters']['width'],
-                            alpha=cfg_graphic['clusters']['alpha'])
-
+                    ax.plot(*lines[li].T, color=current_color,lw=line_w[li] * wid_line,alpha=cfg_graphic['clusters']['alpha'])
                 # This adds small lines to the legend (one legend entry per cluster)
                 line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
                 legend_clusters.append(line_legend)
-
             # Label the languages in the clusters
-            if cfg_graphic['languages']['label']:
-                cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+                if cfg_graphic['languages']['label']:
+                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
 
-        else:
+        elif not(isinstance(cfg_graphic['clusters']['point_size'],str)) and isinstance(cfg_graphic['clusters']['line_width'],str):
         # plot the graph map
+            wid_line = 1
             for i, cluster in enumerate(results.clusters):
 
                 # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
                 in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
                 current_color = cluster_colors[i]
-
-                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['size'], color=current_color)
+                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['point_size'], color=current_color)
                 for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color,
-                            lw=line_w[li] * cfg_graphic['clusters']['width'],
-                            alpha=cfg_graphic['clusters']['alpha'])
+                    ax.plot(*lines[li].T, color=current_color,lw= line_w[li] * wid_line,alpha=cfg_graphic['clusters']['alpha'])
 
                 # This adds small lines to the legend (one legend entry per cluster)
                 line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
                 legend_clusters.append(line_legend)
-
             # Label the languages in the clusters
-            if cfg_graphic['languages']['label']:
-                cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+                if cfg_graphic['languages']['label']:
+                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+        else:
+            in_cluster = cluster_freq > cfg_content['min_posterior_frequency']
+            if len(color_for_freq) <= 7:
+                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['point_size'], color=color_for_freq)
+            else:
+                color_for_freq = np.asarray(color_for_freq)
+                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['point_size'],color=color_for_freq[in_cluster])
+                for i, cluster in enumerate(results.clusters):
+
+                    # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
+                    in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+                    current_color = cluster_colors[i]
+
+                    for li in range(len(lines)):
+                        ax.plot(*lines[li].T, color=current_color, lw=cfg_graphic['clusters']['line_width'],alpha=cfg_graphic['clusters']['alpha'])
+                    # This adds small lines to the legend (one legend entry per cluster)
+                    line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
+                    legend_clusters.append(line_legend)
+                    # Label the languages in the clusters
+                    if cfg_graphic['languages']['label']:
+                        cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
 
         if cfg_legend['clusters']['add']:
             # add to legend

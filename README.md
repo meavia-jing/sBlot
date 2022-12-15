@@ -3,7 +3,7 @@
 
 
 
-## configuration file
+## Configuration file
 map >> conten >> type<br>
 if the type == "density_map" , plot all the languages.<br>
 if the type == "consensus_map", plot languages with afrequency larger than min_posterior_frequency.<br>

@@ -11,8 +11,10 @@ if __name__ == '__main__':
     #path = '/Users/zhanganjing/Downloads/RA work/sbayes_plot/results'
     for name, result in plot.iterate_over_models():
         ## plot map
-        plot.posterior_map(results=result, file_name=f'map_{name}')
+        #plot.posterior_map(results=result, file_name=f'map_{name}')
+
         #plot.plot_pies(result,os.path.join(path,name))
+        plot.save_idw(result,name)
 
     plot.plot_dic(models=plot.results, file_name='dic')
 

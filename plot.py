@@ -39,6 +39,15 @@ from pyproj import CRS
 from scipy.spatial import Delaunay
 from shapely import geometry
 from shapely.ops import cascaded_union, polygonize
+from shapely.ops import unary_union
+
+from math import sqrt, floor, ceil
+import rasterio
+from rasterio.mask import mask
+from rasterio.plot import show
+from rasterio.transform import from_bounds
+from rasterio.enums import Resampling
+import rasterio.crs  as rastercrs
 
 from sbayes.processpost import compute_dic
 from sbayes.results import Results
@@ -990,6 +999,7 @@ class Plot:
                    edgecolor=cfg_polygon['outline_color'],
                    lw=cfg_polygon['outline_width'],
                    zorder=-100000)
+        return world
 
     def add_rivers(self, cfg_geo, cfg_graphic, ax):
         # The user can provide geojson line geometries, for example those for rivers. Looks good on a map :)
@@ -2020,6 +2030,248 @@ class Plot:
         fig.savefig(self.path_plots / f'{file_name}.{file_format}', bbox_inches='tight',
                     dpi=cfg_pie['output']['resolution'], format=file_format)
         plt.close(fig)
+
+    ############### inverse distance weights interpolation ############
+    ##################################################################
+    def blank_raster(self,extentpoly,path):
+        '''
+        convert the shapefile of basemap(extent_map) to  raster
+         Args:
+        extentpoly: the extent shapefile
+        path: path to save raster file
+        '''
+
+        calculationExtent = extentpoly
+        minX = floor(calculationExtent.bounds.minx)
+        minY = floor(calculationExtent.bounds.miny)
+        maxX = ceil(calculationExtent.bounds.maxx)
+        maxY = ceil(calculationExtent.bounds.maxy)
+        longRange = sqrt((minX - maxX) ** 2)
+        latRange = sqrt((minY - maxY) ** 2)
+
+        gridWidth = 400
+        pixelPD = (gridWidth / longRange)  # Pixel Per Degree
+        gridHeight = floor(pixelPD * latRange)
+        BlankGrid = np.ones([gridHeight, gridWidth])
+
+        blank_filename = str(path) + 'extent_blank.tif'
+
+        with rasterio.open(
+                blank_filename,
+                "w",
+                driver='GTiff',
+                height=BlankGrid.shape[0],
+                width=BlankGrid.shape[1],
+                count=1,
+                dtype=BlankGrid.dtype,  # BlankGrid.dtype, np.float32, np.int16
+                crs= CRS('epsg:4326'),
+                transform=from_bounds(minX, minY, maxX, maxY, BlankGrid.shape[1], BlankGrid.shape[0]),
+                nodata=32767) as dst:
+            dst.write(BlankGrid, 1)
+
+    def crop_size(self,input_raster_filename, extentpoly, path, max_height_or_width=250):
+        '''
+     Co-variable raster file (elevation in this case) is croped and resized using rasterio.r
+        Args:
+            input_raster_filename: the raster file of basemap
+            extentpoly: the extent shapefile
+            path: path to save raster file
+        '''
+
+        BD = extentpoly
+        elevation = rasterio.open(str(path) + input_raster_filename)
+
+        # Using mask method from rasterio.mask to clip study area from larger elevation file.
+        croped_data, croped_transform = mask(dataset=elevation,
+                                             shapes=BD.geometry,
+                                             crop=True,
+                                             all_touched=True)
+        croped_meta = elevation.meta
+        croped_meta.update({
+            'height': croped_data.shape[-2],
+            'width': croped_data.shape[-1],
+            'transform': croped_transform
+        })
+
+        croped_filename = str(path) + input_raster_filename.rsplit('.', 1)[0] + '_croped.tif'
+        with rasterio.open(croped_filename, 'w', **croped_meta) as croped_file:
+            croped_file.write(croped_data)  # Save the croped file as croped_elevation.tif to working directory.
+
+        # Calculate resampling factor for resizing the elevation file, this is done to reduce calculation time.
+        # Here 250 is choosed for optimal result, it can be more or less depending on users desire.
+        # max_height_or_width = 250
+        resampling_factor = max_height_or_width / max(rasterio.open(croped_filename).shape)
+
+        # Reshape/resize the croped elevation file and save it to working directory.
+        with rasterio.open(croped_filename, 'r') as croped_elevation:
+            resampled_elevation = croped_elevation.read(
+                out_shape=(croped_elevation.count,
+                           int(croped_elevation.height * resampling_factor),
+                           int(croped_elevation.width * resampling_factor)),
+                resampling=Resampling.bilinear)
+
+            resampled_transform = croped_elevation.transform * croped_elevation.transform.scale(
+                croped_elevation.width / resampled_elevation.shape[-1],
+                croped_elevation.height / resampled_elevation.shape[-2])
+
+            resampled_meta = croped_elevation.meta
+            resampled_meta.update({
+                'height': resampled_elevation.shape[-2],
+                'width': resampled_elevation.shape[-1],
+                'dtype': np.float64,
+                'transform': resampled_transform
+            })
+
+            resampled_filename = str(path) + input_raster_filename.rsplit(
+                '.', 1)[0] + '_resized.tif'
+            with rasterio.open(resampled_filename, 'w', **resampled_meta) as resampled_file:
+                resampled_file.write(
+                    resampled_elevation)  # Save the resized file as resampled_elevation.tif in working directory.
+
+    def standard_idw(self,lon, lat, longs, lats, d_values, id_power, s_radious):
+        """
+       calculating inverse distance weights
+        """
+
+        calc_arr = np.zeros(shape=(len(longs), 6))  # create an empty array shape of (total no. of observation * 6)
+        calc_arr[:, 0] = longs  # First column will be Longitude of known data points.
+        calc_arr[:, 1] = lats  # Second column will be Latitude of known data points.
+        #     calc_arr[:, 2] = elevs    # Third column will be Elevation of known data points.
+        calc_arr[:, 3] = d_values  # Fourth column will be Observed data value of known data points.
+
+        # Fifth column is weight value from idw formula " w = 1 / (d(x, x_i)^power + 1)"
+        # >> constant 1 is to prevent int divide by zero when distance is zero.
+        calc_arr[:, 4] = 1 / (np.sqrt((calc_arr[:, 0] - lon) ** 2 + (calc_arr[:, 1] - lat) ** 2) ** id_power + 1)
+
+        # Sort the array in ascendin order based on column_5 (weight) "np.argsort(calc_arr[:,4])"
+        # and exclude all the rows outside of search radious "[ - s_radious :, :]"
+        calc_arr = calc_arr[np.argsort(calc_arr[:, 4])][-s_radious:, :]
+
+        # Sixth column is multiplicative product of inverse distant weight and actual value.
+        calc_arr[:, 5] = calc_arr[:, 3] * calc_arr[:, 4]
+        # Divide sum of weighted value vy sum of weights to get IDW interpolation.
+        idw = calc_arr[:, 5].sum() / calc_arr[:, 4].sum()
+        return idw
+
+
+    def idw_interpolation(self,input_point_shapefile,extent_shapefile,column_name,path,power=2,search_radious=4,
+                          output_resolution=250):
+        '''
+        interpolate idw map based on the language frequency shapefile and basemap, and save it as raster file
+        Args:
+            input_point_shapefile: the shapefile of points including language location and  frequency.
+            extent_shapefile: the shapefile of basemap
+            column_name: 'freq': the frequency of language, this column is used to calculate the inverse distance weights
+            path: the path to save the inverse distance weigts interpolation map
+        '''
+        self.blank_raster(extent_shapefile, path)
+
+        blank_filename = 'extent_blank.tif'
+        self.crop_size(blank_filename, extent_shapefile, path, max_height_or_width=output_resolution)
+
+        resized_raster_name = str(path) + blank_filename.rsplit('.', 1)[0] + '_resized.tif'
+        baseRasterFile = rasterio.open(resized_raster_name)  # baseRasterFile stands for resampled elevation.
+
+        with rasterio.open(resized_raster_name) as baseRasterFile:
+            inputPoints = input_point_shapefile
+            # obser_df stands for observation_dataframe, lat, lon, data_value for each station will be stored here.
+            obser_df = pd.DataFrame()
+            obser_df['station_name'] = inputPoints.iloc[:, 0]
+
+            # create two list of indexes of station longitude, latitude in elevation raster file.
+            lons, lats = baseRasterFile.index(
+                [lon for lon in inputPoints.geometry.x],
+                [lat for lat in inputPoints.geometry.y])
+            obser_df['lon_index'] = lons
+            obser_df['lat_index'] = lats
+            obser_df['data_value'] = inputPoints[column_name]
+
+            idw_array = baseRasterFile.read(1)
+            for x in range(baseRasterFile.height):
+                for y in range(baseRasterFile.width):
+                    if baseRasterFile.read(1)[x][y] == 32767:
+                        continue
+                    else:
+                        idw_array[x][y] = self.standard_idw(
+                            lon=x,
+                            lat=y,
+                            longs=obser_df.lon_index,
+                            lats=obser_df.lat_index,
+                            d_values=obser_df.data_value,
+                            id_power=power,
+                            s_radious=search_radious)
+
+            output_filename = str(path) + 'output_idw.tif'
+            with rasterio.open(output_filename, 'w', **baseRasterFile.meta) as std_idw:
+                std_idw.write(idw_array, 1)
+
+            return output_filename
+
+    def show_map(self,input_raster,path,name,image_size=1.3,colormap='coolwarm'):
+        '''
+        This function is show the interpolation map
+        Args:
+            input_raster: the interpolation raster file
+            path: path to save the path of interpolation map with color bar
+
+        '''
+        with rasterio.open(input_raster) as image_data:
+            my_matrix = image_data.read(1)
+            my_matrix = np.ma.masked_where(my_matrix == 32767, my_matrix)
+            fig, ax = plt.subplots()
+            image_hidden = ax.imshow(my_matrix, cmap=colormap)
+            plt.close()
+
+            fig, ax = plt.subplots()
+            fig.set_facecolor("w")
+            width = fig.get_size_inches()[0] * image_size
+            height = fig.get_size_inches()[1] * image_size
+            fig.set_size_inches(w=width, h=height)
+            image = show(image_data, cmap=colormap, ax=ax)
+            cbar = fig.colorbar(image_hidden, ax=ax, pad=0.02)
+
+            fig.savefig(str(path)+'/'+name+'.pdf',dpi=400, format="pdf", bbox_inches='tight')
+
+    def save_idw(self,results,name):
+        '''
+        This function is to preprocess the language data and extract the base map,and save the final interpolation map
+
+        '''
+
+        print('Plotting idw map...')
+
+        cfg_content = self.config['map']['content']
+        cfg_geo = self.config['map']['geo']
+        cfg_graphic = self.config['map']['graphic']
+        cfg_output = self.config['map']['output']
+
+        fig, ax = plt.subplots(figsize=(cfg_output['width'],
+                                        cfg_output['height']), constrained_layout=True)
+
+        locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
+
+        # Get extent
+        extent = self.get_extent(cfg_geo, locations_map_crs)
+        bbox = self.compute_bbox(extent)
+        extent_file = self.add_background_map(bbox, cfg_geo, cfg_graphic,ax)
+        ploys = extent_file['geometry']
+        mergedPolys = unary_union(ploys)
+        extentpoly = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[mergedPolys])
+
+        ## get_point_frequency
+        cluster_freq = self.get_cluster_freq(results.clusters[0], cfg_content)
+        df = pd.DataFrame({
+            'x': locations_map_crs[:, 0],
+            'y': locations_map_crs[:, 1],
+            'freq': cluster_freq
+        })
+        point_freq = gpd.GeoDataFrame(df, geometry=df.apply(lambda row: geometry.Point(row.x, row.y), axis=1))
+
+        self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
+        if not os.path.exists(self.path_plots):
+            os.makedirs(self.path_plots)
+        outputidw = self.idw_interpolation(point_freq,extentpoly,column_name="freq",path=self.path_plots,power=2,search_radious=10,output_resolution=250)
+        self.show_map(outputidw,path=self.path_plots,name=name)
 
 
 class PlotType(Enum):

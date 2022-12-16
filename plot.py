@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import os
 from argparse import Namespace
 from enum import Enum
@@ -10,6 +9,8 @@ from functools import lru_cache
 from itertools import compress
 from pathlib import Path
 import typing as typ
+import math
+from math import sqrt, floor, ceil
 
 from numpy.ma import indices
 
@@ -41,7 +42,6 @@ from shapely import geometry
 from shapely.ops import cascaded_union, polygonize
 from shapely.ops import unary_union
 
-from math import sqrt, floor, ceil
 import rasterio
 from rasterio.mask import mask
 from rasterio.plot import show
@@ -63,6 +63,7 @@ from sbayes import maps as maps_package
 
 DEFAULT_CONFIG = json.loads(pkg_resources.read_text(config_package, 'default_config_plot.json'))
 
+FREQUENCY = 'frequency'
 
 class Plot:
 
@@ -584,81 +585,42 @@ class Plot:
         cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
         cluster_colors =self.cluster_color(results,cfg_graphic)
         cluster_labels = []
+
         ## plot the point plot
-
         cluster_freq, color_for_freq = self.get_point_weight_color(results, cfg_content, cfg_graphic)
-        if isinstance(cfg_graphic['clusters']['point_size'],str) and not(isinstance(cfg_graphic['clusters']['line_width'],str)):
-            ## compare frequency of each laguage in each area and plot them on
+
+        # Choose point size from config file or from posterior frequency
+        point_size = cfg_graphic['clusters']['point_size']
+        if point_size == FREQUENCY:
             point_size = 80
             cluster_freq = cluster_freq * point_size
-            ax.scatter(*locations_map_crs.T, s= cluster_freq.tolist(), color= color_for_freq)
-            for i, cluster in enumerate(results.clusters):
-                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
-                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
-                current_color = cluster_colors[i]
-                for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color, lw= cfg_graphic['clusters']['line_width'],
-                            alpha=cfg_graphic['clusters']['alpha'])
-                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
-                legend_clusters.append(line_legend)
-                # Label the languages in the clusters
-                if cfg_graphic['languages']['label']:
-                    current_color = "black"
-                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
-        elif isinstance(cfg_graphic['clusters']['point_size'],str) and isinstance(cfg_graphic['clusters']['line_width'],str):
-            point_size = 80
-            cluster_freq = cluster_freq * point_size
-            ax.scatter(*locations_map_crs.T, s=cluster_freq.tolist(), color=color_for_freq)
-            wid_line = 1
-            for i, cluster in enumerate(results.clusters):
-                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
-                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
-                current_color = cluster_colors[i]
-                for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color, lw=line_w[li] * wid_line,alpha= line_w[li]*cfg_graphic['clusters']['alpha'])
-                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
-                legend_clusters.append(line_legend)
-                # Label the languages in the clusters
-                if cfg_graphic['languages']['label']:
-                    current_color = "black"
-                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+        ax.scatter(*locations_map_crs.T, s=cluster_freq, color=color_for_freq)
 
-        elif not(isinstance(cfg_graphic['clusters']['point_size'],str)) and isinstance(cfg_graphic['clusters']['line_width'],str):
-            wid_line = 1
-            for i, cluster in enumerate(results.clusters):
-                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
-                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
-                current_color = cluster_colors[i]
-                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['point_size'], color=current_color)
-                for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color, lw=line_w[li] * wid_line,
-                            alpha=line_w[li] * cfg_graphic['clusters']['alpha'])
+        wid_line = 1
+        for i, cluster in enumerate(results.clusters):
 
-                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
-                legend_clusters.append(line_legend)
-                # Label the languages in the clusters
-                if cfg_graphic['languages']['label']:
-                    current_color = "black"
-                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
-        else:
-            for i, cluster in enumerate(results.clusters):
-                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
-                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+            # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
+            in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+            current_color = cluster_colors[i]
+            for li in range(len(lines)):
 
-                current_color = cluster_colors[i]
+                # Choose line width from config file or from posterior frequency
+                lw = cfg_graphic['clusters']['line_width']
+                if lw == FREQUENCY:
+                    lw = line_w[li] * wid_line
 
-                ax.scatter(*locations_map_crs[in_cluster].T, s=cfg_graphic['clusters']['point_size'], color=current_color)
-                for li in range(len(lines)):
-                    ax.plot(*lines[li].T, color=current_color, lw=cfg_graphic['clusters']['line_width'],alpha= cfg_graphic['clusters']['alpha'])
-                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
-                legend_clusters.append(line_legend)
-                # Label the languages in the clusters
-                if cfg_graphic['languages']['label']:
-                    current_color = "black"
-                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+                ax.plot(*lines[li].T, color=current_color, lw=lw,
+                        alpha=line_w[li] * cfg_graphic['clusters']['alpha'])
+
+            line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
+            legend_clusters.append(line_legend)
+            # Label the languages in the clusters
+            if cfg_graphic['languages']['label']:
+                current_color = "black"
+                cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
 
         if cfg_legend['clusters']['add']:
-                # add to legend
+            # add to legend
             legend_clusters = ax.legend(legend_clusters, cluster_labels_legend, title_fontsize=18,
                                         title='Contact clusters',
                                         frameon=True, edgecolor='#ffffff', framealpha=1, fontsize=16, ncol=1,
@@ -2149,6 +2111,7 @@ class Plot:
 
         # Sixth column is multiplicative product of inverse distant weight and actual value.
         calc_arr[:, 5] = calc_arr[:, 3] * calc_arr[:, 4]
+
         # Divide sum of weighted value vy sum of weights to get IDW interpolation.
         idw = calc_arr[:, 5].sum() / calc_arr[:, 4].sum()
         return idw
@@ -2170,26 +2133,26 @@ class Plot:
         self.crop_size(blank_filename, extent_shapefile, path, max_height_or_width=output_resolution)
 
         resized_raster_name = str(path) + blank_filename.rsplit('.', 1)[0] + '_resized.tif'
-        baseRasterFile = rasterio.open(resized_raster_name)  # baseRasterFile stands for resampled elevation.
+        base_raster_file = rasterio.open(resized_raster_name)  # base_raster_file stands for resampled elevation.
 
-        with rasterio.open(resized_raster_name) as baseRasterFile:
+        with rasterio.open(resized_raster_name) as base_raster_file:
             inputPoints = input_point_shapefile
             # obser_df stands for observation_dataframe, lat, lon, data_value for each station will be stored here.
             obser_df = pd.DataFrame()
             obser_df['station_name'] = inputPoints.iloc[:, 0]
 
             # create two list of indexes of station longitude, latitude in elevation raster file.
-            lons, lats = baseRasterFile.index(
+            lons, lats = base_raster_file.index(
                 [lon for lon in inputPoints.geometry.x],
                 [lat for lat in inputPoints.geometry.y])
             obser_df['lon_index'] = lons
             obser_df['lat_index'] = lats
             obser_df['data_value'] = inputPoints[column_name]
 
-            idw_array = baseRasterFile.read(1)
-            for x in range(baseRasterFile.height):
-                for y in range(baseRasterFile.width):
-                    if baseRasterFile.read(1)[x][y] == 32767:
+            idw_array = base_raster_file.read(1)
+            for x in range(base_raster_file.height):
+                for y in range(base_raster_file.width):
+                    if base_raster_file.read(1)[x][y] == 32767:
                         continue
                     else:
                         idw_array[x][y] = self.standard_idw(
@@ -2202,7 +2165,7 @@ class Plot:
                             s_radious=search_radious)
 
             output_filename = str(path) + 'output_idw.tif'
-            with rasterio.open(output_filename, 'w', **baseRasterFile.meta) as std_idw:
+            with rasterio.open(output_filename, 'w', **base_raster_file.meta) as std_idw:
                 std_idw.write(idw_array, 1)
 
             return output_filename

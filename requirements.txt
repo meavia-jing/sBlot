@@ -15,4 +15,3 @@ tables
 pydantic
 ruamel.yaml
 rasterio
-math

@@ -15,3 +15,9 @@ if point_size == "freqency" and line_width =="frequency", plot the line width an
 else, just plot size of point and width of line to a fixed number .
 
 
+## Data description
+Data for testing the plotting package:<br>
+28 types of language that mainly located in the southern Europe, including Greek, Romance,Turkish, etc.
+
+
+

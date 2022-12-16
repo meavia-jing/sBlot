@@ -602,35 +602,6 @@ class Plot:
             legend_clusters.append(line_legend)
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
-
-        for i, cluster in enumerate(results.clusters):
-            # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
-            in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
-            current_color = cluster_colors[i]
-
-            max_size = 50
-            point_size = cfg_graphic['clusters']['point_size']
-            in_cluster_point = cluster_freq > cfg_content['min_posterior_frequency']
-            if cfg_graphic['clusters']['point_size'] == "frequency":
-                point_size = cluster_freq[cluster_freq > cfg_content['min_posterior_frequency']] * max_size
-            ax.scatter(*locations_map_crs[in_cluster_point].T, s=point_size, color=color_for_freq[in_cluster_point])
-
-            ## plot the line map accroding to the cgf_content['type']
-            for i, cluster in enumerate(results.clusters):
-                # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
-                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
-                current_color = cluster_colors[i]
-                for li in range(len(lines)):
-                    lineweight = cfg_graphic['clusters']['line_width']
-                    if lineweight == "frequency":
-                        lineweight = line_w[li]
-                    ax.plot(*lines[li].T, color=current_color, lw=lineweight,
-                            alpha=cfg_graphic['clusters']['alpha'])
-                line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
-                legend_clusters.append(line_legend)
-                if cfg_graphic['languages']['label']:
-                    cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
-
         if cfg_legend['clusters']['add']:
                 # add to legend
             legend_clusters = ax.legend(legend_clusters, cluster_labels_legend, title_fontsize=18,

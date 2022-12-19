@@ -2039,8 +2039,6 @@ class Plot:
         if (len(results.clusters)> len(cfg_graphic['clusters']['color'])):
             color_for_freq = [ (colors.to_hex(x)) for x in color_for_freq]
 
-        print(color_for_freq)
-
         red,green,blue = self.rgb_color(color_for_freq)
         df = pd.DataFrame({
             'x': locations_map_crs[:, 0],

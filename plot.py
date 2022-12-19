@@ -2090,30 +2090,34 @@ class Plot:
                 resampled_file.write(
                     resampled_elevation)  # Save the resized file as resampled_elevation.tif in working directory.
 
-    def standard_idw(self,lon, lat, longs, lats, d_values, id_power, s_radious):
+    def standard_idw(
+        self,
+        lon: float,
+        lat: float,
+        longs: NDArray[float],
+        lats: NDArray[float],
+        d_values: NDArray[float],
+        id_power: int = 2,
+        background_weight: float = 0.0,
+        background_value: float = 0.0
+    ):
         """
-       calculating inverse distance weights
+        calculating inverse distance weights
         """
+        # Compute distances from the grid cell (lon, lat) to the values (longs, lats)
+        dists = np.sqrt((longs - lon) ** 2 + (lats - lat) ** 2)
 
-        calc_arr = np.zeros(shape=(len(longs), 6))  # create an empty array shape of (total no. of observation * 6)
-        calc_arr[:, 0] = longs  # First column will be Longitude of known data points.
-        calc_arr[:, 1] = lats  # Second column will be Latitude of known data points.
-        #     calc_arr[:, 2] = elevs    # Third column will be Elevation of known data points.
-        calc_arr[:, 3] = d_values  # Fourth column will be Observed data value of known data points.
-
-        # Fifth column is weight value from idw formula " w = 1 / (d(x, x_i)^power + 1)"
+        # The IDW weights are given by " w = 1 / (d(x, x_i)^power + 1)"
         # >> constant 1 is to prevent int divide by zero when distance is zero.
-        calc_arr[:, 4] = 1 / (np.sqrt((calc_arr[:, 0] - lon) ** 2 + (calc_arr[:, 1] - lat) ** 2) ** id_power + 1)
+        weights = 1 / (dists ** id_power + 1)
 
-        # Sort the array in ascendin order based on column_5 (weight) "np.argsort(calc_arr[:,4])"
-        # and exclude all the rows outside of search radious "[ - s_radious :, :]"
-        calc_arr = calc_arr[np.argsort(calc_arr[:, 4])][-s_radious:, :]
+        # Divide sum of weighted values by sum of weights to get IDW interpolation.
+        # We add a constant background_value with background_weight, so that the
+        # interpolation decays to this background value when no points are nearby.
+        sum_weighted_values = (background_value * background_weight) + np.sum(d_values * weights)
+        sum_weights = background_weight + np.sum(weights)
+        idw = sum_weighted_values / sum_weights
 
-        # Sixth column is multiplicative product of inverse distant weight and actual value.
-        calc_arr[:, 5] = calc_arr[:, 3] * calc_arr[:, 4]
-
-        # Divide sum of weighted value vy sum of weights to get IDW interpolation.
-        idw = calc_arr[:, 5].sum() / calc_arr[:, 4].sum()
         return idw
 
 
@@ -2133,7 +2137,6 @@ class Plot:
         self.crop_size(blank_filename, extent_shapefile, path, max_height_or_width=output_resolution)
 
         resized_raster_name = str(path) + blank_filename.rsplit('.', 1)[0] + '_resized.tif'
-        base_raster_file = rasterio.open(resized_raster_name)  # base_raster_file stands for resampled elevation.
 
         with rasterio.open(resized_raster_name) as base_raster_file:
             inputPoints = input_point_shapefile
@@ -2150,6 +2153,13 @@ class Plot:
             obser_df['data_value'] = inputPoints[column_name]
 
             idw_array = base_raster_file.read(1)
+
+            dist_diag = sqrt(base_raster_file.width**2 + base_raster_file.height**2)
+            background_weight = 1 / ((dist_diag / 8)**power + 1)
+            # I decided to weigh the background the same as 1 sample that is 1/8 of the
+            # diagonal of the whole map away from each grid cell. Seems to give visually
+            # pleasing results in the Balkans example.
+
             for x in range(base_raster_file.height):
                 for y in range(base_raster_file.width):
                     if base_raster_file.read(1)[x][y] == 32767:
@@ -2162,7 +2172,9 @@ class Plot:
                             lats=obser_df.lat_index,
                             d_values=obser_df.data_value,
                             id_power=power,
-                            s_radious=search_radious)
+                            background_weight=background_weight,
+                            background_value=255,
+                        )
 
             output_filename = str(path) + 'output_idw.tif'
             with rasterio.open(output_filename, 'w', **base_raster_file.meta) as std_idw:

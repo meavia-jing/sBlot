@@ -439,7 +439,7 @@ class Plot:
             additional = cm(np.linspace(0, 1, n_clusters - len(custom_colors), endpoint=False))
             return list(np.concatenate((provided, additional), axis=0))
 
-    def add_labels(self, cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, ax):
+    def add_labels(self, cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent,colorOn, ax):
         """Add labels to languages"""
 
         all_loc = list(range(locations_map_crs.shape[0]))
@@ -455,7 +455,7 @@ class Plot:
             for j in range(len(cluster_labels)):
                 if i in cluster_labels[j]:
                     # Recolor labels (only for consensus_map)
-                    if cfg_content['type'] == 'consensus_map':
+                    if cfg_content['type'] == 'consensus_map' and colorOn==True:
                         label_color = cluster_colors[j]
                     in_cluster = True
 
@@ -2023,40 +2023,62 @@ class Plot:
         background_weight = 1 / ((dist_diag / 12) ** id_power + 1)
 
         # calculating the idw color for the entire grid
-        grid_point['idw_hex'] = ''
-        for i in range(len(grid_point)):
-            central = grid_point['geometry'][i].centroid
-            idwred = int(self.standard_idw(
-                lon=central.x,
-                lat=central.y,
-                longs=point_rgb.x,
-                lats=point_rgb.y,
-                d_values=point_rgb.red,
-                id_power=id_power,
-                background_weight=background_weight,
-                background_value=255
-            ))
-            idwgreen = int(self.standard_idw(
-                lon=central.x,
-                lat=central.y,
-                longs=point_rgb.x,
-                lats=point_rgb.y,
-                d_values=point_rgb.green,
-                id_power=id_power,
-                background_weight=background_weight,
-                background_value=255
-            ))
-            idwblue = int(self.standard_idw(
-                lon=central.x,
-                lat=central.y,
-                longs=point_rgb.x,
-                lats=point_rgb.y,
-                d_values=point_rgb.blue,
-                id_power=id_power,
-                background_weight=background_weight,
-                background_value=255
-            ))
-            grid_point['idw_hex'][i] = self.rgb_to_hex((idwred, idwgreen, idwblue))
+        grid_point['idw_hex'] = grid_point.apply(lambda x:self.rgb_to_hex((
+            int(self.standard_idw(lon=x['geometry'].centroid.x,lat=x['geometry'].centroid.y,
+                             longs=point_rgb.x,
+                             lats=point_rgb.y,
+                             d_values=point_rgb.red,
+                             id_power=2,
+                             background_weight=background_weight,
+                             background_value=255)),
+            int(self.standard_idw(lon=x['geometry'].centroid.x,
+                             lat=x['geometry'].centroid.y,
+                             longs=point_rgb.x,lats=point_rgb.y,
+                             d_values=point_rgb.green,
+                             id_power=2,
+                             background_weight=background_weight,
+                             background_value=255)),
+            int(self.standard_idw(lon=x['geometry'].centroid.x,
+                             lat=x['geometry'].centroid.y,
+                             longs=point_rgb.x,
+                             lats=point_rgb.y,
+                             d_values=point_rgb.blue,
+                             id_power=2,
+                             background_weight=background_weight,
+                             background_value=255)))),axis=1)
+        # for i in range(len(grid_point)):
+        #     central = grid_point['geometry'][i].centroid
+        #     idwred = int(self.standard_idw(
+        #         lon=central.x,
+        #         lat=central.y,
+        #         longs=point_rgb.x,
+        #         lats=point_rgb.y,
+        #         d_values=point_rgb.red,
+        #         id_power=id_power,
+        #         background_weight=background_weight,
+        #         background_value=255
+        #     ))
+        #     idwgreen = int(self.standard_idw(
+        #         lon=central.x,
+        #         lat=central.y,
+        #         longs=point_rgb.x,
+        #         lats=point_rgb.y,
+        #         d_values=point_rgb.green,
+        #         id_power=id_power,
+        #         background_weight=background_weight,
+        #         background_value=255
+        #     ))
+        #     idwblue = int(self.standard_idw(
+        #         lon=central.x,
+        #         lat=central.y,
+        #         longs=point_rgb.x,
+        #         lats=point_rgb.y,
+        #         d_values=point_rgb.blue,
+        #         id_power=id_power,
+        #         background_weight=background_weight,
+        #         background_value=255
+        #     ))
+        #     grid_point['idw_hex'][i] = self.rgb_to_hex((idwred, idwgreen, idwblue))
         return grid_point
 
     def get_idw_map(self, results, file_name):
@@ -2100,7 +2122,8 @@ class Plot:
             'blue': blue
         })
         point_geo = gpd.GeoDataFrame(df, geometry=df.apply(lambda row: geometry.Point(row.x, row.y), axis=1))
-        idw_grid = self.cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=5_000, id_power=2)
+        delta = cfg_graphic["base_map"]["polygon"]["resolution"]
+        idw_grid = self.cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, id_power=2)
 
         cluster_colors = self.cluster_color(results, cfg_graphic)
 
@@ -2117,8 +2140,9 @@ class Plot:
 
         idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
         point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
+        colorOn = False
         if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
-            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, ax)
+            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, colorOn, ax)
 
         file_format = cfg_output['format']
 

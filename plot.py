@@ -1941,8 +1941,8 @@ class Plot:
 
     def standard_idw(
         self,
-        lon: float,
-        lat: float,
+        grid_lon: NDArray[float],
+        grid_lat: NDArray[float],
         longs: NDArray[float],
         lats: NDArray[float],
         d_values: NDArray[float],
@@ -1954,8 +1954,15 @@ class Plot:
         calculating inverse distance weights
         """
 
+        # The grid has more than one dimension. We flatten it, but remember the shape so
+        # that we can bring it back to the original shape in the end.
+        grid_shape = grid_lon.shape
+        grid_lon = grid_lon.flatten()
+        grid_lat = grid_lat.flatten()
+
         # Compute distances from the grid cell (lon, lat) to the values (longs, lats)
-        dists = np.sqrt((longs - lon) ** 2 + (lats - lat) ** 2)
+        dists = np.sqrt((longs[np.newaxis, :] - grid_lon[:, np.newaxis]) ** 2 +
+                        (lats[np.newaxis, :] - grid_lat[:, np.newaxis]) ** 2)
 
         # The IDW weights are given by " w = 1 / (d(x, x_i)^power + 1)"
         # >> constant 1 is to prevent int divide by zero when distance is zero.
@@ -1964,11 +1971,13 @@ class Plot:
         # Divide sum of weighted values by sum of weights to get IDW interpolation.
         # We add a constant background_value with background_weight, so that the
         # interpolation decays to this background value when no points are nearby.
-        sum_weighted_values = (background_value * background_weight) + np.sum(d_values * weights)
-        sum_weights = background_weight + np.sum(weights)
+        sum_weighted_values = (background_value * background_weight +
+                               np.sum(d_values[None, :] * weights, axis=1))
+        sum_weights = background_weight + np.sum(weights, axis=1)
         idw = sum_weighted_values / sum_weights
 
-        return idw
+        # Reshape the idw values to match the original grid shape
+        return idw.reshape(grid_shape)
 
     def Hex_to_RGB(self,hex):
         '''
@@ -2010,7 +2019,6 @@ class Plot:
     def cal_idw(self, extentpoly, point_rgb, delta, id_power):
         grid = self.partition(extentpoly, delta)
         grid = gpd.GeoDataFrame(geometry=gpd.GeoSeries(grid))
-        grid_point = grid.sjoin(point_rgb, how='left', predicate="within")
 
         bbox_width = self.polygon_width(extentpoly)
         bbox_height = self.polygon_height(extentpoly)
@@ -2020,66 +2028,31 @@ class Plot:
         # diagonal of the whole map away from each grid cell. Seems to give visually
         # pleasing results in the Balkans example.
         dist_diag = sqrt(bbox_width ** 2 + bbox_height ** 2)
-        background_weight = 1 / ((dist_diag / 12) ** id_power + 1)
+        background_weight = 1 / ((dist_diag / 8) ** id_power + 1)
 
         # calculating the idw color for the entire grid
-        grid_point['idw_hex'] = grid_point.apply(lambda x:self.rgb_to_hex((
-            int(self.standard_idw(lon=x['geometry'].centroid.x,lat=x['geometry'].centroid.y,
-                             longs=point_rgb.x,
-                             lats=point_rgb.y,
-                             d_values=point_rgb.red,
-                             id_power=2,
-                             background_weight=background_weight,
-                             background_value=255)),
-            int(self.standard_idw(lon=x['geometry'].centroid.x,
-                             lat=x['geometry'].centroid.y,
-                             longs=point_rgb.x,lats=point_rgb.y,
-                             d_values=point_rgb.green,
-                             id_power=2,
-                             background_weight=background_weight,
-                             background_value=255)),
-            int(self.standard_idw(lon=x['geometry'].centroid.x,
-                             lat=x['geometry'].centroid.y,
-                             longs=point_rgb.x,
-                             lats=point_rgb.y,
-                             d_values=point_rgb.blue,
-                             id_power=2,
-                             background_weight=background_weight,
-                             background_value=255)))),axis=1)
-        # for i in range(len(grid_point)):
-        #     central = grid_point['geometry'][i].centroid
-        #     idwred = int(self.standard_idw(
-        #         lon=central.x,
-        #         lat=central.y,
-        #         longs=point_rgb.x,
-        #         lats=point_rgb.y,
-        #         d_values=point_rgb.red,
-        #         id_power=id_power,
-        #         background_weight=background_weight,
-        #         background_value=255
-        #     ))
-        #     idwgreen = int(self.standard_idw(
-        #         lon=central.x,
-        #         lat=central.y,
-        #         longs=point_rgb.x,
-        #         lats=point_rgb.y,
-        #         d_values=point_rgb.green,
-        #         id_power=id_power,
-        #         background_weight=background_weight,
-        #         background_value=255
-        #     ))
-        #     idwblue = int(self.standard_idw(
-        #         lon=central.x,
-        #         lat=central.y,
-        #         longs=point_rgb.x,
-        #         lats=point_rgb.y,
-        #         d_values=point_rgb.blue,
-        #         id_power=id_power,
-        #         background_weight=background_weight,
-        #         background_value=255
-        #     ))
-        #     grid_point['idw_hex'][i] = self.rgb_to_hex((idwred, idwgreen, idwblue))
-        return grid_point
+        grid_centroids = grid.geometry.centroid
+        grid_x = grid_centroids.x.to_numpy()
+        grid_y = grid_centroids.y.to_numpy()
+        x = point_rgb.x.to_numpy()
+        y = point_rgb.y.to_numpy()
+
+        # Apply IDW interpolation to each color channel separately
+        for c in ['red', 'green', 'blue']:
+            grid[c] = self.standard_idw(
+                grid_lon=grid_x,
+                grid_lat=grid_y,
+                longs=x,
+                lats=y,
+                d_values=point_rgb[c].to_numpy(),
+                id_power=id_power,
+                background_weight=background_weight,
+                background_value=255
+            ).astype(int)
+
+        grid['idw_hex'] = [self.rgb_to_hex(rgb) for rgb in zip(grid.red, grid.green, grid.blue)]
+
+        return grid
 
     def get_idw_map(self, results, file_name):
         '''
@@ -2103,7 +2076,7 @@ class Plot:
         # Get extent
         extent = self.get_extent(cfg_geo, locations_map_crs)
         bbox = self.compute_bbox(extent)
-        extent_file = self.add_background_map(bbox, cfg_geo, cfg_graphic,ax)
+        extent_file = self.add_background_map(bbox, cfg_geo, cfg_graphic, ax)
         ploys = extent_file['geometry']
         mergedPolys = unary_union(ploys)
         #poly = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[mergedPolys])
@@ -2144,6 +2117,9 @@ class Plot:
         if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
             self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, colorOn, ax)
 
+        # Match the extent of x- and y-axis to the bounding-box of the grid
+        plt.xlim(bbox.bounds[0], bbox.bounds[2])
+        plt.ylim(bbox.bounds[1], bbox.bounds[3])
         file_format = cfg_output['format']
 
         fig.savefig(self.path_plots / f"{file_name}.{file_format}", bbox_inches='tight',dpi=cfg_output['resolution'], format=file_format)

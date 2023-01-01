@@ -567,7 +567,13 @@ class Plot:
                     color_for_freq.append(cluster_colors[item])
                 color_for_freq = np.asarray(color_for_freq)
 
-        return cluster_freq,color_for_freq
+        if cfg_content['type'] == 'density_map':
+            in_cluster_point = np.ones(len(cluster_freq ))
+
+        else:
+            in_cluster_point = cluster_freq >= cfg_content['min_posterior_frequency']
+
+        return cluster_freq,color_for_freq,in_cluster_point
 
     def density_map(self, results: Results, locations_map_crs, cfg_content, cfg_graphic, cfg_legend, ax):
         """ This function displays density map
@@ -577,7 +583,7 @@ class Plot:
         cluster_labels = []
         ## plot the point plot
 
-        cluster_freq, color_for_freq = self.get_point_weight_color(results, cfg_content, cfg_graphic)
+        cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         print(color_for_freq)
         max_size = 50
         point_size = cfg_graphic['clusters']['point_size']
@@ -619,11 +625,11 @@ class Plot:
         cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
         cluster_colors = self.cluster_color(results, cfg_graphic)
         cluster_labels = []
-        cluster_freq, color_for_freq = self.get_point_weight_color(results, cfg_content, cfg_graphic)
+        cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         ## plot the point
         max_size = 50
         point_size = cfg_graphic['clusters']['point_size']
-        in_cluster_point = cluster_freq > cfg_content['min_posterior_frequency']
+        #in_cluster_point = cluster_freq > cfg_content['min_posterior_frequency']
         if cfg_graphic['clusters']['point_size'] == "frequency":
             point_size = cluster_freq[cluster_freq > cfg_content['min_posterior_frequency']] * max_size
         ax.scatter(*locations_map_crs[in_cluster_point].T, s=point_size, color=color_for_freq[in_cluster_point])
@@ -1037,8 +1043,10 @@ class Plot:
                 ax=ax
             )
 
+
+        Coloron = True
         if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
-            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, ax)
+            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, Coloron, ax)
 
         # Visualizes language families
         if cfg_content['plot_families']:
@@ -2082,14 +2090,15 @@ class Plot:
         #poly = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[mergedPolys])
 
         ## get_point_frequency
-        cluster_freq, color_for_freq = self.get_point_weight_color(results, cfg_content, cfg_graphic)
+        cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         if (len(results.clusters)> len(cfg_graphic['clusters']['color'])):
             color_for_freq = [ (colors.to_hex(x)) for x in color_for_freq]
 
-        red,green,blue = self.rgb_color(color_for_freq)
+
+        red,green,blue = self.rgb_color(color_for_freq[in_cluster_point])
         df = pd.DataFrame({
-            'x': locations_map_crs[:, 0],
-            'y': locations_map_crs[:, 1],
+            'x': locations_map_crs[:, 0][in_cluster_point],
+            'y': locations_map_crs[:, 1][in_cluster_point],
             'red': red,
             'green': green,
             'blue': blue

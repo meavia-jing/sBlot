@@ -2094,11 +2094,16 @@ class Plot:
         if (len(results.clusters)> len(cfg_graphic['clusters']['color'])):
             color_for_freq = [ (colors.to_hex(x)) for x in color_for_freq]
 
+        # languages which are below the frequency threshold are colored in white
+        indices = np.where(in_cluster_point == False)[0]
+        color_for_freq[indices] = '#ffffff'
+        print(color_for_freq)
 
-        red,green,blue = self.rgb_color(color_for_freq[in_cluster_point])
+
+        red,green,blue = self.rgb_color(color_for_freq)
         df = pd.DataFrame({
-            'x': locations_map_crs[:, 0][in_cluster_point],
-            'y': locations_map_crs[:, 1][in_cluster_point],
+            'x': locations_map_crs[:, 0],
+            'y': locations_map_crs[:, 1],
             'red': red,
             'green': green,
             'blue': blue

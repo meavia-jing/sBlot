@@ -2097,8 +2097,7 @@ class Plot:
         # languages which are below the frequency threshold are colored in white
         indices = np.where(in_cluster_point == False)[0]
         color_for_freq[indices] = '#ffffff'
-        print(color_for_freq)
-
+   
 
         red,green,blue = self.rgb_color(color_for_freq)
         df = pd.DataFrame({

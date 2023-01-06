@@ -1,4 +1,4 @@
-# SBbaysPlot
+# sBlot - plotting for sBayes
  This package provide plotting functions for the project Sbayes
 
 

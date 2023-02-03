@@ -170,7 +170,7 @@ The Pie chart shows the weight of each contact area in the language.  **Figure 9
     color: black;
     padding: 2px;">Figure 9. Pie plot with 7 contact areas</div>
 </center>
-[Part 2.7](#configpie) is to set parameters and [Part 3.6](#pythonpie)  specifies codes for drawing the DIC plots.
+[Part 2.7](#configpre) is to set parameters and [Part 3.6](#pythonpre) specifies codes for drawing the DIC plots.
 
 ## 2 The config_plot.JSON file<a name="config"></a>
 

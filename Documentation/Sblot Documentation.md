@@ -143,7 +143,8 @@ These plots visualize the preference for each of the states of a feature, either
     color: black;
     padding: 2px;">Figure 7. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
 </center>
-[Part 2.5](#configpre) is to set parameters and [Part 3.4](#pythonpre)  specifies codes for drawing the preference plots.
+
+[Part 2.5](#configpre) is to set parameters and [Part 3.4](#pythonpre)  specifies codes for drawing weight plots. plots.
 ### 1.4 DIC plots <a name="DIC"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K, and help the analyst to decide for an appropriate number of areas. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
 <center>

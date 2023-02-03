@@ -109,6 +109,7 @@ class Plot:
 
     def load_config(self, config_file):
         # Get parameters from config_custom (for particular experiment)
+
         self.base_directory, self.config_file = self.decompose_config_path(config_file)
 
         # Read the user specified config file
@@ -131,7 +132,13 @@ class Plot:
             self.config['map']['legend']['correspondence']['color_labels'] = False
 
         # Fix relative paths and assign global variables for more convenient workflow
-        self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
+        #self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
+        self.path_plots_main = self.config['results']['path_out']
+        self.path_plots = {"IDC":self.path_plots_main+'/IDC',
+                           "map":self.path_plots_main+'/map',
+                           "pie":self.path_plots_main+'/pie',
+                           "preferene":self.path_plots_main+'/preference',
+                           "weights":self.path_plots_main+'/weights'}
 
         self.path_features = fix_relative_path(self.config['data']['features'], self.base_directory)
         self.path_feature_states = fix_relative_path(self.config['data']['feature_states'], self.base_directory)
@@ -140,8 +147,12 @@ class Plot:
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
 
-        if not os.path.exists(self.path_plots):
-            os.makedirs(self.path_plots)
+        for name,item in self.path_plots.items():
+            if not os.path.exists(item):
+                os.makedirs(item)
+            self.path_plots[name] = fix_relative_path(item, self.base_directory)
+
+
 
     @staticmethod
     def convert_config(d):
@@ -1079,7 +1090,10 @@ class Plot:
 
         # Save the plot
         file_format = cfg_output['format']
-        fig.savefig(self.path_plots / f"{file_name}.{file_format}", bbox_inches='tight',
+
+
+
+        fig.savefig(self.path_plots['map'] / f"{file_name}.{file_format}", bbox_inches='tight',
                     dpi=cfg_output['resolution'], format=file_format)
 
         plt.close(fig)
@@ -1424,7 +1438,7 @@ class Plot:
         file_format = cfg_weights['output']['format']
         resolution = cfg_weights['output']['resolution']
 
-        fig.savefig(self.path_plots / f'{file_name}.{file_format}', bbox_inches='tight',
+        fig.savefig(self.path_plots["weights_plot"] / f'{file_name}.{file_format}', bbox_inches='tight',
                     dpi=resolution, format=file_format)
         plt.close(fig)
 
@@ -1550,7 +1564,7 @@ class Plot:
                 position += 1
 
             plt.subplots_adjust(wspace=width_spacing, hspace=height_spacing)
-            fig.savefig(self.path_plots / f'{file_name}_{component}.{file_format}',
+            fig.savefig(self.path_plots["preference_plot"] / f'{file_name}_{component}.{file_format}',
                         bbox_inches='tight', dpi=resolution, format=file_format)
             plt.close(fig)
 
@@ -1561,6 +1575,8 @@ class Plot:
             file_name: name of the output file
         """
         print('Plotting DIC...')
+
+
         cfg_dic = self.config['dic_plot']
 
         width = cfg_dic['output']['width']
@@ -1620,7 +1636,7 @@ class Plot:
         yticklabels = [f'{y_tick:.0f}' for y_tick in y_ticks]
         ax.set_yticklabels(yticklabels, fontsize=10)
 
-        fig.savefig(self.path_plots / f'{file_name}.{file_format}', bbox_inches='tight',
+        fig.savefig( self.path_plots["dic_plot"]/ f'{file_name}.{file_format}', bbox_inches='tight',
                     dpi=resolution, format=file_format)
 
     def plot_trace(self, results: Results, file_name="trace", show_every_k_sample=1, file_format="pdf"):
@@ -1914,7 +1930,7 @@ class Plot:
                             hspace=cfg_pie['output']['spacing_vertical'])
 
         file_format = cfg_pie['output']['format']
-        fig.savefig(self.path_plots / f'{file_name}.{file_format}', bbox_inches='tight',
+        fig.savefig(self.path_plots['pie'] / f'{file_name}.{file_format}', bbox_inches='tight',
                     dpi=cfg_pie['output']['resolution'], format=file_format)
         plt.close(fig)
 
@@ -2092,9 +2108,9 @@ class Plot:
         ## get_point_frequency
         cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         if (len(results.clusters)> len(cfg_graphic['clusters']['color'])):
-            color_for_freq = [ (colors.to_hex(x)) for x in color_for_freq]
+            color_for_freq = np.array([ (colors.to_hex(x)) for x in color_for_freq])
 
-        # languages which are below the frequency threshold are colored in white
+        # languages which are below the frequency threshold are colored  white
         indices = np.where(in_cluster_point == False)[0]
         color_for_freq[indices] = '#ffffff'
    
@@ -2108,7 +2124,7 @@ class Plot:
             'blue': blue
         })
         point_geo = gpd.GeoDataFrame(df, geometry=df.apply(lambda row: geometry.Point(row.x, row.y), axis=1))
-        delta = cfg_graphic["base_map"]["polygon"]["resolution"]
+        delta = cfg_graphic["base_map"]["polygon"]["idw_resolution"]
         idw_grid = self.cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, id_power=2)
 
         cluster_colors = self.cluster_color(results, cfg_graphic)
@@ -2119,10 +2135,6 @@ class Plot:
             in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
-
-        self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
-        if not os.path.exists(self.path_plots):
-            os.makedirs(self.path_plots)
 
         idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
         point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
@@ -2135,7 +2147,7 @@ class Plot:
         plt.ylim(bbox.bounds[1], bbox.bounds[3])
         file_format = cfg_output['format']
 
-        fig.savefig(self.path_plots / f"{file_name}.{file_format}", bbox_inches='tight',dpi=cfg_output['resolution'], format=file_format)
+        fig.savefig( self.path_plots["map"]/ f"{file_name}.{file_format}", bbox_inches='tight',dpi=cfg_output['resolution'], format=file_format)
 
 
 
@@ -2206,10 +2218,10 @@ def plot_map(plot: Plot, results: Results, m: str):
     config_map = plot.config['map']
     map_type = config_map['content']['type']
 
-    if map_type == config_map['content']['type'] == 'density_map':
+    if map_type == 'density_map':
         plot.posterior_map(results, file_name='posterior_map_' + m)
 
-    elif map_type == config_map['content']['type'] == 'consensus_map':
+    elif map_type == 'consensus_map':
         min_posterior_frequency = config_map['content']['min_posterior_frequency']
         if min_posterior_frequency in [tuple, list, set]:
             for mpf in min_posterior_frequency:
@@ -2217,6 +2229,9 @@ def plot_map(plot: Plot, results: Results, m: str):
                 plot.posterior_map(results, file_name=f'posterior_map_{m}_{mpf}')
         else:
             plot.posterior_map(results, file_name=f'posterior_map_{m}_{min_posterior_frequency}')
+
+    elif map_type == 'idw_map':
+        plot.get_idw_map(results,m)
     else:
         raise ValueError(f'Unknown map type: {map_type}  (in the config file "map" -> "content" -> "type")')
 

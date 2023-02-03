@@ -134,7 +134,7 @@ class Plot:
         # Fix relative paths and assign global variables for more convenient workflow
         #self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
         self.path_plots_main = self.config['results']['path_out']
-        self.path_plots = {"IDC":self.path_plots_main+'/IDC',
+        self.path_plots = {"dic":self.path_plots_main+'/DIC',
                            "map":self.path_plots_main+'/map',
                            "pie":self.path_plots_main+'/pie',
                            "preferene":self.path_plots_main+'/preference',
@@ -1438,7 +1438,7 @@ class Plot:
         file_format = cfg_weights['output']['format']
         resolution = cfg_weights['output']['resolution']
 
-        fig.savefig(self.path_plots["weights_plot"] / f'{file_name}.{file_format}', bbox_inches='tight',
+        fig.savefig(self.path_plots["weights"] / f'{file_name}.{file_format}', bbox_inches='tight',
                     dpi=resolution, format=file_format)
         plt.close(fig)
 
@@ -1564,7 +1564,7 @@ class Plot:
                 position += 1
 
             plt.subplots_adjust(wspace=width_spacing, hspace=height_spacing)
-            fig.savefig(self.path_plots["preference_plot"] / f'{file_name}_{component}.{file_format}',
+            fig.savefig(self.path_plots["preference"] / f'{file_name}_{component}.{file_format}',
                         bbox_inches='tight', dpi=resolution, format=file_format)
             plt.close(fig)
 
@@ -1636,7 +1636,7 @@ class Plot:
         yticklabels = [f'{y_tick:.0f}' for y_tick in y_ticks]
         ax.set_yticklabels(yticklabels, fontsize=10)
 
-        fig.savefig( self.path_plots["dic_plot"]/ f'{file_name}.{file_format}', bbox_inches='tight',
+        fig.savefig( self.path_plots["dic"]/ f'{file_name}.{file_format}', bbox_inches='tight',
                     dpi=resolution, format=file_format)
 
     def plot_trace(self, results: Results, file_name="trace", show_every_k_sample=1, file_format="pdf"):

@@ -144,7 +144,7 @@ These plots visualize the preference for each of the states of a feature, either
     padding: 2px;">Figure 7. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
 </center>
 
-[Part 2.5](#configpre) is to set parameters and [Part 3.4](#pythonpre)  specifies codes for drawing weight plots. plots.
+[Part 2.5](#configpre) is to set parameters and [Part 3.4](#pythonpre)  specifies codes for drawing the Preference plots. 
 ### 1.4 DIC plots <a name="DIC"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K, and help the analyst to decide for an appropriate number of areas. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
 <center>
@@ -157,7 +157,7 @@ The Deviance Information criterion (DIC) is a measure for the performance of a m
     color: black;
     padding: 2px;">Figure 8. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
 </center>
-[Part 2.6](#configdic) is to set parameters and [Part 3.5](#pythondic)  specifies codes for drawing the DIC plots.
+[Part 2.6](#configdic) is to set parameters and [Part 3.5](#pythondic)  specifies codes for drawing the DIC plots. 
 
 ### 1.5 Pie plots <a name="pie"></a>
 The Pie chart shows the weight of each contact area in the language.  **Figure 9** show teh pie plots with 7 contact areas.
@@ -171,7 +171,7 @@ The Pie chart shows the weight of each contact area in the language.  **Figure 9
     color: black;
     padding: 2px;">Figure 9. Pie plot with 7 contact areas</div>
 </center>
-[Part 2.7](#configpre) is to set parameters and [Part 3.6](#pythonpre) specifies codes for drawing the DIC plots.
+[Part 2.7](#configpie) is to set parameters and [Part 3.6](#pythonpie)  specifies codes for drawing the Pie plots. 
 
 ## 2 The config_plot.JSON file<a name="config"></a>
 

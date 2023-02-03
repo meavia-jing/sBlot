@@ -5,8 +5,8 @@
 ## Table of contents
 * 1. [Introduction](#introduction)
     * 1.1 [Maps](#map)
-    	* 1.1.1 [Line map] (#line)
-    	* 1.1.2 [Dot map] (#dot)
+    	* 1.1.1 [Line map](#line)
+    	* 1.1.2 [Dot map](#dot)
     	* 1.1.3 [Inverse Distance Weighting(IDW) map](#idw)
     	* 1.1.4 [Line and dot map](#line and dot)
     * 1.2 [Weight plots](#weight )

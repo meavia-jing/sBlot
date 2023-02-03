@@ -772,13 +772,13 @@ for name, result in plot.iterate_over_models():
 	plot.get_idw_map(result,name)
    
   #### How to run the posterior_map from command line?####
-# open SBlot
+# open SBlot and draw map
 cd SBlot
 python plot.py config_plot.json map
 
 ```
 
-### 3.3 [Codes for drawing Weight plot]<a name="ythonweight"></a>
+### 3.3 [Codes for drawing Weight plot]<a name="pythonweight"></a>
 
 - `plot_weights(results: Results, file_name:PathLike)`: plotting the line and dot map.
 
@@ -796,14 +796,14 @@ for name, result in plot.iterate_over_models():
 	plot.plot_weights(results, file_name='weights_grid_' + name)
 
   #### How to run the posterior_map from command line?####
-# open SBlot
+# open SBlot and draw Weight plots
 cd SBlot
 python plot.py config_plot.json weights_plot
      
 ```
 
 
-### 3.4 [Codes for drawing Preference plot]<a name="ythonpre"></a>
+### 3.4 [Codes for drawing Preference plot]<a name="pythonpre"></a>
 - `plot_preferences(results: Results, file_name:PathLike)`: plotting the preference plot.
 
    > Argument:
@@ -820,7 +820,7 @@ for name, result in plot.iterate_over_models():
 	plot.plot_preferences(results, file_name=f'prob_grid_{name}')
 	
 	#### How to run the posterior_map from command line?####
-# open SBlot
+# open SBlot and draw preference plots
 cd SBlot
 python plot.py config_plot.json preference_plot
      
@@ -841,7 +841,7 @@ plot.read_data()
 plot.plot_dic(models=plot.results, file_name='dic')
 
 #### How to run the posterior_map from command line?####
-# open SBlot and run the plot_dic
+# open SBlot and plot the DIC plots
 cd SBlot
 python plot.py config_plot.json dic_plot
      
@@ -864,7 +864,7 @@ for name, result in plot.iterate_over_models():
 	plot.plot_pies(results, os.path.join(name))
 	
     #### How to run the posterior_map from command line?####
-# open SBlot and run the plot_dic
+# open SBlot and plot the Pie 
 cd SBlot
 python plot.py config_plot.json pie_plot
      

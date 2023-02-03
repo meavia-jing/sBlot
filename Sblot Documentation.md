@@ -12,14 +12,15 @@
     * 1.2 [Weight plots](#weight )
     * 1.2 [Preference plots] (#preference)
     * 1.3 [DIC plots](#DIC)
+    * 1.4 [Pie plots](#pie)
 * 2. [The config_plot.JSON file](#config)
     * 2.1 [How to set input and output file path?](#configresult)
     * 2.2 [How to read supporting data?](#configdata)
     * 2.3 [How to draw map? ](#configmap)
     * 2.4 [How to draw weight_plot? ](#configweight)
     * 2.5 [How to draw the preference_plot? ](#configpre)
-    * 2.6 [How to draw the pie_plot](#configpie)
-    * 2.7 [How to draw the dic_plot](#configdic)
+    * 2.6 [How to draw the dic_plot](#configdic)
+    * 2.7 [How to draw the pie_plot](#configpie)
 * 3. [Python interface](#python)
 
 
@@ -62,7 +63,7 @@ Languages, which appear together in the same area and which neighbors in a Gabri
     padding: 2px;">Figure 2. Line graph with 7 contact areas</div>
 </center>
 
-The part plot the [line map](#)
+Part 2.3 is to set parameters for plotting the [line map](#configmap)
 
 #### 1.1.2 Dot map <a name="dot"></a>
 Dot size indicates how often a language is in an area. **Figure 3** shows the Dot map with 7 contact areas.
@@ -77,6 +78,8 @@ Dot size indicates how often a language is in an area. **Figure 3** shows the Do
     padding: 2px;">Figure 3. Dot graph with 7 contact areas</div>
 </center>
 
+Part 2.3 is to set parameters for plotting the [dot map](#configmap)
+
 #### 1.1.3 Inverse Distance Weighting (IDW) map <a name="idw"></a>
 The Inverse Distance Weighting(IDW) map shows how languages in different contact areas interact with each other. Inverse Distance Weighting (IDW) interpolation assumes that closer values are more related than further values with its function. **Figure 4** shows the IDW map with 7 contact areas.
 <center>
@@ -89,6 +92,8 @@ The Inverse Distance Weighting(IDW) map shows how languages in different contact
     color: black;
     padding: 2px;">Figure 4. IDW graph with 7 contact areas</div>
 </center>
+
+Part 2.3 is to set parameters for plotting the [idw map](#configmap)
 
 #### 1.1.4 Line and dot map <a name="line and dot"></a>
 Combining the line and dot map. There are four situations: line graph shows the frequency of two languages together, and the dot graph shows the frequency of languages in an area; line graph shows the frequency of two languages together, and the size of dot is fixed; the dot graph shows the frequency of languages in an area, and the thickness of line is fixed; the thickness of line and size of dot are fixed.   **Figure 5** shows the lines and dots map for 7 areas.
@@ -103,6 +108,8 @@ Combining the line and dot map. There are four situations: line graph shows the 
     padding: 2px;">Figure 5. Line and dot graph</div>
 </center>
 
+Part 2.3 is to set parameters for plotting the [line and dot map](#configmap)
+
 ### 1.2 Weight plots <a name="weight"></a>
 Weight plots visualize the posterior densities of the weights per feature: how well does each effect – universal preference, inheritance and contact – predict the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for two features - F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
 <center>
@@ -116,6 +123,7 @@ Weight plots visualize the posterior densities of the weights per feature: how w
     padding: 2px;">Figure 6. Weight plots for two features (F24, F16)</div>
 </center>
 
+Part 2.4 is to set parameters for plotting the [Weight plot](#configweight)
 ### 1.3 Preference plots <a name="preference"></a>
 These plots visualize the preference for each of the states of a feature, either universally, in a family or a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per family or area or globally, in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
 <center>
@@ -128,7 +136,7 @@ These plots visualize the preference for each of the states of a feature, either
     color: black;
     padding: 2px;">Figure 7. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
 </center>
-
+Part 2.5 is to set parameters for plotting the [Preference plot](#configpre)
 ### 1.4 DIC plots <a name="DIC"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K, and help the analyst to decide for an appropriate number of areas. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
 <center>
@@ -141,7 +149,21 @@ The Deviance Information criterion (DIC) is a measure for the performance of a m
     color: black;
     padding: 2px;">Figure 8. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
 </center>
+Part 2.6 is to set parameters for plotting the [DIC plot](#configpre)
 
+### 1.5 Pie plots <a name="pie"></a>
+The Pie chart shows the weight of each contact area in the language.  **Figure 9** show teh pie plots with 7 contact areas.
+<center>
+    <img style="border-radius: 0.3125em;
+    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
+    src="images/pie.jpg">
+    <br>
+    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
+    display: inline-block;
+    color: black;
+    padding: 2px;">Figure 9. Pie plot with 7 contact areas</div>
+</center>
+Part 2.7 is to set parameters for plotting the [Pie plot](#configpie)
 
 ## 2 The config_plot.JSON file<a name="config"></a>
 
@@ -490,14 +512,6 @@ Table 11: The config_plot.JSON file: keys in preference_plot > output
 |format|string|"pdf"|file format of the output figure|
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 
-### 2.6 How to drea the pie plot <a name="configpie"></a>
-config_plot.JSON: pie\_plot
-
-####2.6.1 config_plot.JSON : pie\_plot > content
-
-####2.6.2 config_plot.JSON : pie\_plot > output
-
-
 
 ### 2.7 How to draw the dic_plot <a name="configdic"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.config_plot.JSON: dic\_plot
@@ -530,6 +544,32 @@ Table 14: : The config_plot.JSON file: keys in dic_plot > output
 |width|number|15| width of the plot in cm|
 |height|number|15|  height of the plot in cm|
 
+
+### 2.7 How to drea the pie plot <a name="configpie"></a>
+config_plot.JSON: pie\_plot
+
+
+####2.7.1 config_plot.JSON : pie\_plot > content
+
+Table 15: The config_plot.JSON file: keys in pie\_plot > content
+
+|Key| data type|default value| description
+| -----------| ---------|-----| ----|
+|burn_in|number|0.2| fraction of the posterior samples discarded as burn-in|
+
+####2.7.2 config_plot.JSON : pie\_plot > output
+
+
+Table 16: The config_plot.JSON file: keys in pie\_plot > content
+
+|Key| data type|default value| description
+| -----------| ---------|-----| ----|
+|width|number|4| width of the plot in cm|
+|height|number|2|height of the plot in cm|
+|spacing_horizontal|number|0.01||
+|spacing_vertical|number|0.01||
+|format|string|"pdf"| file format of the output figure|
+|ressolution|number|300|resolution of the output figure in pixels per inch|
 
 ## 3 Command <a name="python"></a>
 

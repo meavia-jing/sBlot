@@ -157,6 +157,7 @@ The Deviance Information criterion (DIC) is a measure for the performance of a m
     color: black;
     padding: 2px;">Figure 8. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
 </center>
+	
 [Part 2.6](#configdic) is to set parameters and [Part3.5](#pythondic)specifies codes for drawing the DIC plots. 
 
 ### 1.5 Pie plots <a name="pie"></a>
@@ -171,6 +172,7 @@ The Pie chart shows the weight of each contact area in the language.  **Figure 9
     color: black;
     padding: 2px;">Figure 9. Pie plot with 7 contact areas</div>
 </center>
+	
 [Part 2.7](#configpie) is to set parameters and [Part3.6](#pythonpie) specifies codes for drawing the Pie plots. 
 
 ## 2 The config_plot.JSON file<a name="config"></a>

@@ -8,9 +8,9 @@
     	* 1.1.1 [Line map](#line)
     	* 1.1.2 [Dot map](#dot)
     	* 1.1.3 [Inverse Distance Weighting(IDW) map](#idw)
-    	* 1.1.4 [Line and dot map](#line and dot)
+    	* 1.1.4 [Line and dot map] (#linedot)
     * 1.2 [Weight plots](#weight )
-    * 1.2 [Preference plots] (#preference)
+    * 1.2 [Preference plots](#preference)
     * 1.3 [DIC plots](#DIC)
     * 1.4 [Pie plots](#pie)
 * 2. [The config_plot.JSON file](#config)
@@ -102,7 +102,7 @@ The Inverse Distance Weighting(IDW) map shows how languages in different contact
 
 
 
-#### 1.1.4 Line and dot map <a name="line and dot"></a>
+#### 1.1.4 Line and dot map <a name="linedot"></a>
 Combining the line and dot map. There are four situations: line graph shows the frequency of two languages together, and the dot graph shows the frequency of languages in an area; line graph shows the frequency of two languages together, and the size of dot is fixed; the dot graph shows the frequency of languages in an area, and the thickness of line is fixed; the thickness of line and size of dot are fixed.   **Figure 5** shows the lines and dots map for 7 areas.
 <center>
     <img style="border-radius: 0.3125em;

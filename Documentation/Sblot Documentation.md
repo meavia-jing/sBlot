@@ -14,20 +14,20 @@
     * 1.3 [DIC plots](#DIC)
     * 1.4 [Pie plots](#pie)
 * 2. [The config_plot.JSON file](#config)
-    * 2.1 [How to set input and output file path?](#configresult)
-    * 2.2 [How to read supporting data?](#configdata)
-    * 2.3 [How to set parameters for drawing map? ](#configmap)
-    * 2.4 [How to set parameters for drawing weight_plot? ](#configweight)
-    * 2.5 [How to set parameters for drawing the preference_plot? ](#configpre)
-    * 2.6 [How to set parameters for drawing the dic_plot](#configdic)
-    * 2.7 [How to set parameters for drawing the pie_plot](#configpie)
-* 3. [Python functions](#python)
-	* 3.1 [How to install the Sblots ?](#installation)
-	* 3.2 [Codes for drawing map](#pythonmap)
-	* 3.3 [Codes for drawing weight_plot](#pythonweight)
-	* 3.4 [Codes for drawing preference_plot](#pythonpre)
-	* 3.5 [Codes for drawing dic_plot](#pythondic)
-	* 3.6 [Codes for drawing pie_plot](#pythonpie)
+    * 2.1 [How to load the results from a sBayes analysis and how to save the plots?](#configresult)
+    * 2.2 [How to read the data of the original sBayes analyisis?](#configdata)
+    * 2.3 [How to set parameters for drawing a map? ](#configmap)
+    * 2.4 [How to set parameters for drawing a weight plot? ](#configweight)
+    * 2.5 [How to set parameters for drawing a preference plot? ](#configpre)
+    * 2.6 [How to set parameters for drawing a DIC_plot](#configdic)
+    * 2.7 [How to set parameters for drawing a pie plot](#configpie)
+* 3. [Run sBlots](#python)
+	* 3.1 [How to install Sblots ?](#installation)
+	* 3.2 [Draw a map](#pythonmap)
+	* 3.3 [Draw a weight plot](#pythonweight)
+	* 3.4 [Draw a preference plot](#pythonpre)
+	* 3.5 [Draw a DIC plot](#pythondic)
+	* 3.6 [Draw a pie plot](#pythonpie)
 
 
 ## 1 Introduction <a name="introduction"></a>
@@ -197,11 +197,11 @@ To customise plotting with sBlot, users can adjust the settings in the config\_p
 - dic\_plot: provides parameters to plot the dic\_plot
 
 
-### 2.1  How to load the results from a sBayes analysis and save the plots?<a name="configresult"></a>
+### 2.1 How to load the results from a sBayes analysis and how to save the plots?<a name="configresult"></a>
 In config\_plot.JSON results, users can provide the paths to the results of a sBayes analysis (path\_in) and the file paths to the output folder where the plots are saved (path\_out). 
 <br/>
 <br/>
-The path\_in has two sub-keys, areas for the posterior samples of the contact areas (area\*.txt), and stats for the posterior samples of the remaining parameters (stats\*.txt). As shown in the **Figure 10** and **Table 1**, users can provide several result files, which will be read in and plotted sequentially. The number of entries in areas andstats must be the same. The following code snippet reads the results of three runs in sBayesfor which the number of areas, K, was iteratively increased from K = 1 to K = 3. Once the plots are generated, they are saved in the folder "plots".
+The path\_in has two sub-keys, areas for the posterior samples of the contact areas (area\*.txt), and stats for the posterior samples of the remaining parameters (stats\*.txt). As shown in the **Figure 10** and **Table 1**, users can provide several result files, which will be read in and plotted sequentially. The number of entries in areas and stats must be the same. The following code snippet reads the results of three runs in sBayes for which the number of areas, K, was iteratively increased from K = 1 to K = 3. Once the plots are generated, they are saved in the folder "plots".
 <br/>
 <br/>
 The path\_out specifies the output path for different types of diagrams:
@@ -229,7 +229,7 @@ The path\_out specifies the output path for different types of diagrams:
 | path_out   | string |required| file path to the output folder for saving the plots
 
 
-### 2.2 How to read supporting data? <a name="configdata"></a>
+### 2.2 How to read the data of the original sBayes analyisis? <a name="configdata"></a>
 
 In the config\_plot.JSON: data part, the key data points to the empirical data which were used as an supporting input for the sBlot analysis. Users provide the file paths to the features.csv file (features), the applicable states for all features (feature\_states), and the coordinate reference system of the location data (projection). If no CRS is provided, sBlot assumes that the location data are latitude/longitude data in WGS84 ("epsg:4326"). The following JSON snippet tells plotting to open the file balkan\_features.csv, with applicable states in balkan\_features\_states.csv. Both files are located in the sub-folder data (relative to config_plot.JSON ). The location data are in ETRS89 Lambert Azimuthal Equal-Area projection ("epsg:3035").
 

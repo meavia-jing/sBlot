@@ -94,7 +94,7 @@ In a dot map, sites in the same cluster have the same colour. Dot size indicates
 
 
 #### 1.1.3 Inverse Distance Weighting (IDW) map <a name="idw"></a>
-The Inverse Distance Weighting (IDW)  produces a gradual interpolation of clusters in space. Sites in a cluster are assigned a colour, which radiates to the surrounding space, so locations close to the cluster are similar in colour. . **Figure 4** shows the IDW map for 7 contact areas.
+The Inverse Distance Weighting (IDW)  produces a gradual spatial interpolation of clusters. Sites in a cluster are assigned a colour, which radiates to the surrounding space, so locations close to the cluster are similar in colour. **Figure 4** shows the IDW map for 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -124,7 +124,7 @@ The map combines lines and dots. There are four situations: line graph shows the
 
 
 ### 1.2 Weight plots <a name="weight"></a>
-Weight plots visualize the posterior densities of the weights per feature: how well does each effect – universal preference, inheritance and contact – predict the distribution of the feature in the data? For languages, w The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for two features - F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
+Weight plots visualize the posterior densities of the weights per feature: how well does each effect – the confounders and the clustering – predict the distribution of the feature in the data? For languages, there are two confounders - inheritance and universal preference - and contact, so the densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for the features F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 

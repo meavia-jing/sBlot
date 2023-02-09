@@ -32,15 +32,15 @@
 
 ## 1 Introduction <a name="introduction"></a>
 
-This document explains how to use sBlot - a software package designed to rovide visualization functions for the Package Sbayes. There are four main types of diagrams in this package:
+This document explains how to use sBlot - a software package designed to provide visualization functions for the package sBayes. Users can create four main types of plots with this package:
 
-1. Map
-2. weight plots
-3. preference plots
+1. Maps 
+2. Weight plots
+3. Preference plots
 3. DIC plots
 4. Pie plots
 
-Before plotting map, users need to specify the input and output file path ([Part 2.1](#configresult)), and read supporting data ([Part 2.2](#configdata)). More details about how to plot different types of diagrams are described below: 
+Before plotting, users need to provide a config_plot.JSON file, where they define the plotting setup  and specify the file path to the sBayes results ([Part 2.1](#configresult)) and the data used for analysis ([Part 2.2](#configdata)). More details about how to plot different types of diagrams are given below. 
 
 ### 1.1 Maps <a name="map"></a>
 Maps show the posetrior distribution of contact areas in geographic space. Maps include the spatial location of all languages (dots), their assignment to contact areas (colored dots and lines), to families (colored polygons), and their interactions to contact areas(Inverse Distance Weights (IDW) map). Users can add different legend items and include an overview map (see example in **Figure 1**).

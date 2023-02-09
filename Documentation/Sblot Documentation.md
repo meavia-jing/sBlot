@@ -1,4 +1,4 @@
-# <center>Sblot Documentation
+# <center>sBlot Documentation
 #### <center>January, 2023
 
 

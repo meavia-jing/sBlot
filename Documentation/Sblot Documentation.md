@@ -186,7 +186,7 @@ The pie chart show how often each site was assigned to each cluster in the poste
 
 ## 2 Setting up the config_plot.JSON file<a name="config"></a>
 
-To using the sBlot analysis, users need to define the settings in the config\_plot.JSON file. There are seven parts related to plotting functions in the config_plot.json
+To customise plotting with sBlot, users can adjust the settings in the config\_plot.JSON file. The config_plot.JSON file has seven parts that can be modified:
 
 - results: provides the file paths to the results of a sBayes analysis
 - data: provides the file paths to the empirical data of the analysis
@@ -197,8 +197,8 @@ To using the sBlot analysis, users need to define the settings in the config\_pl
 - dic\_plot: provides parameters to plot the dic\_plot
 
 
-### 2.1  How to set input and output file path?<a name="configresult"></a>
-In config\_plot.JSON: results part, users can provide the input and output file paths to the results of a sBlot analysis (path\_in) and the file paths to the output folder where the plots are saved (path\_out). 
+### 2.1  How to load the results from a sBayes analysis and save the plots?<a name="configresult"></a>
+In config\_plot.JSON results, users can provide the paths to the results of a sBayes analysis (path\_in) and the file paths to the output folder where the plots are saved (path\_out). 
 <br/>
 <br/>
 The path\_in has two sub-keys, areas for the posterior samples of the contact areas (area\*.txt), and stats for the posterior samples of the remaining parameters (stats\*.txt). As shown in the **Figure 10** and **Table 1**, users can provide several result files, which will be read in and plotted sequentially. The number of entries in areas andstats must be the same. The following code snippet reads the results of three runs in sBayesfor which the number of areas, K, was iteratively increased from K = 1 to K = 3. Once the plots are generated, they are saved in the folder "plots".

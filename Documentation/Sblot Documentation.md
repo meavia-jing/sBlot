@@ -40,10 +40,15 @@ This document explains how to use sBlot - a software package designed to provide
 3. DIC plots
 4. Pie plots
 
-Before plotting, users need to provide a config_plot.JSON file, where they define the plotting setup  and specify the file path to the sBayes results ([Part 2.1](#configresult)) and the data used for analysis ([Part 2.2](#configdata)). More details about how to plot different types of diagrams are given below. 
+Before plotting, users need to provide a config file (config_plot.JSON) where they define the plotting setup and specify the file path to the sBayes results ([Part 2.1](#configresult)) and the data used for analysis ([Part 2.2](#configdata)). More details about how to plot different types of diagrams are given below. 
 
 ### 1.1 Maps <a name="map"></a>
-Maps show the posetrior distribution of contact areas in geographic space. Maps include the spatial location of all languages (dots), their assignment to contact areas (colored dots and lines), to families (colored polygons), and their interactions to contact areas(Inverse Distance Weights (IDW) map). Users can add different legend items and include an overview map (see example in **Figure 1**).
+Maps show the posetrior distribution of clusters in geographic space. Maps can include
+	- the spatial location of the sites (i.e. languages) as points
+	- their assignment to clusters (i.e. contact areas) as colored dots, lines, or inverse distance weighted (IDW) interpolation, 
+	- their assignment to confunders (i.e. a langauge family) as colored polygons.
+
+Users can also add different legend items, a basemap and an overview map (see example in **Figure 1**).
 
 <center>
     <img style="border-radius: 0.3125em;
@@ -56,7 +61,7 @@ Maps show the posetrior distribution of contact areas in geographic space. Maps 
     padding: 2px;">Figure 1. A map with three contact areas (green, orange and purple dots and lines).</div>
 </center>
 
-[Part 2.3](#configmap) is to set parameters and [Part 3.2](#pythonmap)  specifies codes for drawing map. 
+[Part 2.3](#configmap) shows how to setup the config plot file for generating maps. [Part 3.2](#pythonmap) shows how to draw the maps.
 
 #### 1.1.1 Line map <a name="line"></a>
 Languages, which appear together in the same area and which neighbors in a Gabriel graph, are connected with a line. The thickness of lines indicates how often two languages are together. **Figure 2** shows the line map wtih 7 contact areas.

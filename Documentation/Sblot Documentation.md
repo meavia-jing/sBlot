@@ -45,9 +45,9 @@ Before plotting, users need to provide a config file (config_plot.JSON) where th
 ### 1.1 Maps <a name="map"></a>
 Maps show the posetrior distribution of clusters in geographic space. Maps can include
 
-	- the spatial location of the sites (e.g. languages) as points
-	- their assignment to clusters (e.g. contact areas) as colored dots, lines, or inverse distance weighted (IDW) interpolation, 
-	- their assignment to confunders (e.g. a langauge family) as colored polygons.
+- the spatial location of the sites (e.g. languages) as points
+- their assignment to clusters (e.g. contact areas) as colored dots, lines, or inverse distance weighted (IDW) interpolation, 
+- their assignment to confunders (e.g. a langauge family) as colored polygons.
 
 Users can also add different legend items, a basemap and an overview map (see example in **Figure 1**).
 

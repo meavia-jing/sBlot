@@ -40,13 +40,13 @@ This document explains how to use sBlot - a software package designed to provide
 3. DIC plots
 4. Pie plots
 
-Before plotting, users need to provide a config file (config_plot.JSON) where they define the plotting setup and specify the file path to the sBayes results ([Part 2.1](#configresult)) and the data used for analysis ([Part 2.2](#configdata)). More details about how to plot different types of diagrams are given below. 
+Before plotting, users need to provide a config file (config_plot.JSON) where they define the plotting setup and specify the file path to the sBayes results ([Part 2.1](#configresult)) and the data used for analysis ([Part 2.2](#configdata)). More details about how to plot different types of figures are given below. 
 
 ### 1.1 Maps <a name="map"></a>
 Maps show the posetrior distribution of clusters in geographic space. Maps can include
-	- the spatial location of the sites (i.e. languages) as points
-	- their assignment to clusters (i.e. contact areas) as colored dots, lines, or inverse distance weighted (IDW) interpolation, 
-	- their assignment to confunders (i.e. a langauge family) as colored polygons.
+	- the spatial location of the sites (e.g. languages) as points
+	- their assignment to clusters (e.g. contact areas) as colored dots, lines, or inverse distance weighted (IDW) interpolation, 
+	- their assignment to confunders (e.g. a langauge family) as colored polygons.
 
 Users can also add different legend items, a basemap and an overview map (see example in **Figure 1**).
 
@@ -61,10 +61,10 @@ Users can also add different legend items, a basemap and an overview map (see ex
     padding: 2px;">Figure 1. A map with three contact areas (green, orange and purple dots and lines).</div>
 </center>
 
-[Part 2.3](#configmap) shows how to setup the config plot file for generating maps. [Part 3.2](#pythonmap) shows how to draw the maps.
+[Part 2.3](#configmap) shows how to setup the config plot file for generating maps. [Part 3.2](#pythonmap) shows how to execute the function to draw the maps.
 
 #### 1.1.1 Line map <a name="line"></a>
-Languages, which appear together in the same area and which neighbors in a Gabriel graph, are connected with a line. The thickness of lines indicates how often two languages are together. **Figure 2** shows the line map wtih 7 contact areas.
+The line map connects neighbouring sites belonging to the same cluster with a line. For language contact, these are neighbouring languages belonging to the same contact area. The line thickness indicates how often two sites are in the cluster together. **Figure 2** shows a line map for languages with 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -78,7 +78,7 @@ Languages, which appear together in the same area and which neighbors in a Gabri
 
 
 #### 1.1.2 Dot map <a name="dot"></a>
-Dot size indicates how often a language is in an area. **Figure 3** shows the Dot map with 7 contact areas.
+In a dot map, sites in the same cluster have the same colour. Dot size indicates how often a site is in a cluster, e.g. how often a language is in a contact area. **Figure 3** shows a dot map with 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -93,7 +93,7 @@ Dot size indicates how often a language is in an area. **Figure 3** shows the Do
 
 
 #### 1.1.3 Inverse Distance Weighting (IDW) map <a name="idw"></a>
-The Inverse Distance Weighting(IDW) map shows how languages in different contact areas interact with each other. Inverse Distance Weighting (IDW) interpolation assumes that closer values are more related than further values with its function. **Figure 4** shows the IDW map with 7 contact areas.
+The Inverse Distance Weighting (IDW)  produces a gradual interpolation of clusters in space. Sites in a cluster are assigned a colour, which radiates to the surrounding space, so locations close to the cluster are similar in colour. . **Figure 4** shows the IDW map for 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -108,7 +108,7 @@ The Inverse Distance Weighting(IDW) map shows how languages in different contact
 
 
 #### 1.1.4 Line and dot map <a name="linedot"></a>
-Combining the line and dot map. There are four situations: line graph shows the frequency of two languages together, and the dot graph shows the frequency of languages in an area; line graph shows the frequency of two languages together, and the size of dot is fixed; the dot graph shows the frequency of languages in an area, and the thickness of line is fixed; the thickness of line and size of dot are fixed.   **Figure 5** shows the lines and dots map for 7 areas.
+The map combines lines and dots. There are four situations: line graph shows the frequency of two languages together, and the dot graph shows the frequency of languages in an area; line graph shows the frequency of two languages together, and the size of dot is fixed; the dot graph shows the frequency of languages in an area, and the thickness of line is fixed; the thickness of line and size of dot are fixed.   **Figure 5** shows the lines and dots map for 7 areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -123,7 +123,7 @@ Combining the line and dot map. There are four situations: line graph shows the 
 
 
 ### 1.2 Weight plots <a name="weight"></a>
-Weight plots visualize the posterior densities of the weights per feature: how well does each effect – universal preference, inheritance and contact – predict the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for two features - F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
+Weight plots visualize the posterior densities of the weights per feature: how well does each effect – universal preference, inheritance and contact – predict the distribution of the feature in the data? For languages, w The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for two features - F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 

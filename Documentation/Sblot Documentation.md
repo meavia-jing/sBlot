@@ -47,7 +47,7 @@ Maps show the posetrior distribution of clusters in geographic space. Maps can i
 
 - the spatial location of the sites (e.g. languages) as points
 - their assignment to clusters (e.g. contact areas) as colored dots, lines, or inverse distance weighted (IDW) interpolation, 
-- their assignment to confunders (e.g. a langauge family) as colored polygons.
+- their assignment to confunders (e.g. a language family) as colored polygons.
 
 Users can also add different legend items, a basemap and an overview map (see example in **Figure 1**).
 

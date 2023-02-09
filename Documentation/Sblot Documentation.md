@@ -62,6 +62,7 @@ Users can also add different legend items, a basemap and an overview map (see ex
     padding: 2px;">Figure 1. A map with three contact areas (green, orange and purple dots and lines).</div>
 </center>
 
+	
 [Part 2.3](#configmap) shows how to setup the config plot file for generating maps. [Part 3.2](#pythonmap) shows how to execute the function to draw the maps.
 
 #### 1.1.1 Line map <a name="line"></a>
@@ -136,9 +137,10 @@ Weight plots visualize the posterior densities of the weights per feature: how w
     padding: 2px;">Figure 6. Weight plots for two features (F24, F16)</div>
 </center>
 
-[Part 2.4](#configweight) is to set parameters and [Part 3.3](#pythonweight)  specifies codes for drawing weight plots. 
+[Part 2.4](#configweight) is to set parameters and [Part 3.3](#pythonweight)  shows how to execute the function to draw the weight plots.
+
 ### 1.3 Preference plots <a name="preference"></a>
-These plots visualize the preference for each of the states of a feature, either universally, in a family or a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per family or area or globally, in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
+These plots visualize the preference for each of the states of a feature, either for each confounder or the clustering (for language these are the universal prefence, the preference in a family or a contact area) The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per confounder or for the clustering in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -150,9 +152,10 @@ These plots visualize the preference for each of the states of a feature, either
     padding: 2px;">Figure 7. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
 </center>
 
-[Part 2.5](#configpre) is to set parameters and [Part 3.4](#pythonpre)  specifies codes for drawing the Preference plots. 
-### 1.4 DIC plots <a name="DIC"></a>
-The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K, and help the analyst to decide for an appropriate number of areas. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
+[Part 2.5](#configpre) shows how to setup the config plot file for generating preference plots. [Part 3.4](#pythonpre) shows how to execute the function to draw the preference plots.
+
+	### 1.4 DIC plots <a name="DIC"></a>
+The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of clusters, K, and help the analyst to decide for an appropriate number of clusters. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 

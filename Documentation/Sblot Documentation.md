@@ -63,7 +63,7 @@ Users can also add different legend items, a basemap and an overview map (see ex
 </center>
 
 	
-[Part 2.3](#configmap) shows how to setup the config plot file for generating maps. [Part 3.2](#pythonmap) shows how to execute the function to draw the maps.
+[Part 2.3](#configmap) shows how to set-up the config plot file for generating maps. [Part 3.2](#pythonmap) shows how to execute the function to draw the maps.
 
 #### 1.1.1 Line map <a name="line"></a>
 The line map connects neighbouring sites belonging to the same cluster with a line. For language contact, these are neighbouring languages belonging to the same contact area. The line thickness indicates how often two sites are in the cluster together. **Figure 2** shows a line map for languages with 7 contact areas.
@@ -137,10 +137,10 @@ Weight plots visualize the posterior densities of the weights per feature: how w
     padding: 2px;">Figure 6. Weight plots for two features (F24, F16)</div>
 </center>
 
-[Part 2.4](#configweight) shows how to setup the config plot file for generating weight plots. [Part 3.3](#pythonweight) shows how to execute the function to draw the weight plots.
+[Part 2.4](#configweight) shows how to set-up the config plot file for generating weight plots. [Part 3.3](#pythonweight) shows how to execute the function to draw the weight plots.
 
 ### 1.3 Preference plots <a name="preference"></a>
-These plots visualize the preference for each of the states of a feature, either for each confounder or the clustering (for language these are the universal prefence, the preference in a family or a contact area) The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per confounder or for the clustering in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
+These plots visualize the preference for each of the states of a feature, either for each confounder or the clustering (for language these are the universal prefence, the preference in a family or a contact area). The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per confounder or for the clustering in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -152,7 +152,7 @@ These plots visualize the preference for each of the states of a feature, either
     padding: 2px;">Figure 7. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
 </center>
 
-[Part 2.5](#configpre) shows how to setup the config plot file for generating preference plots. [Part 3.4](#pythonpre) shows how to execute the function to draw the preference plots.
+[Part 2.5](#configpre) shows how to set-up the config plot file for generating preference plots. [Part 3.4](#pythonpre) shows how to execute the function to draw the preference plots.
 
 ### 1.4 DIC plots <a name="DIC"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of clusters, K, and help the analyst to decide for an appropriate number of clusters. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
@@ -167,10 +167,10 @@ The Deviance Information criterion (DIC) is a measure for the performance of a m
     padding: 2px;">Figure 8. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
 </center>
 	
-[Part 2.6](#configdic) is to set parameters and [Part3.5](#pythondic)specifies codes for drawing the DIC plots. 
+[Part 2.6](#configdic) shows how to set-up the config plot file for generating DIC plots [Part3.5](#pythondic) shows how to execute the function to draw the  DIC plots. 
 
 ### 1.5 Pie plots <a name="pie"></a>
-The Pie chart shows the weight of each contact area in the language.  **Figure 9** show teh pie plots with 7 contact areas.
+The pie chart show how often each site was assigned to each cluster in the posterior (e.g. how often a language was assigned to each contact area).  **Figure 9** shows a  pie plots with 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -182,9 +182,9 @@ The Pie chart shows the weight of each contact area in the language.  **Figure 9
     padding: 2px;">Figure 9. Pie plot with 7 contact areas</div>
 </center>
 	
-[Part 2.7](#configpie) is to set parameters and [Part3.6](#pythonpie) specifies codes for drawing the Pie plots. 
+[Part 2.7](#configpie) shows how to set-up the config plot file for generating the pie plots [Part3.6](#pythonpie) shows how to execute the function to draw the pie plots. 
 
-## 2 The config_plot.JSON file<a name="config"></a>
+## 2 Setting up the config_plot.JSON file<a name="config"></a>
 
 To using the sBlot analysis, users need to define the settings in the config\_plot.JSON file. There are seven parts related to plotting functions in the config_plot.json
 

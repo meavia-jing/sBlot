@@ -16,7 +16,7 @@
 * 2. [The config_plot.JSON file](#config)
     * 2.1 [How to load the results of an sBayes analysis?  How to save the plots?](#configresult)
     * 2.2 [How to include the original input data of an sBayes analysis?](#configdata)
-    * 2.3 [How to customize maps? ](#configmap)
+    * 2.3 [How to customize the maps? ](#configmap)
     * 2.4 [How to customize the weight plots? ](#configweight)
     * 2.5 [How to customize the preference plots? ](#configpre)
     * 2.6 [How to customize the DIC plots?](#configdic)
@@ -184,7 +184,7 @@ The pie chart show how often each site was assigned to each cluster in the poste
 	
 [Part 2.7](#configpie) shows how to set-up the config plot file for generating the pie plots [Part3.6](#pythonpie) shows how to execute the function to draw the pie plots. 
 
-## 2 Setting up the config_plot.JSON file<a name="config"></a>
+## 2 The config_plot.JSON file<a name="config"></a>
 
 To customise plotting with sBlot, users can adjust the settings in the config\_plot.JSON file. The config_plot.JSON file has seven parts that can be modified:
 
@@ -197,7 +197,7 @@ To customise plotting with sBlot, users can adjust the settings in the config\_p
 - dic\_plot: provides parameters to plot the dic\_plot
 
 
-### 2.1 How to load the results from a sBayes analysis and how to save the plots?<a name="configresult"></a>
+### 2.1 How to load the results of an sBayes analysis?  How to save the plots?<a name="configresult"></a>
 In config\_plot.JSON results, users can provide the paths to the results of a sBayes analysis (path\_in) and the file paths to the output folder where the plots are saved (path\_out). 
 <br/>
 <br/>
@@ -229,7 +229,7 @@ The path\_out specifies the output path for different types of diagrams:
 | path_out   | string |required| file path to the output folder for saving the plots
 
 
-### 2.2 How to read the data of the original sBayes analyisis? <a name="configdata"></a>
+### 2.2 How to include the original input data of an sBayes analysis?<a name="configdata"></a>
 
 In the config\_plot.JSON: data part, the key data points to the empirical data which were used as an supporting input for the sBlot analysis. Users provide the file paths to the features.csv file (features), the applicable states for all features (feature\_states), and the coordinate reference system of the location data (projection). If no CRS is provided, sBlot assumes that the location data are latitude/longitude data in WGS84 ("epsg:4326"). The following JSON snippet tells plotting to open the file balkan\_features.csv, with applicable states in balkan\_features\_states.csv. Both files are located in the sub-folder data (relative to config_plot.JSON ). The location data are in ETRS89 Lambert Azimuthal Equal-Area projection ("epsg:3035").
 
@@ -253,7 +253,7 @@ In the config\_plot.JSON: data part, the key data points to the empirical data w
 |feature_states| string|(required）|path to to the feature_states.csv file|
 |projection|string|"epsg:4326"|CRS of the location data, as PROJ or EPSG|
 
-### 2.3 How to set parameters for drawing map?<a name="configmap"></a>
+### 2.3 How to customize the maps? <a name="configmap"></a>
 
 The config_plot.JSON:map is to create a map of the posterior distribution of contact areas. Maps visualize the spatial locations of all languages, their assignment and interaction to contact areas, and, optionally, the language families. Users have a wide array of options to customize the map to their liking. They can change the content of the map (content), either visualizing the full posterior density or a consensus map. They can change the appearance of individual map items (graphic), tweak the projection and add base map items (geo). Finally, users can add a legend and an overview map (legend) and define the output format output. map has the following sub-keys, all of which are JSON objects.
 
@@ -455,7 +455,7 @@ Table 7: The config_plot.JSON file: keys in map > output
 |format|string|"pdf"|file format of the output figure|
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 
-### 2.4 How to set parameters for drawing the weight plot ?<a name="configwieght"></a>
+### 2.4 How to customize the weight plots ?<a name="configwieght"></a>
 Weight plots visualize the posterior densities of the weights per feature: how well does each of the effects – universal preference, inheritance and contact – explain the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact, the right lower corner the weight for inheritance, and the upper corner the weight for universal preference. The weight plots of several features are combined into one overall figure. There are three subkeys in the config_plot.JSON: weight\_plots part: content, graphic,and output.
 ####2.4.1 config_plot.JSON : weight\_plot > content
 In content, users specify for which of the features the weights are plotted (features). Users pass the relevant features in an array. For example, [3] generates a weight plot for feature three only; [3, 4, 17] generates weight plots for features three, four and seventeen. When the array is left empty or features are not provided explicitly, the plotting function generates weight plots for all features. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in. 
@@ -543,7 +543,7 @@ Table 10: The config\_plot.JSON file: keys in weight/_plot > output
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 |n_columns|number|5| number of columns in the overall plot|
 
-### 2.5 How to set parameters for drawing the Preference plot?<a name="configpre"></a>
+### 2.5 How to customize the preference plot?<a name="configpre"></a>
 The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), , in
 a triangular probability simplex for three states, a square for four states, a pentagon for five,and so on. preference_plot combines the sub-plot for several features (per family, per area or globally) in a single figure
 
@@ -631,7 +631,7 @@ Table 13: The config_plot.JSON file: keys in preference\_plot > output
 |n_columns|number|5| number of columns in the overall plot|
 
 
-### 2.6 How to set parameters for drawing the dic_plot <a name="configdic"></a>
+### 2.6 How to customize the DIC plots? <a name="configdic"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models,
 usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.
 
@@ -689,7 +689,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
     padding: 2px;">Figure 23. shows all keys in config\_plot.JSON > dic\_plot  and gives default values and expected data types</div>
 </center>
 
-### 2.7 How to set parameters for drawing the pie plot <a name="configpie"></a>
+### 2.7 How to customize the pie plots?  <a name="configpie"></a>
 The Pie plot is to show the weights of each area for a language. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
 
 ####2.7.1 config_plot.JSON : pie\_plot > content
@@ -733,10 +733,10 @@ Table 18: The config_plot.JSON file: keys in pie\_plot > content
 
 
 
-## 3 Python Functions <a name="python"></a> 
+## 3 Run sBlot <a name="python"></a> 
 To run sBlots, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ. The way of installing these system requirements depends on your operating system.  It can be used as a python library or through a command line interface. 
 
-### 3.1 [How to install SBlots]<a name="installation"></a>
+### 3.1 [How to install SBlot]<a name="installation"></a>
 To run sBlot, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ.Then you can install sBlot. The exact steps to do this depend on your operating system (due to different ways of installing dependencies). Following are the instructions for Linux, MacOS and Windows.
 #### 3.1.1 Linux (Debian/Ubuntu)
 To install sBlot, open a terminal window, navigate to the folder where you want to install it

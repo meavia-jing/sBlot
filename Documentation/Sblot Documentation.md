@@ -32,13 +32,13 @@
 
 ## 1 Introduction <a name="introduction"></a>
 
-This document explains how to use sBlot - a software package designed to provide visualization functions for the package sBayes. Users can create four main types of plots with this package:
+This document explains how to use sBlot - a software package designed to provide visualization functions for the package sBayes. Users can create five main types of plots with this package:
 
 1. Maps 
 2. Weight plots
 3. Preference plots
-3. DIC plots
-4. Pie plots
+4. DIC plots
+5. Pie plots
 
 Before plotting, users need to provide a config file (config_plot.JSON) where they define the plotting setup and specify the file path to the sBayes results ([Part 2.1](#configresult)) and the data used for analysis ([Part 2.2](#configdata)). More details about how to plot different types of figures are given below. 
 

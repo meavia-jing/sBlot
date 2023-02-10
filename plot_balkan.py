@@ -1,5 +1,5 @@
 import warnings
-from plot import Plot
+from sbayes.plot import Plot
 
 import os
 

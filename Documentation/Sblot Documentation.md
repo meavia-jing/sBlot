@@ -109,21 +109,6 @@ The Inverse Distance Weighting (IDW)  produces a gradual spatial interpolation o
 
 
 
-#### 1.1.4 Line and dot map <a name="linedot"></a>
-The map combines lines and dots. There are four situations: line graph shows the frequency of two languages together, and the dot graph shows the frequency of languages in an area; line graph shows the frequency of two languages together, and the size of dot is fixed; the dot graph shows the frequency of languages in an area, and the thickness of line is fixed; the thickness of line and size of dot are fixed.   **Figure 5** shows the lines and dots map for 7 areas.
-<center>
-    <img style="border-radius: 0.3125em;
-    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
-    src="images/linedot.png">
-    <br>
-    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
-    display: inline-block;
-    color: black;
-    padding: 2px;">Figure 5. Line and dot graph</div>
-</center>
-
-
-
 ### 1.2 Weight plots <a name="weight"></a>
 Weight plots visualize the posterior densities of the weights per feature: how well does each effect – the confounders and the clustering – predict the distribution of the feature in the data? For languages, there are two confounders - inheritance and universal preference - and contact, so the densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for the features F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
 <center>
@@ -134,7 +119,7 @@ Weight plots visualize the posterior densities of the weights per feature: how w
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 6. Weight plots for two features (F24, F16)</div>
+    padding: 2px;">Figure 5. Weight plots for two features (F24, F16)</div>
 </center>
 
 [Part 2.4](#configweight) shows how to set-up the config plot file for generating weight plots. [Part 3.3](#pythonweight) shows how to execute the function to draw the weight plots.
@@ -149,7 +134,7 @@ These plots visualize the preference for each of the states of a feature, either
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 7. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
+    padding: 2px;">Figure 6. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
 </center>
 
 [Part 2.5](#configpre) shows how to set-up the config plot file for generating preference plots. [Part 3.4](#pythonpre) shows how to execute the function to draw the preference plots.
@@ -164,7 +149,7 @@ The Deviance Information criterion (DIC) is a measure for the performance of a m
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 8. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
+    padding: 2px;">Figure 7. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
 </center>
 	
 [Part 2.6](#configdic) shows how to set-up the config plot file for generating DIC plots [Part3.5](#pythondic) shows how to execute the function to draw the  DIC plots. 
@@ -179,7 +164,7 @@ The pie chart show how often each site was assigned to each cluster in the poste
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 9. Pie plot with 7 contact areas</div>
+    padding: 2px;">Figure 8. Pie plot with 7 contact areas</div>
 </center>
 	
 [Part 2.7](#configpie) shows how to set-up the config plot file for generating the pie plots [Part3.6](#pythonpie) shows how to execute the function to draw the pie plots. 
@@ -216,7 +201,7 @@ The path\_out specifies the output path for different types of diagrams:
 <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 10. shows all keys in config_plot.JSON > results and gives default values and expected data types.</div>
+    padding: 2px;">Figure . shows all keys in config_plot.JSON > results and gives default values and expected data types.</div>
 </center>
 
 <center>Table 1. The config_plot.JSON file: keys in results</center>

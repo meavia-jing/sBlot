@@ -8,7 +8,6 @@
     	* 1.1.1 [Line map](#line)
     	* 1.1.2 [Dot map](#dot)
     	* 1.1.3 [Inverse Distance Weighting(IDW) map](#idw)
-    	* 1.1.4 [Line and dot map](#linedot)
     * 1.2 [Weight plots](#weight)
     * 1.2 [Preference plots](#preference)
     * 1.3 [DIC plots](#DIC)
@@ -110,7 +109,7 @@ The Inverse Distance Weighting (IDW)  produces a gradual spatial interpolation o
 
 
 ### 1.2 Weight plots <a name="weight"></a>
-Weight plots visualize the posterior densities of the weights per feature: how well does each effect – the confounders and the clustering – predict the distribution of the feature in the data? For languages, there are two confounders - inheritance and universal preference - and contact, so the densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for the features F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
+Weight plots visualize the posterior densities of the weights per feature: how well does each effect – the confounders and the clustering – predict the distribution of the feature in the data? For languages, there are two confounders - inheritance and universal preference - and contact, so the densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 5** shows the weight plot for the features F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -125,7 +124,7 @@ Weight plots visualize the posterior densities of the weights per feature: how w
 [Part 2.4](#configweight) shows how to set-up the config plot file for generating weight plots. [Part 3.3](#pythonweight) shows how to execute the function to draw the weight plots.
 
 ### 1.3 Preference plots <a name="preference"></a>
-These plots visualize the preference for each of the states of a feature, either for each confounder or the clustering (for language these are the universal prefence, the preference in a family or a contact area). The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per confounder or for the clustering in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
+These plots visualize the preference for each of the states of a feature, either for each confounder or the clustering (for language these are the universal prefence, the preference in a family or a contact area). The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 6**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per confounder or for the clustering in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -140,7 +139,7 @@ These plots visualize the preference for each of the states of a feature, either
 [Part 2.5](#configpre) shows how to set-up the config plot file for generating preference plots. [Part 3.4](#pythonpre) shows how to execute the function to draw the preference plots.
 
 ### 1.4 DIC plots <a name="DIC"></a>
-The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of clusters, K, and help the analyst to decide for an appropriate number of clusters. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
+The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of clusters, K, and help the analyst to decide for an appropriate number of clusters. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 7** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -155,7 +154,7 @@ The Deviance Information criterion (DIC) is a measure for the performance of a m
 [Part 2.6](#configdic) shows how to set-up the config plot file for generating DIC plots [Part3.5](#pythondic) shows how to execute the function to draw the  DIC plots. 
 
 ### 1.5 Pie plots <a name="pie"></a>
-The pie chart show how often each site was assigned to each cluster in the posterior (e.g. how often a language was assigned to each contact area).  **Figure 9** shows a  pie plots with 7 contact areas.
+The pie chart show how often each site was assigned to each cluster in the posterior (e.g. how often a language was assigned to each contact area).  **Figure 8** shows a  pie plots with 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -186,7 +185,7 @@ To customise plotting with sBlot, users can adjust the settings in the config\_p
 In config\_plot.JSON results, users can provide the paths to the results of a sBayes analysis (path\_in) and the file paths to the output folder where the plots are saved (path\_out). 
 <br/>
 <br/>
-The path\_in has two sub-keys, areas for the posterior samples of the contact areas (area\*.txt), and stats for the posterior samples of the remaining parameters (stats\*.txt). As shown in the **Figure 10** and **Table 1**, users can provide several result files, which will be read in and plotted sequentially. The number of entries in areas and stats must be the same. The following code snippet reads the results of three runs in sBayes for which the number of areas, K, was iteratively increased from K = 1 to K = 3. Once the plots are generated, they are saved in the folder "plots".
+The path\_in has two sub-keys, areas for the posterior samples of the contact areas (area\*.txt), and stats for the posterior samples of the remaining parameters (stats\*.txt). As shown in the **Figure 9** and **Table 1**, users can provide several result files, which will be read in and plotted sequentially. The number of entries in areas and stats must be the same. The following code snippet reads the results of three runs in sBayes for which the number of areas, K, was iteratively increased from K = 1 to K = 3. Once the plots are generated, they are saved in the folder "plots".
 <br/>
 <br/>
 The path\_out specifies the output path for different types of diagrams:
@@ -201,7 +200,7 @@ The path\_out specifies the output path for different types of diagrams:
 <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure . shows all keys in config_plot.JSON > results and gives default values and expected data types.</div>
+    padding: 2px;">Figure 9. shows all keys in config_plot.JSON > results and gives default values and expected data types.</div>
 </center>
 
 <center>Table 1. The config_plot.JSON file: keys in results</center>
@@ -226,7 +225,7 @@ In the config\_plot.JSON: data part, the key data points to the empirical data w
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 11. shows all keys in config_plot.JSON > data and gives default values and expected data types.</div>
+    padding: 2px;">Figure 10. shows all keys in config_plot.JSON > data and gives default values and expected data types.</div>
 </center>
 
 <center>Table 2: The config_plot.JSON file: keys in data
@@ -263,7 +262,7 @@ The following code snippet plots the map in the CRS of the World Geodetic System
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 12. summarises all keys in config_plot.JSON > map > geo and gives default values and
+    padding: 2px;">Figure 11. summarises all keys in config_plot.JSON > map > geo and gives default values and
 expected data types.</div>
 </center>
 
@@ -296,7 +295,7 @@ The following code snippet creates a consensus map showing languages which are a
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 13. shows all keys in config_plot.JSON > map > content and gives default values and expected data types</div>
+    padding: 2px;">Figure 12. shows all keys in config_plot.JSON > map > content and gives default values and expected data types</div>
 </center>
 
 <center>Table 4: The config_plot.JSON file: keys in map > content
@@ -312,8 +311,7 @@ The following code snippet creates a consensus map showing languages which are a
 
 
 #### 2.3.3 config_plot.JSON : map > graphic
-In graphic, users can change the appearance of the individual map items, including the languages (languages), the posterior areas (clusters), the families (families) and the base map(base\_map). Alternatively, users can leave all parameters untouched, in which case the default design is used. The key (languages) tunes how the languages are displayed on the map: the sub\-key size changes the size of the point markers, color changes their color, and (labels) adds labels. For reasons of readability, on the map labels are shown as numeric shorthand notations, for which users can output a correspondence table (see key (output)). The (clusters) key has four sub-keys: users can change the size of the point markers (point\_size), set the color of each contact area (color), and change the width（line\_width) and the transparency (alpha) of the lines connecting the languages in an area. In families, users can change the color and the shape of the family polygons. For a small shape value, each language is assigned to their own circular polygon. Users can set the size of this polygon (size). When the shape value is increased,
-the family polygons are more and more generalized, such that neighbouring languages from the same family are aggregated to larger polygons using alpha shapes. These polygons have a buffer (in map units). For good results without overlapping polygons expect to tweak the shape and the buffer values iteratively. The key base\_map defines the appearance of the base map polygons (polygon – with sub-keys color, outline\_color, and outline\_width, and the
+In graphic, users can change the appearance of the individual map items, including the languages (languages), the posterior areas (clusters), the families (families) and the base map(base\_map). Alternatively, users can leave all parameters untouched, in which case the default design is used. The key (languages) tunes how the languages are displayed on the map: the sub\-key size changes the size of the point markers, color changes their color, and (labels) adds labels. For reasons of readability, on the map labels are shown as numeric shorthand notations, for which users can output a correspondence table (see key (output)). The (clusters) key has four sub-keys: users can change the size of the point markers (point\_size), set the color of each contact area (color), and change the width（line\_width) and the transparency (alpha) of the lines connecting the languages in an area. In families, users can change the color and the shape of the family polygons. For a small shape value, each language is assigned to their own circular polygon. Users can set the size of this polygon (size). When the shape value is increased, the family polygons are more and more generalized, such that neighbouring languages from the same family are aggregated to larger polygons using alpha shapes. These polygons have a buffer (in map units). For good results without overlapping polygons expect to tweak the shape and the buffer values iteratively. The key base\_map defines the appearance of the base map polygons (polygon – with sub-keys color, outline\_color, and outline\_width, and the
 base map lines (line – with sub-keys color and width). 
 
 <br\>
@@ -328,7 +326,7 @@ The following code snippet creates a map combinng line and dot graph. The thickn
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 14. summarises all keys in config_plot.JSON > map > graphic and gives default values and expected data types.</div>
+    padding: 2px;">Figure 13. summarises all keys in config_plot.JSON > map > graphic and gives default values and expected data types.</div>
 </center>
 
 
@@ -381,7 +379,7 @@ The following code snippet adds a legend item for clusters and changes its posit
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 15. summarises all keys in config_plot.JSON > map > legend and gives default values and expected data types.</div>
+    padding: 2px;">Figure 14. summarises all keys in config_plot.JSON > map > legend and gives default values and expected data types.</div>
 </center>
 
 
@@ -427,7 +425,7 @@ In output, users define the width and the height of the output figure, its file 
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 16. shows all keys in config_plot.JSON > map > output and gives default values and expected data types</div>
+    padding: 2px;">Figure 15. shows all keys in config_plot.JSON > map > output and gives default values and expected data types</div>
 </center>
 
 
@@ -456,7 +454,7 @@ The following code snippet creates weight plots for features 5,6, and 8. The fir
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 17. shows all keys in config\_plot.JSON > weight\_plot > content and gives default values and expected data types</div>
+    padding: 2px;">Figure 16. shows all keys in config\_plot.JSON > weight\_plot > content and gives default values and expected data types</div>
 </center>
 
 Table 8: The config\_plot.JSON file: keys in weight\_plot > content
@@ -482,7 +480,7 @@ The following code snippet uses alternative labels and title for each sub-plot.
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 18. shows all keys in config\_plot.JSON > weight\_plot > legend and gives default values and expected data types</div>
+    padding: 2px;">Figure 17. shows all keys in config\_plot.JSON > weight\_plot > legend and gives default values and expected data types</div>
 </center>
 
 Table 9: The config\_plot.JSON file: keys in weight\_plot > content
@@ -514,7 +512,7 @@ The following code snippet creates 2x2 cm sub-plots. All sub-plots are combined 
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 19. shows all keys in config\_plot.JSON > weight\_plot > output and gives default values and expected data types</div>
+    padding: 2px;">Figure 18. shows all keys in config\_plot.JSON > weight\_plot > output and gives default values and expected data types</div>
 </center>
 
 
@@ -529,7 +527,7 @@ Table 10: The config\_plot.JSON file: keys in weight/_plot > output
 |n_columns|number|5| number of columns in the overall plot|
 
 ### 2.5 How to customize the preference plot?<a name="configpre"></a>
-The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), , in
+The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 19**), , in
 a triangular probability simplex for three states, a square for four states, a pentagon for five,and so on. preference_plot combines the sub-plot for several features (per family, per area or globally) in a single figure
 
 ####2.5.1 config_plot.JSON : preference\_plot > content
@@ -547,7 +545,7 @@ The following code snippet creates sub-plots for features 7, 8, and 9 and prefer
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 20. shows all keys in config\_plot.JSON > preference\_plot > content and gives default values and expected data types</div>
+    padding: 2px;">Figure 19. shows all keys in config\_plot.JSON > preference\_plot > content and gives default values and expected data types</div>
 </center>
 
 Table 11: The config\_plot.JSON file: keys in preference\_plot > content
@@ -574,7 +572,7 @@ The following code snippet uses the state names as labels and the features names
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 21. shows all keys in config\_plot.JSON > preference\_plot > legend and gives default values and expected data types</div>
+    padding: 2px;">Figure 20. shows all keys in config\_plot.JSON > preference\_plot > legend and gives default values and expected data types</div>
 </center>
 
 Table 12:  The config\_plot.JSON file: keys in preference_plot > legend
@@ -602,7 +600,7 @@ The following code snippet creates 3x3 cm sub-plots. All sub-plots are combined 
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 22. shows all keys in config\_plot.JSON > preference\_plot > output and gives default values and expected data types</div>
+    padding: 2px;">Figure 21. shows all keys in config\_plot.JSON > preference\_plot > output and gives default values and expected data types</div>
 </center>
 
 Table 13: The config_plot.JSON file: keys in preference\_plot > output
@@ -617,14 +615,13 @@ Table 13: The config_plot.JSON file: keys in preference\_plot > output
 
 
 ### 2.6 How to customize the DIC plots? <a name="configdic"></a>
-The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models,
-usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.
+The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.
 
 ####2.6.1 config\_plot.JSON : dic\_plot > content
 In content, users can change which models appear in the DIC and how they are ordered (models). Typically, models are ordered from simplest to most complex, e.g. from fewest to most areas. When no models are provided by the user, the DIC is plotted for all models from results. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in.
 <br/>
 <br/>
-Codes in **Figure 23** snippet creates a DIC plot for models 1, 3, and 5 in results. The first 40% of the posterior samples of each model are discarded as burn-in.
+Codes in **Figure 22** snippet creates a DIC plot for models 1, 3, and 5 in results. The first 40% of the posterior samples of each model are discarded as burn-in.
 
 Table 14: The config\_plot.JSON file: keys in dic\_plot > content
 
@@ -637,7 +634,7 @@ Table 14: The config\_plot.JSON file: keys in dic\_plot > content
 In graphic, users can change the appearance of the DIC plot. Specifically, they can label the models in the plot (labels) and change whether consecutive DIC values are connected with a line (line_plot) or a scatter plot is used. As a default, the models are labelled in ascending order, starting from 1. 
 <br/>
 <br/>
-Codes in **Figure 23** uses the labels "K=1" to "K=7". Consecutive DIC values are vconnected with a line.
+Codes in **Figure 22** uses the labels "K=1" to "K=7". Consecutive DIC values are vconnected with a line.
 
 Table 15: The config\_plot.JSON file: keys in dic_plot > content
 
@@ -671,7 +668,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 23. shows all keys in config\_plot.JSON > dic\_plot  and gives default values and expected data types</div>
+    padding: 2px;">Figure 22. shows all keys in config\_plot.JSON > dic\_plot  and gives default values and expected data types</div>
 </center>
 
 ### 2.7 How to customize the pie plots?  <a name="configpie"></a>
@@ -702,7 +699,7 @@ figure.
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 24. shows all keys in config\_plot.JSON > pie\_plot  and gives default values and expected data types</div>
+    padding: 2px;">Figure 23. shows all keys in config\_plot.JSON > pie\_plot  and gives default values and expected data types</div>
 </center>
 
 Table 18: The config_plot.JSON file: keys in pie\_plot > content
@@ -767,7 +764,9 @@ plot.read_data()
 for name, result in plot.iterate_over_models():      
 	plot.posterior_map(results=result, file_name=f'map_{name}')
 	plot.get_idw_map(result,name)
-   
+ ```
+	
+```
   #### How to run the posterior_map from command line?####
 # open SBlot and draw map
 cd SBlot
@@ -791,7 +790,8 @@ plot.read_data()
 
 for name, result in plot.iterate_over_models():      
 	plot.plot_weights(results, file_name='weights_grid_' + name)
-
+```
+```
   #### How to run the posterior_map from command line?####
 # open SBlot and draw Weight plots
 cd SBlot
@@ -815,6 +815,8 @@ plot.read_data()
 
 for name, result in plot.iterate_over_models():      
 	plot.plot_preferences(results, file_name=f'prob_grid_{name}')
+```
+```
 	
 	#### How to run the posterior_map from command line?####
 # open SBlot and draw preference plots
@@ -823,7 +825,7 @@ python plot.py config_plot.json preference_plot
      
 ```
 
-###3.5 [Codes for drawing DIC plot]<a name="pythondic"></a>
+### 3.5 [Codes for drawing DIC plot]<a name="pythondic"></a>
 - `plot_dic(results: Results, file_name:PathLike)`: plotting the DIC plot.
 
    > Argument:
@@ -836,7 +838,8 @@ plot = Plot()
 plot.load_config(config_file='config_plot.json')
 plot.read_data()
 plot.plot_dic(models=plot.results, file_name='dic')
-
+```
+```
 #### How to run the posterior_map from command line?####
 # open SBlot and plot the DIC plots
 cd SBlot
@@ -844,7 +847,7 @@ python plot.py config_plot.json dic_plot
      
 ```
 
-###3.6 [Codes for drawing Pie plot]<a name="pythonpie"></a>
+### 3.6 [Codes for drawing Pie plot]<a name="pythonpie"></a>
 - `plot_preferences(results: Results, file_name:PathLike)`: plotting the pie plot.
 
    > Argument:
@@ -859,8 +862,9 @@ plot.read_data()
 
 for name, result in plot.iterate_over_models():      
 	plot.plot_pies(results, os.path.join(name))
-	
-    #### How to run the posterior_map from command line?####
+```
+```
+  #### How to run the posterior_map from command line?####
 # open SBlot and plot the Pie 
 cd SBlot
 python plot.py config_plot.json pie_plot

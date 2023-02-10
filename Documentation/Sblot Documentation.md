@@ -527,7 +527,7 @@ Table 10: The config\_plot.JSON file: keys in weight/_plot > output
 |n_columns|number|5| number of columns in the overall plot|
 
 ### 2.5 How to customize the preference plot?<a name="configpre"></a>
-The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 19**), , in
+The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 6**), , in
 a triangular probability simplex for three states, a square for four states, a pentagon for five,and so on. preference_plot combines the sub-plot for several features (per family, per area or globally) in a single figure
 
 ####2.5.1 config_plot.JSON : preference\_plot > content

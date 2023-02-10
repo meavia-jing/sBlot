@@ -672,7 +672,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
 </center>
 
 ### 2.7 How to customize the pie plots?  <a name="configpie"></a>
-The Pie plot is to show the weights of each area for a language. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
+The Pie plots show the frequency at which each language appears in each area in the posterior distribution. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
 
 ####2.7.1 config_plot.JSON : pie\_plot > content
 
@@ -745,10 +745,10 @@ This will create a sBayes directory on your computer.
 ### 3.2 [codes for drawing map]<a name="pythonmap"></a>
 
 
-- `iterate_over_models`: iterate all the models.
+- `iterate_over_models`: iterates over the results of all specified models.
    > Output Argument:
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;model_name: the name of model.
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instance of Class Result.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instance of Class Result, which contains the parsed content of the stats and clusters files.
 	
 - `posterior_map(results: Results, file_name:PathLike)`: plotting the line and dot map.
    > Input Argument:
@@ -777,6 +777,7 @@ for name, result in plot.iterate_over_models():
 	plot.get_idw_map(result,name)
  ```
 	
+We can also plot maps from the commmand line, without writing custom python code:	
 ```
   #### How to run the posterior_map from command line?####
 # open SBlot and draw map
@@ -787,10 +788,10 @@ python plot.py config_plot.json map
 
 ### 3.3 [Codes for drawing Weight plot]<a name="pythonweight"></a>
 
-- `plot_weights(results: Results, file_name:PathLike)`: plotting the line and dot map.
+- `plot_weights(results: Results, file_name:PathLike)`: plotting the weights of the cluster effect and each confounding effect for each feature.
 
   > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:the result of Sbayes
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
        
 ```
@@ -815,7 +816,7 @@ python plot.py config_plot.json weights_plot
 - `plot_preferences(results: Results, file_name:PathLike)`: plotting the preference plot.
 
    > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:the result of Sbayes
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
        
 ```
@@ -840,7 +841,7 @@ python plot.py config_plot.json preference_plot
 - `plot_dic(results: Results, file_name:PathLike)`: plotting the DIC plot.
 
    > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:the result of Sbayes
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
              
 ```
@@ -859,10 +860,10 @@ python plot.py config_plot.json dic_plot
 ```
 
 ### 3.6 [Codes for drawing Pie plot]<a name="pythonpie"></a>
-- `plot_preferences(results: Results, file_name:PathLike)`: plotting the pie plot.
+- `plot_preferences(results: Results, file_name:PathLike)`: plotting the Pie plot which.
 
    > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:the result of Sbayes
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
        
 ```
@@ -874,6 +875,7 @@ plot.read_data()
 for name, result in plot.iterate_over_models():      
 	plot.plot_pies(results, os.path.join(name))
 ```
+	
 ```
   #### How to run the posterior_map from command line?####
 # open SBlot and plot the Pie 

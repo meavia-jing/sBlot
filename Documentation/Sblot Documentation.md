@@ -672,7 +672,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
 </center>
 
 ### 2.7 How to customize the pie plots?  <a name="configpie"></a>
-The Pie plots show the frequency at which each language appears in each area in the posterior distribution. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
+The Pie plots show the frequency at which each site appears in each cluster in the posterior distribution. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
 
 ####2.7.1 config_plot.JSON : pie\_plot > content
 

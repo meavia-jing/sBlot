@@ -1,4 +1,4 @@
-# <center>Sblot Documentation
+# <center>sBlot Documentation
 #### <center>January, 2023
 
 
@@ -14,36 +14,42 @@
     * 1.3 [DIC plots](#DIC)
     * 1.4 [Pie plots](#pie)
 * 2. [The config_plot.JSON file](#config)
-    * 2.1 [How to set input and output file path?](#configresult)
-    * 2.2 [How to read supporting data?](#configdata)
-    * 2.3 [How to set parameters for drawing map? ](#configmap)
-    * 2.4 [How to set parameters for drawing weight_plot? ](#configweight)
-    * 2.5 [How to set parameters for drawing the preference_plot? ](#configpre)
-    * 2.6 [How to set parameters for drawing the dic_plot](#configdic)
-    * 2.7 [How to set parameters for drawing the pie_plot](#configpie)
-* 3. [Python functions](#python)
-	* 3.1 [How to install the Sblots ?](#installation)
-	* 3.2 [Codes for drawing map](#pythonmap)
-	* 3.3 [Codes for drawing weight_plot](#pythonweight)
-	* 3.4 [Codes for drawing preference_plot](#pythonpre)
-	* 3.5 [Codes for drawing dic_plot](#pythondic)
-	* 3.6 [Codes for drawing pie_plot](#pythonpie)
+    * 2.1 [How to load the results of an sBayes analysis?  How to save the plots?](#configresult)
+    * 2.2 [How to include the original input data of an sBayes analysis?](#configdata)
+    * 2.3 [How to customize the maps? ](#configmap)
+    * 2.4 [How to customize the weight plots? ](#configweight)
+    * 2.5 [How to customize the preference plots? ](#configpre)
+    * 2.6 [How to customize the DIC plots?](#configdic)
+    * 2.7 [How to customize the pie plots?](#configpie)
+* 3. [Run sBlots](#python)
+	* 3.1 [How to install Sblots?](#installation)
+	* 3.2 [Draw a map](#pythonmap)
+	* 3.3 [Draw a weight plot](#pythonweight)
+	* 3.4 [Draw a preference plot](#pythonpre)
+	* 3.5 [Draw a DIC plot](#pythondic)
+	* 3.6 [Draw a pie plot](#pythonpie)
 
 
 ## 1 Introduction <a name="introduction"></a>
 
-This document explains how to use sBlot - a software package designed to rovide visualization functions for the Package Sbayes. There are four main types of diagrams in this package:
+This document explains how to use sBlot - a software package designed to provide visualization functions for the package sBayes. Users can create five main types of plots with this package:
 
-1. Map
-2. weight plots
-3. preference plots
-3. DIC plots
-4. Pie plots
+1. Maps 
+2. Weight plots
+3. Preference plots
+4. DIC plots
+5. Pie plots
 
-Before plotting map, users need to specify the input and output file path ([Part 2.1](#configresult)), and read supporting data ([Part 2.2](#configdata)). More details about how to plot different types of diagrams are described below: 
+Before plotting, users need to provide a config file (config_plot.JSON) where they define the plotting setup and specify the file path to the sBayes results ([Part 2.1](#configresult)) and the data used for analysis ([Part 2.2](#configdata)). More details about how to plot different types of figures are given below. 
 
 ### 1.1 Maps <a name="map"></a>
-Maps show the posetrior distribution of contact areas in geographic space. Maps include the spatial location of all languages (dots), their assignment to contact areas (colored dots and lines), to families (colored polygons), and their interactions to contact areas(Inverse Distance Weights (IDW) map). Users can add different legend items and include an overview map (see example in **Figure 1**).
+Maps show the posetrior distribution of clusters in geographic space. Maps can include
+
+- the spatial location of the sites (e.g. languages) as points
+- their assignment to clusters (e.g. contact areas) as colored dots, lines, or inverse distance weighted (IDW) interpolation, 
+- their assignment to confunders (e.g. a language family) as colored polygons.
+
+Users can also add different legend items, a basemap and an overview map (see example in **Figure 1**).
 
 <center>
     <img style="border-radius: 0.3125em;
@@ -56,10 +62,11 @@ Maps show the posetrior distribution of contact areas in geographic space. Maps 
     padding: 2px;">Figure 1. A map with three contact areas (green, orange and purple dots and lines).</div>
 </center>
 
-[Part 2.3](#configmap) is to set parameters and [Part 3.2](#pythonmap)  specifies codes for drawing map. 
+	
+[Part 2.3](#configmap) shows how to set-up the config plot file for generating maps. [Part 3.2](#pythonmap) shows how to execute the function to draw the maps.
 
 #### 1.1.1 Line map <a name="line"></a>
-Languages, which appear together in the same area and which neighbors in a Gabriel graph, are connected with a line. The thickness of lines indicates how often two languages are together. **Figure 2** shows the line map wtih 7 contact areas.
+The line map connects neighbouring sites belonging to the same cluster with a line. For language contact, these are neighbouring languages belonging to the same contact area. The line thickness indicates how often two sites are in the cluster together. **Figure 2** shows a line map for languages with 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -73,7 +80,7 @@ Languages, which appear together in the same area and which neighbors in a Gabri
 
 
 #### 1.1.2 Dot map <a name="dot"></a>
-Dot size indicates how often a language is in an area. **Figure 3** shows the Dot map with 7 contact areas.
+In a dot map, sites in the same cluster have the same colour. Dot size indicates how often a site is in a cluster, e.g. how often a language is in a contact area. **Figure 3** shows a dot map with 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -88,7 +95,7 @@ Dot size indicates how often a language is in an area. **Figure 3** shows the Do
 
 
 #### 1.1.3 Inverse Distance Weighting (IDW) map <a name="idw"></a>
-The Inverse Distance Weighting(IDW) map shows how languages in different contact areas interact with each other. Inverse Distance Weighting (IDW) interpolation assumes that closer values are more related than further values with its function. **Figure 4** shows the IDW map with 7 contact areas.
+The Inverse Distance Weighting (IDW)  produces a gradual spatial interpolation of clusters. Sites in a cluster are assigned a colour, which radiates to the surrounding space, so locations close to the cluster are similar in colour. **Figure 4** shows the IDW map for 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -102,23 +109,8 @@ The Inverse Distance Weighting(IDW) map shows how languages in different contact
 
 
 
-#### 1.1.4 Line and dot map <a name="linedot"></a>
-Combining the line and dot map. There are four situations: line graph shows the frequency of two languages together, and the dot graph shows the frequency of languages in an area; line graph shows the frequency of two languages together, and the size of dot is fixed; the dot graph shows the frequency of languages in an area, and the thickness of line is fixed; the thickness of line and size of dot are fixed.   **Figure 5** shows the lines and dots map for 7 areas.
-<center>
-    <img style="border-radius: 0.3125em;
-    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
-    src="images/linedot.png">
-    <br>
-    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
-    display: inline-block;
-    color: black;
-    padding: 2px;">Figure 5. Line and dot graph</div>
-</center>
-
-
-
 ### 1.2 Weight plots <a name="weight"></a>
-Weight plots visualize the posterior densities of the weights per feature: how well does each effect – universal preference, inheritance and contact – predict the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for two features - F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
+Weight plots visualize the posterior densities of the weights per feature: how well does each effect – the confounders and the clustering – predict the distribution of the feature in the data? For languages, there are two confounders - inheritance and universal preference - and contact, so the densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact (C), the right lower corner the weight for inheritance (I), and the upper corner the weight for universal preference (U). **Figure 6** shows the weight plot for the features F24 and F26. The distribution of F24 is best explained by inheritance and contact – both receive high posterior weights, but there is no single best explanation for F16 – the posterior weights are all over the place. The pink dot marks the mean of the distribution (optional). Again, sBayes returns the density plots for all features in a single grid.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -127,12 +119,13 @@ Weight plots visualize the posterior densities of the weights per feature: how w
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 6. Weight plots for two features (F24, F16)</div>
+    padding: 2px;">Figure 5. Weight plots for two features (F24, F16)</div>
 </center>
 
-[Part 2.4](#configweight) is to set parameters and [Part 3.3](#pythonweight)  specifies codes for drawing weight plots. 
+[Part 2.4](#configweight) shows how to set-up the config plot file for generating weight plots. [Part 3.3](#pythonweight) shows how to execute the function to draw the weight plots.
+
 ### 1.3 Preference plots <a name="preference"></a>
-These plots visualize the preference for each of the states of a feature, either universally, in a family or a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per family or area or globally, in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
+These plots visualize the preference for each of the states of a feature, either for each confounder or the clustering (for language these are the universal prefence, the preference in a family or a contact area). The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), in a triangular probability simplex for three states (similar to the weights, see previous section), a square for four states, a pentagon for five, and so on. sBayes returns the density plots for all features per confounder or for the clustering in a single grid. **Figure 7** shows the density plot for features F1, F2 with two states (N, Y) in an area. While the posterior distribution for F1 in the area is only weakly informative, with a slight tendency for Y, F2 clearly tends towards state N.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -141,12 +134,13 @@ These plots visualize the preference for each of the states of a feature, either
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 7. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
+    padding: 2px;">Figure 6. The density plot shows the posterior preference for two features (F1, F2) in an area</div>
 </center>
 
-[Part 2.5](#configpre) is to set parameters and [Part 3.4](#pythonpre)  specifies codes for drawing the Preference plots. 
+[Part 2.5](#configpre) shows how to set-up the config plot file for generating preference plots. [Part 3.4](#pythonpre) shows how to execute the function to draw the preference plots.
+
 ### 1.4 DIC plots <a name="DIC"></a>
-The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K, and help the analyst to decide for an appropriate number of areas. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
+The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of clusters, K, and help the analyst to decide for an appropriate number of clusters. As a rule of thumb, the best model is the one where the DIC levels off. **Figure 8** shows the DIC for seven models with increasing number of areas – K = 1 to K = 7. The DIC levels off for K = 2, suggesting two salient contact areas in the data. As the DIC plot compares performance across models, it needs several result files as input.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -155,13 +149,13 @@ The Deviance Information criterion (DIC) is a measure for the performance of a m
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 8. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
+    padding: 2px;">Figure 7. DIC plot for models with increasing number of areas (K = 1 to K = 7)</div>
 </center>
 	
-[Part 2.6](#configdic) is to set parameters and [Part3.5](#pythondic)specifies codes for drawing the DIC plots. 
+[Part 2.6](#configdic) shows how to set-up the config plot file for generating DIC plots [Part3.5](#pythondic) shows how to execute the function to draw the  DIC plots. 
 
 ### 1.5 Pie plots <a name="pie"></a>
-The Pie chart shows the weight of each contact area in the language.  **Figure 9** show teh pie plots with 7 contact areas.
+The pie chart show how often each site was assigned to each cluster in the posterior (e.g. how often a language was assigned to each contact area).  **Figure 9** shows a  pie plots with 7 contact areas.
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -170,14 +164,14 @@ The Pie chart shows the weight of each contact area in the language.  **Figure 9
     <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 9. Pie plot with 7 contact areas</div>
+    padding: 2px;">Figure 8. Pie plot with 7 contact areas</div>
 </center>
 	
-[Part 2.7](#configpie) is to set parameters and [Part3.6](#pythonpie) specifies codes for drawing the Pie plots. 
+[Part 2.7](#configpie) shows how to set-up the config plot file for generating the pie plots [Part3.6](#pythonpie) shows how to execute the function to draw the pie plots. 
 
 ## 2 The config_plot.JSON file<a name="config"></a>
 
-To using the sBlot analysis, users need to define the settings in the config\_plot.JSON file. There are seven parts related to plotting functions in the config_plot.json
+To customise plotting with sBlot, users can adjust the settings in the config\_plot.JSON file. The config_plot.JSON file has seven parts that can be modified:
 
 - results: provides the file paths to the results of a sBayes analysis
 - data: provides the file paths to the empirical data of the analysis
@@ -188,11 +182,11 @@ To using the sBlot analysis, users need to define the settings in the config\_pl
 - dic\_plot: provides parameters to plot the dic\_plot
 
 
-### 2.1  How to set input and output file path?<a name="configresult"></a>
-In config\_plot.JSON: results part, users can provide the input and output file paths to the results of a sBlot analysis (path\_in) and the file paths to the output folder where the plots are saved (path\_out). 
+### 2.1 How to load the results of an sBayes analysis?  How to save the plots?<a name="configresult"></a>
+In config\_plot.JSON results, users can provide the paths to the results of a sBayes analysis (path\_in) and the file paths to the output folder where the plots are saved (path\_out). 
 <br/>
 <br/>
-The path\_in has two sub-keys, areas for the posterior samples of the contact areas (area\*.txt), and stats for the posterior samples of the remaining parameters (stats\*.txt). As shown in the **Figure 10** and **Table 1**, users can provide several result files, which will be read in and plotted sequentially. The number of entries in areas andstats must be the same. The following code snippet reads the results of three runs in sBayesfor which the number of areas, K, was iteratively increased from K = 1 to K = 3. Once the plots are generated, they are saved in the folder "plots".
+The path\_in has two sub-keys, areas for the posterior samples of the contact areas (area\*.txt), and stats for the posterior samples of the remaining parameters (stats\*.txt). As shown in the **Figure 10** and **Table 1**, users can provide several result files, which will be read in and plotted sequentially. The number of entries in areas and stats must be the same. The following code snippet reads the results of three runs in sBayes for which the number of areas, K, was iteratively increased from K = 1 to K = 3. Once the plots are generated, they are saved in the folder "plots".
 <br/>
 <br/>
 The path\_out specifies the output path for different types of diagrams:
@@ -207,7 +201,7 @@ The path\_out specifies the output path for different types of diagrams:
 <div style="color:orange; border-bottom: 1px solid #d9d9d9;
     display: inline-block;
     color: black;
-    padding: 2px;">Figure 10. shows all keys in config_plot.JSON > results and gives default values and expected data types.</div>
+    padding: 2px;">Figure . shows all keys in config_plot.JSON > results and gives default values and expected data types.</div>
 </center>
 
 <center>Table 1. The config_plot.JSON file: keys in results</center>
@@ -220,7 +214,7 @@ The path\_out specifies the output path for different types of diagrams:
 | path_out   | string |required| file path to the output folder for saving the plots
 
 
-### 2.2 How to read supporting data? <a name="configdata"></a>
+### 2.2 How to include the original input data of an sBayes analysis?<a name="configdata"></a>
 
 In the config\_plot.JSON: data part, the key data points to the empirical data which were used as an supporting input for the sBlot analysis. Users provide the file paths to the features.csv file (features), the applicable states for all features (feature\_states), and the coordinate reference system of the location data (projection). If no CRS is provided, sBlot assumes that the location data are latitude/longitude data in WGS84 ("epsg:4326"). The following JSON snippet tells plotting to open the file balkan\_features.csv, with applicable states in balkan\_features\_states.csv. Both files are located in the sub-folder data (relative to config_plot.JSON ). The location data are in ETRS89 Lambert Azimuthal Equal-Area projection ("epsg:3035").
 
@@ -244,7 +238,7 @@ In the config\_plot.JSON: data part, the key data points to the empirical data w
 |feature_states| string|(required）|path to to the feature_states.csv file|
 |projection|string|"epsg:4326"|CRS of the location data, as PROJ or EPSG|
 
-### 2.3 How to set parameters for drawing map?<a name="configmap"></a>
+### 2.3 How to customize the maps? <a name="configmap"></a>
 
 The config_plot.JSON:map is to create a map of the posterior distribution of contact areas. Maps visualize the spatial locations of all languages, their assignment and interaction to contact areas, and, optionally, the language families. Users have a wide array of options to customize the map to their liking. They can change the content of the map (content), either visualizing the full posterior density or a consensus map. They can change the appearance of individual map items (graphic), tweak the projection and add base map items (geo). Finally, users can add a legend and an overview map (legend) and define the output format output. map has the following sub-keys, all of which are JSON objects.
 
@@ -446,7 +440,7 @@ Table 7: The config_plot.JSON file: keys in map > output
 |format|string|"pdf"|file format of the output figure|
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 
-### 2.4 How to set parameters for drawing the weight plot ?<a name="configwieght"></a>
+### 2.4 How to customize the weight plots ?<a name="configwieght"></a>
 Weight plots visualize the posterior densities of the weights per feature: how well does each of the effects – universal preference, inheritance and contact – explain the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact, the right lower corner the weight for inheritance, and the upper corner the weight for universal preference. The weight plots of several features are combined into one overall figure. There are three subkeys in the config_plot.JSON: weight\_plots part: content, graphic,and output.
 ####2.4.1 config_plot.JSON : weight\_plot > content
 In content, users specify for which of the features the weights are plotted (features). Users pass the relevant features in an array. For example, [3] generates a weight plot for feature three only; [3, 4, 17] generates weight plots for features three, four and seventeen. When the array is left empty or features are not provided explicitly, the plotting function generates weight plots for all features. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in. 
@@ -534,7 +528,7 @@ Table 10: The config\_plot.JSON file: keys in weight/_plot > output
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 |n_columns|number|5| number of columns in the overall plot|
 
-### 2.5 How to set parameters for drawing the Preference plot?<a name="configpre"></a>
+### 2.5 How to customize the preference plot?<a name="configpre"></a>
 The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 7**), , in
 a triangular probability simplex for three states, a square for four states, a pentagon for five,and so on. preference_plot combines the sub-plot for several features (per family, per area or globally) in a single figure
 
@@ -622,7 +616,7 @@ Table 13: The config_plot.JSON file: keys in preference\_plot > output
 |n_columns|number|5| number of columns in the overall plot|
 
 
-### 2.6 How to set parameters for drawing the dic_plot <a name="configdic"></a>
+### 2.6 How to customize the DIC plots? <a name="configdic"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models,
 usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.
 
@@ -680,7 +674,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
     padding: 2px;">Figure 23. shows all keys in config\_plot.JSON > dic\_plot  and gives default values and expected data types</div>
 </center>
 
-### 2.7 How to set parameters for drawing the pie plot <a name="configpie"></a>
+### 2.7 How to customize the pie plots?  <a name="configpie"></a>
 The Pie plot is to show the weights of each area for a language. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
 
 ####2.7.1 config_plot.JSON : pie\_plot > content
@@ -724,10 +718,10 @@ Table 18: The config_plot.JSON file: keys in pie\_plot > content
 
 
 
-## 3 Python Functions <a name="python"></a> 
+## 3 Run sBlot <a name="python"></a> 
 To run sBlots, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ. The way of installing these system requirements depends on your operating system.  It can be used as a python library or through a command line interface. 
 
-### 3.1 [How to install SBlots]<a name="installation"></a>
+### 3.1 [How to install SBlot]<a name="installation"></a>
 To run sBlot, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ.Then you can install sBlot. The exact steps to do this depend on your operating system (due to different ways of installing dependencies). Following are the instructions for Linux, MacOS and Windows.
 #### 3.1.1 Linux (Debian/Ubuntu)
 To install sBlot, open a terminal window, navigate to the folder where you want to install it

@@ -311,8 +311,7 @@ The following code snippet creates a consensus map showing languages which are a
 
 
 #### 2.3.3 config_plot.JSON : map > graphic
-In graphic, users can change the appearance of the individual map items, including the languages (languages), the posterior areas (clusters), the families (families) and the base map(base\_map). Alternatively, users can leave all parameters untouched, in which case the default design is used. The key (languages) tunes how the languages are displayed on the map: the sub\-key size changes the size of the point markers, color changes their color, and (labels) adds labels. For reasons of readability, on the map labels are shown as numeric shorthand notations, for which users can output a correspondence table (see key (output)). The (clusters) key has four sub-keys: users can change the size of the point markers (point\_size), set the color of each contact area (color), and change the width（line\_width) and the transparency (alpha) of the lines connecting the languages in an area. In families, users can change the color and the shape of the family polygons. For a small shape value, each language is assigned to their own circular polygon. Users can set the size of this polygon (size). When the shape value is increased, the family polygons are more and more generalized, such that neighbouring languages from the same family are aggregated to larger polygons using alpha shapes. These polygons have a buffer (in map units). For good results without overlapping polygons expect to tweak the shape and the buffer values iteratively. The key base\_map defines the appearance of the base map polygons (polygon – with sub-keys color, outline\_color, and outline\_width, and the
-base map lines (line – with sub-keys color and width). 
+In graphic, users can change the appearance of the individual map items, including the languages (languages), the posterior areas (clusters), the families (families) and the base map(base\_map). Alternatively, users can leave all parameters untouched, in which case the default design is used. The key (languages) tunes how the languages are displayed on the map: the sub\-key size changes the size of the point markers, color changes their color, and (labels) adds labels. For reasons of readability, on the map labels are shown as numeric shorthand notations, for which users can output a correspondence table (see key (output)). The (clusters) key has four sub-keys: users can change the size of the point markers (point\_size), set the color of each contact area (color), and change the width（line\_width) and the transparency (alpha) of the lines connecting the languages in an area. In families, users can change the color and the shape of the family polygons. For a small shape value, each language is assigned to their own circular polygon. Users can set the size of this polygon (size). When the shape value is increased, the family polygons are more and more generalized, such that neighbouring languages from the same family are aggregated to larger polygons using alpha shapes. These polygons have a buffer (in map units). For good results without overlapping polygons expect to tweak the shape and the buffer values iteratively. The key base\_map defines the appearance of the base map polygons (polygon – with sub-keys color, outline\_color, outline\_width, and idw_resolution and the base map lines (line – with sub-keys color and width). 
 
 <br\>
 The following code snippet creates a map combinng line and dot graph. The thickness of the line show the frequency of two languages gather together, and the size of dot shows the frequency of languages in an area 
@@ -756,16 +755,16 @@ This will create a sBayes directory on your computer.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instance of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
    > Output Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Line map, dot map or line and dot map
        
   
 - `get_idw_map(results: Results, file_name:String)`:plotting idw map.
 
     >Input Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:the result of Sbayes
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: file name.
-    >Input Argument:
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: file name.
+    >Output Argument:
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; IDW map
 
 ```
   #### How to run the posterior_map in python? ####

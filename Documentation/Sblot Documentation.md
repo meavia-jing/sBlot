@@ -744,16 +744,27 @@ This will create a sBayes directory on your computer.
 
 ### 3.2 [codes for drawing map]<a name="pythonmap"></a>
 
+
+- `iterate_over_models`: iterate all the models.
+   > Output Argument:
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;model_name: the name of model.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instance of Class Result.
+	
 - `posterior_map(results: Results, file_name:PathLike)`: plotting the line and dot map.
-   > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:the result of Sbayes
+   > Input Argument:
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instance of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
+   > Output Argument:
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+       
   
 - `get_idw_map(results: Results, file_name:String)`:plotting idw map.
 
- > Argument:
+    >Input Argument:
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:the result of Sbayes
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: file name.
+    >Input Argument:
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
 
 ```
   #### How to run the posterior_map in python? ####

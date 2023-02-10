@@ -19,14 +19,14 @@
     * 2.4 [How to customize the weight plots? ](#configweight)
     * 2.5 [How to customize the preference plots? ](#configpre)
     * 2.6 [How to customize the DIC plots?](#configdic)
-    * 2.7 [How to customize the pie plots?](#configpie)
+    * 2.7 [How to customize the Pie plots?](#configpie)
 * 3. [Run sBlots](#python)
 	* 3.1 [How to install Sblots?](#installation)
 	* 3.2 [Draw a map](#pythonmap)
 	* 3.3 [Draw a weight plot](#pythonweight)
 	* 3.4 [Draw a preference plot](#pythonpre)
 	* 3.5 [Draw a DIC plot](#pythondic)
-	* 3.6 [Draw a pie plot](#pythonpie)
+	* 3.6 [Draw a Pie plot](#pythonpie)
 
 
 ## 1 Introduction <a name="introduction"></a>

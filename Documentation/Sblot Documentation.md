@@ -742,7 +742,7 @@ This will create a sBayes directory on your computer.
 3. Install GEOS, GDAL and PROJ manually or using the OSGeo4W installer https://trac.osgeo.org/osgeo4w.
 4. Install sBayes along with some required python libraries by running pip install . 
 
-### 3.2 [codes for drawing map]<a name="pythonmap"></a>
+### 3.2 codes for drawing map <a name="pythonmap"></a>
 
 
 - `iterate_over_models`: iterates over the results of all specified models.
@@ -786,7 +786,7 @@ python plot.py config_plot.json map
 
 ```
 
-### 3.3 [Codes for drawing Weight plot]<a name="pythonweight"></a>
+### 3.3 Codes for drawing Weight plot <a name="pythonweight"></a>
 
 - `plot_weights(results: Results, file_name:PathLike)`: plotting the weights of the cluster effect and each confounding effect for each feature.
 
@@ -812,7 +812,7 @@ python plot.py config_plot.json weights_plot
 ```
 
 
-### 3.4 [Codes for drawing Preference plot]<a name="pythonpre"></a>
+### 3.4 Codes for drawing Preference plot <a name="pythonpre"></a>
 - `plot_preferences(results: Results, file_name:PathLike)`: plotting the preference plot.
 
    > Argument:
@@ -837,7 +837,7 @@ python plot.py config_plot.json preference_plot
      
 ```
 
-### 3.5 [Codes for drawing DIC plot]<a name="pythondic"></a>
+### 3.5 Codes for drawing DIC plot <a name="pythondic"></a>
 - `plot_dic(results: Results, file_name:PathLike)`: plotting the DIC plot.
 
    > Argument:
@@ -859,7 +859,7 @@ python plot.py config_plot.json dic_plot
      
 ```
 
-### 3.6 [Codes for drawing Pie plot]<a name="pythonpie"></a>
+### 3.6 Codes for drawing Pie plot <a name="pythonpie"></a>
 - `plot_preferences(results: Results, file_name:PathLike)`: plotting the Pie plot which.
 
    > Argument:

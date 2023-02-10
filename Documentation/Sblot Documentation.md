@@ -758,10 +758,10 @@ This will create a sBayes directory on your computer.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Line map, dot map or line and dot map
        
   
-- `get_idw_map(results: Results, file_name:String)`:plotting idw map.
+- `get_idw_map(results: Results, file_name:String)`: plotting idw map.
 
     >Input Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: file name.
     >Output Argument:
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp; IDW map
@@ -788,10 +788,10 @@ python plot.py config_plot.json map
 
 ### 3.3 Codes for drawing Weight plot <a name="pythonweight"></a>
 
-- `plot_weights(results: Results, file_name:PathLike)`: plotting the weights of the cluster effect and each confounding effect for each feature.
+- `plot_weights(results: Results, file_name: PathLike)`: plotting the weights of the cluster effect and each confounding effect for each feature.
 
   > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
        
 ```
@@ -816,7 +816,7 @@ python plot.py config_plot.json weights_plot
 - `plot_preferences(results: Results, file_name:PathLike)`: plotting the preference plot.
 
    > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
        
 ```
@@ -841,7 +841,7 @@ python plot.py config_plot.json preference_plot
 - `plot_dic(results: Results, file_name:PathLike)`: plotting the DIC plot.
 
    > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
              
 ```
@@ -863,7 +863,7 @@ python plot.py config_plot.json dic_plot
 - `plot_preferences(results: Results, file_name:PathLike)`: plotting the Pie plot which.
 
    > Argument:
-       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results:instane of Class Result.
+       <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;results: instane of Class Result.
        <br/> &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;file_name: a path of the output file.
        
 ```

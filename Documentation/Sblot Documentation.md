@@ -354,6 +354,7 @@ The following code snippet creates a map combinng line and dot graph. The thickn
 | <font size=1>color</font>| <font size=1>string</front>| <font size=1>"white"<font>|<font size=1> face color of the polygons</font>| 
 | <font size=1>outline<br>\_color</font>| <font size=1>string</front>| <font size=1>"black"<font> |<font size=1> outline color of the polygons</font>|
 | <font size=1>outline<br>\_width</font>| <font size=1>number</front>| <font size=1>0.5<font> |<font size=1> outline width of the polygons</font>|
+| <font size=1>idw_resolution</font>|<font size=1>number</front>|<font size=1>80000<font>|<font size=1>The resolution for the idw map. Units:meter </font>|	
 |<font size=2>line</font>| <font size=2>JSON</front>| <font size=2>-<font> |<font size=2> the appearance of the line geometries</font>|
 | <font size=1>color</font>| <font size=1>string</front>| <font size=1>"skyblue"<font>|<font size=1>color of the lines</font>| 
 | <font size=1>width</font>| <font size=1>number</front>| <font size=1>1<font>|<font size=1>width of the lines</font>|

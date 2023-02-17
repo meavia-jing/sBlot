@@ -106,6 +106,34 @@ class Plot:
     ####################################
     # Configure the parameters
     ####################################
+    @staticmethod
+    def get_datapath(datapath:str):
+        '''
+        Args
+            datapath(str): the path of test data
+        Returns:
+            a dict that contains the  path of cluster and stats file under the datapath folder seperately.
+        '''
+        namelist = []
+        for filepath, dirnames, filenames in os.walk(datapath):
+            for filename in filenames:
+                namelist.append(os.path.join(filepath, filename))
+
+        stats = []
+        cluster = []
+        for item in namelist:
+            if item.__contains__("stats"):
+                stats.append(item)
+            elif item.__contains__("area"):
+                cluster.append(item)
+
+        cluster = sorted(cluster)
+        stats = sorted(stats)
+        detailed_path = {"clusters": cluster,
+                         "stats": stats}
+
+        return detailed_path
+
 
     def load_config(self, config_file):
         # Get parameters from config_custom (for particular experiment)
@@ -132,25 +160,33 @@ class Plot:
             self.config['map']['legend']['correspondence']['color_labels'] = False
 
         # Fix relative paths and assign global variables for more convenient workflow
+        # 1. Read the base directory
+
         #self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
         self.path_plots_main = self.config['results']['path_out']
         self.path_plots = {"dic":self.path_plots_main+'/DIC',
                            "map":self.path_plots_main+'/map',
                            "pie":self.path_plots_main+'/pie',
-                           "preferene":self.path_plots_main+'/preference',
+                           "preference":self.path_plots_main+'/preference',
                            "weights":self.path_plots_main+'/weights'}
-
-        self.path_features = fix_relative_path(self.config['data']['features'], self.base_directory)
-        self.path_feature_states = fix_relative_path(self.config['data']['feature_states'], self.base_directory)
-
-        input_paths = self.config['results']['path_in']
-        self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
-        self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
 
         for name,item in self.path_plots.items():
             if not os.path.exists(item):
                 os.makedirs(item)
             self.path_plots[name] = fix_relative_path(item, self.base_directory)
+
+        self.path_features = fix_relative_path(self.config['data']['features'], self.base_directory)
+        self.path_feature_states = fix_relative_path(self.config['data']['feature_states'], self.base_directory)
+
+        input_main_paths = self.config['results']['path_in']
+        input_paths = self.get_datapath(input_main_paths)
+        print(input_paths["clusters"])
+        print(input_paths["stats"])
+
+        self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
+        self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
+
+
 
 
 
@@ -444,11 +480,11 @@ class Plot:
     def get_cluster_colors(n_clusters: int, custom_colors=None):
         cm = plt.get_cmap('gist_rainbow')
         if custom_colors is None:
-            return list(cm(np.linspace(0, 1, n_clusters, endpoint=False)))
+            return [colors.to_hex(c) for c in cm(np.linspace(0, 1, n_clusters, endpoint=False))]
         else:
             provided = np.array([colors.to_rgba(c) for c in custom_colors])
             additional = cm(np.linspace(0, 1, n_clusters - len(custom_colors), endpoint=False))
-            return list(np.concatenate((provided, additional), axis=0))
+            return [colors.to_hex(c) for c in np.concatenate((provided, additional), axis=0)]
 
     def add_labels(self, cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent,colorOn, ax):
         """Add labels to languages"""
@@ -560,31 +596,21 @@ class Plot:
                 color_freq: list
          """
         cluster_colors = self.cluster_color(results, cfg_graphic)
-        cluster_freq = self.get_cluster_freq(results.clusters[0], cfg_content)
-        if (len(results.clusters) <= 1):
-            cluster_freq = np.asarray(cluster_freq)
-            color_for_freq =  np.repeat(cluster_colors[0], len(cluster_freq))
-        else:
-            freq_first = cluster_freq
-            for i in range(1, len(results.clusters)):
-                freq = np.asarray(self.get_cluster_freq(results.clusters[i], cfg_content))
-                freq_first = np.vstack((freq_first, freq))
+        cluster_freq = np.array([
+            self.get_cluster_freq(cluster, cfg_content) for cluster in results.clusters
+        ])
 
-                cluster_freq = np.asarray(np.max(freq_first, axis=0))
-
-                maxrow = np.argmax(freq_first,axis=0)
-                color_for_freq = []
-                for item in maxrow:
-                    color_for_freq.append(cluster_colors[item])
-                color_for_freq = np.asarray(color_for_freq)
+        max_cluster_freq = np.max(cluster_freq, axis=0)
+        max_row = np.argmax(cluster_freq,axis=0)
+        color_for_freq = np.array([cluster_colors[item] for item in max_row])
 
         if cfg_content['type'] == 'density_map':
-            in_cluster_point = np.ones(len(cluster_freq ))
+            in_cluster_point = np.ones_like(max_cluster_freq)
 
         else:
-            in_cluster_point = cluster_freq >= cfg_content['min_posterior_frequency']
+            in_cluster_point = max_cluster_freq >= cfg_content['min_posterior_frequency']
 
-        return cluster_freq,color_for_freq,in_cluster_point
+        return max_cluster_freq, color_for_freq, in_cluster_point
 
     def density_map(self, results: Results, locations_map_crs, cfg_content, cfg_graphic, cfg_legend, ax):
         """ This function displays density map
@@ -595,7 +621,6 @@ class Plot:
         ## plot the point plot
 
         cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
-        print(color_for_freq)
         max_size = 50
         point_size = cfg_graphic['clusters']['point_size']
         if cfg_graphic['clusters']['point_size'] == "frequency":
@@ -636,14 +661,16 @@ class Plot:
         cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
         cluster_colors = self.cluster_color(results, cfg_graphic)
         cluster_labels = []
-        cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
+        cluster_freq,color_for_freq, in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         ## plot the point
         max_size = 50
         point_size = cfg_graphic['clusters']['point_size']
         #in_cluster_point = cluster_freq > cfg_content['min_posterior_frequency']
         if cfg_graphic['clusters']['point_size'] == "frequency":
             point_size = cluster_freq[cluster_freq > cfg_content['min_posterior_frequency']] * max_size
-        ax.scatter(*locations_map_crs[in_cluster_point].T, s=point_size, color=color_for_freq[in_cluster_point])
+
+        colors = color_for_freq[in_cluster_point]
+        ax.scatter(*locations_map_crs[in_cluster_point].T, s=point_size, color=colors)
 
         ## plot the line map accroding to the cgf_content['type']
         for i, cluster in enumerate(results.clusters):
@@ -1022,8 +1049,10 @@ class Plot:
 
         locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
 
+
         # Get extent
         extent = self.get_extent(cfg_geo, locations_map_crs)
+
 
         # Initialize the map
         self.initialize_map(locations_map_crs, cfg_graphic, ax)
@@ -1513,11 +1542,13 @@ class Plot:
            file_name: name of the output file
        """
         print('Plotting preferences...')
+
         cfg_preference = self.config['preference_plot']
         # burn_in = int(len(self.results['posterior']) * cfg_preference['content']['burn_in'])
 
         width = cfg_preference['output']['width_subplot']
         height = cfg_preference['output']['height_subplot']
+
 
         # todo: spacing in config?
         width_spacing = 0.2
@@ -1540,6 +1571,7 @@ class Plot:
 
         # Only show the specified list of preferences, if present in the config
         which_prefs = cfg_preference['content']['preference']
+
         if which_prefs:
             preferences = {k: v for k, v in preferences.items() if k in which_prefs}
 
@@ -1564,6 +1596,7 @@ class Plot:
                 position += 1
 
             plt.subplots_adjust(wspace=width_spacing, hspace=height_spacing)
+
             fig.savefig(self.path_plots["preference"] / f'{file_name}_{component}.{file_format}',
                         bbox_inches='tight', dpi=resolution, format=file_format)
             plt.close(fig)
@@ -2013,7 +2046,7 @@ class Plot:
         b = int(hex[5:7], 16)
         #     rgb = str(r)+','+str(g)+','+str(b)
         rgb = [r, g, b]
-        #     print(rgb)
+
         return rgb
 
     def rgb_color(self, colors_area):
@@ -2107,8 +2140,8 @@ class Plot:
 
         ## get_point_frequency
         cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
-        if (len(results.clusters)> len(cfg_graphic['clusters']['color'])):
-            color_for_freq = np.array([ (colors.to_hex(x)) for x in color_for_freq])
+        # if (len(results.clusters)> len(cfg_graphic['clusters']['color'])):
+        #     color_for_freq = np.array([ (colors.to_hex(x)) for x in color_for_freq])
 
         # languages which are below the frequency threshold are colored  white
         indices = np.where(in_cluster_point == False)[0]
@@ -2164,17 +2197,18 @@ class PlotType(Enum):
         return [str(e.value) for e in cls]
 
 
-def main(config, plot_types: list[PlotType] = None, args: Namespace = None):
+def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
     # TODO adapt paths according to experiment_name (if provided)
     # If no plot type is specified, plot everything in the config file
 
     if plot_types is None:
         plot_types = list(PlotType)
 
+
     plot = Plot()
     plot.load_config(config_file=config)
     plot.read_data()
-
+    print(plot_types)
     def should_be_plotted(plot_type: PlotType):
         """A plot type should only be generated if it
             1) is specified in the config file and
@@ -2182,7 +2216,7 @@ def main(config, plot_types: list[PlotType] = None, args: Namespace = None):
         return (plot_type.value in plot.config) and (plot_type in plot_types)
 
     for m, results in plot.iterate_over_models():
-        print('Plotting model', m)
+        print('f', m)
 
         # Plot the reconstructed clusters on a map
         if should_be_plotted(PlotType.map):
@@ -2203,14 +2237,15 @@ def main(config, plot_types: list[PlotType] = None, args: Namespace = None):
 
         # if should_be_plotted(PlotType.feature_plot):
         if should_be_plotted(PlotType.feature_plot):
-            if args.feature_name is None:
+            if feature_name is None:
                 logging.warning("Skipping 'feature_plot', since not feature_name was provided.")
                 # TODO: If feature_name is None, iterate over all features and save to file.
             else:
-                plot.plot_weights_and_prefs(results, args.feature_name)
+                plot.plot_weights_and_prefs(results, feature_name)
 
     # Plot DIC over all models
     if should_be_plotted(PlotType.dic_plot):
+        plot.iterate_over_models()
         plot.plot_dic(plot.results, file_name='dic')
 
 
@@ -2251,4 +2286,4 @@ if __name__ == '__main__':
             raise ValueError(f"Unknown plot type: '{args.type}'. Choose from {PlotType.values()}.")
         plot_types = [PlotType(args.type)]
 
-    main(args.config, plot_types=plot_types, args=args)
+    main(args.config, plot_types=plot_types, feature_name=args.feature_name)

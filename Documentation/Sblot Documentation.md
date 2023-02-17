@@ -439,7 +439,7 @@ Table 7: The config_plot.JSON file: keys in map > output
 
 ### 2.4 How to customize the weight plots? <a name="configweight"></a>
 Weight plots visualize the posterior densities of the weights per feature: how well does each of the effects – universal preference, inheritance and contact – explain the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact, the right lower corner the weight for inheritance, and the upper corner the weight for universal preference. The weight plots of several features are combined into one overall figure. There are three subkeys in the config_plot.JSON: weight\_plots part: content, graphic,and output.
-####2.4.1 config_plot.JSON : weight\_plot > content
+#### 2.4.1 config_plot.JSON : weight\_plot > content
 In content, users specify for which of the features the weights are plotted (features). Users pass the relevant features in an array. For example, [3] generates a weight plot for feature three only; [3, 4, 17] generates weight plots for features three, four and seventeen. When the array is left empty or features are not provided explicitly, the plotting function generates weight plots for all features. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in. 
 <br/>
 <br/>
@@ -464,7 +464,7 @@ Table 8: The config\_plot.JSON file: keys in weight\_plot > content
 |burn_in|number|0.2|fraction of the posterior samples discarded as burn-in|
 
 
-####2.4.2 config_plot.JSON : weight\_plot > legend
+#### 2.4.2 config_plot.JSON : weight\_plot > legend
 In graphic, users can label of each of the corners in the triangular probability simplex labels. The default labels are ["U", "C", "I"]. The sub-key title adds the feature name as a title for each weight plot. Moreover, users can specify how the sub-plots for single features are combined
 in the overall figure: n_columns gives the number of columns in the overall figure. 
 <br/>
@@ -496,7 +496,7 @@ Table 9: The config\_plot.JSON file: keys in weight\_plot > content
 |<font size=2>position</font>|<font size=2>array</font>| <font size=2>[0,1]</font>| <font size=2> position for the title</font>|
 
 
-####2.4.3 config_plot.JSON : weight\_plot > output
+#### 2.4.3 config_plot.JSON : weight\_plot > output
 
 In output, users define the width and the height of each of the sub-plots (width/_subplot, height/_subplot, the file format of the output file and the resolution, n/_columns). 
 <br/>
@@ -529,7 +529,7 @@ Table 10: The config\_plot.JSON file: keys in weight/_plot > output
 The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 6**), , in
 a triangular probability simplex for three states, a square for four states, a pentagon for five,and so on. preference_plot combines the sub-plot for several features (per family, per area or globally) in a single figure
 
-####2.5.1 config_plot.JSON : preference\_plot > content
+#### 2.5.1 config_plot.JSON : preference\_plot > content
 In content, users specify for which of the features preferences are plotted. Users pass the relevant features in an array. For example, [3] generates preference plots for feature three only; [3, 4, 17] generates preference plots for features three, four and seventeen. When the array is left empty or features are not provided explicitly, the plotting function generates plots for all features. Moreover, users can define which preference to plot, i.e. preference in one of the areas, in one of the families, or universal preference. For example, ["universal", "area\_1", "Arawak"] creates three plots: a plot for universal preference, for preference in area 1, and for preference in the Arawakan family. General, all sub-plots for one preference are combined in a single figure. When preference is not provided explicitly, preference plots are generated for all the areas as default. Finally, users can specify in burn\_in which part of the posterior to discard as burn-in.
 <br/>
 <br/>
@@ -556,7 +556,7 @@ Table 11: The config\_plot.JSON file: keys in preference\_plot > content
 |burn_in|number|0.2| fraction of the posterior samples discarded as burn-in|
 
 
-####2.5.2 config_plot.JSON : preference\_plot > legend
+#### 2.5.2 config_plot.JSON : preference\_plot > legend
 
 In legend, users can change the appearance of the preference plot. Specifically, they can use the state names of the features to label both ends of the ridge, or the corners of the probability simplex in case there are more than two states (labels). The sub-key title adds the feature name as a title for each preference plot. Moreover, users can specify how the sub-plots for single features are combined in the overall figure. 
 <br/>
@@ -585,7 +585,7 @@ Table 12:  The config\_plot.JSON file: keys in preference_plot > legend
 |<font size=2>add</font>|<font size=2>boolean</font>|<font size=2>ture</font>| <font size=2>whether to add the title</font>|
 |<font size=2>font\_<br>size</font>|<font size=2>number</font>| <font size=2>6 </font>| <font size=2>font size for the title</font>|
 |<font size=2>position</font>|<font size=2>array</font>| <font size=2>[0,1]</font>| <font size=2> position for the title</font>|
-####2.5.3 config_plot.JSON : preference\_plot > output
+#### 2.5.3 config_plot.JSON : preference\_plot > output
 In output, users define the width and the height of each of the sub-plots (width\_subplot, height\_subplot, the file format of the output file, the resolution, and n\_columns). n\_columns gives the number of columns in the overall figure.
 <br/>
 <br/>
@@ -616,7 +616,7 @@ Table 13: The config_plot.JSON file: keys in preference\_plot > output
 ### 2.6 How to customize the DIC plots? <a name="configdic"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.
 
-####2.6.1 config\_plot.JSON : dic\_plot > content
+#### 2.6.1 config\_plot.JSON : dic\_plot > content
 In content, users can change which models appear in the DIC and how they are ordered (models). Typically, models are ordered from simplest to most complex, e.g. from fewest to most areas. When no models are provided by the user, the DIC is plotted for all models from results. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in.
 <br/>
 <br/>
@@ -629,7 +629,7 @@ Table 14: The config\_plot.JSON file: keys in dic\_plot > content
 |burn_in|number|0.4| fraction of the posterior samples discarded as burn-in|
 |models|array| all models |models that appear in the DIC plot|
 
-####2.6.2 config_plot.JSON : dic\_plot > graphic
+#### 2.6.2 config_plot.JSON : dic\_plot > graphic
 In graphic, users can change the appearance of the DIC plot. Specifically, they can label the models in the plot (labels) and change whether consecutive DIC values are connected with a line (line_plot) or a scatter plot is used. As a default, the models are labelled in ascending order, starting from 1. 
 <br/>
 <br/>
@@ -642,7 +642,7 @@ Table 15: The config\_plot.JSON file: keys in dic_plot > content
 |labels|array|\*| labels of the models|
 |lline_plot|boolean|true| Connect consecutive DIC values with a line? |
 
-####2.6.3 config_plot.JSON : dic\_plot > output
+#### 2.6.3 config_plot.JSON : dic\_plot > output
 In output, users define the width and the height of the DIC plot (width, height, the file format of the output file and the resolution)
 <br/>
 <br/>
@@ -673,7 +673,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
 ### 2.7 How to customize the pie plots?  <a name="configpie"></a>
 The Pie plots show the frequency at which each site appears in each cluster in the posterior distribution. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
 
-####2.7.1 config_plot.JSON : pie\_plot > content
+#### 2.7.1 config_plot.JSON : pie\_plot > content
 
 In content, users can specify in burn_in which part of the posterior to discardas burn-in
 
@@ -683,7 +683,7 @@ Table 17: The config_plot.JSON file: keys in pie\_plot > content
 | -----------| ---------|-----| ----|
 |burn_in|number|0.2| fraction of the posterior samples discarded as burn-in|
 
-####2.7.2 config_plot.JSON : pie\_plot > output
+#### 2.7.2 config_plot.JSON : pie\_plot > output
 In output, users define the width and the height of the pie plot (width, height, spacing\_horizontal,spacing\_vertical,the fileformat of the output file and the resolution.) 
 <br/>
 <br/>

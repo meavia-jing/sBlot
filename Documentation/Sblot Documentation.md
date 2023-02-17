@@ -437,7 +437,7 @@ Table 7: The config_plot.JSON file: keys in map > output
 |format|string|"pdf"|file format of the output figure|
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 
-### 2.4 How to customize the weight plots?<a name="configwieght"></a>
+### 2.4 How to customize the weight plots? <a name="configweight"></a>
 Weight plots visualize the posterior densities of the weights per feature: how well does each of the effects – universal preference, inheritance and contact – explain the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact, the right lower corner the weight for inheritance, and the upper corner the weight for universal preference. The weight plots of several features are combined into one overall figure. There are three subkeys in the config_plot.JSON: weight\_plots part: content, graphic,and output.
 ####2.4.1 config_plot.JSON : weight\_plot > content
 In content, users specify for which of the features the weights are plotted (features). Users pass the relevant features in an array. For example, [3] generates a weight plot for feature three only; [3, 4, 17] generates weight plots for features three, four and seventeen. When the array is left empty or features are not provided explicitly, the plotting function generates weight plots for all features. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in. 

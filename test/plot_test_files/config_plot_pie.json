@@ -10,11 +10,11 @@
 				"./stats_K3_0.txt"
 			]
 		},
-		"path_out":  "../results"
+		"path_out": "../results"
 	},
 	"data": {
-		"features": "./features.csv",
-		"feature_states": "./feature_states.csv",
+		"features": "features.csv",
+		"feature_states": "feature_states.csv",
 		"projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m"
 	},
 	"map": {
@@ -36,7 +36,7 @@
 				"label": true
 			},
 			"clusters": {
-				"point_size":"frequency",
+				"point_size": "frequency",
 				"color": [
 					"#1b9e77",
 					"#d95f02",
@@ -44,13 +44,13 @@
 					"#e7298a",
 					"#66a61e"
 				],
-				"line_width":"frequency",
+				"line_width": "frequency",
 				"alpha": 0.8
 			},
 			"families": {
 				"size": 180,
 				"color": [
-				"#b3e2cd",
+					"#b3e2cd",
 					"#f1e2cc",
 					"#cbd5e8",
 					"#f4cae4",
@@ -59,8 +59,8 @@
 				],
 				"buffer": 0.5,
 				"shape": 20
-		},
-		  "base_map": {
+			},
+			"base_map": {
 				"polygon": {
 					"color": "white",
 					"outline_color": "black",
@@ -118,8 +118,14 @@
 				"width": 2.6,
 				"height": 2.6,
 				"extent": {
-					"x": [-1900000, 2400000],
-					"y": [200000, 4000000]
+					"x": [
+						-1900000,
+						2400000
+					],
+					"y": [
+						200000,
+						4000000
+					]
 				}
 			}
 		},
@@ -130,36 +136,21 @@
 			"resolution": 20
 		}
 	},
-	"weight_plot": {
-		"content": {
-			"features": [5,6],
-			"burn_in": 0.2
-		},
-		"legend": {
-			"labels": {
-				"add": true,
-				"names": [
-					"U",
-					"C",
-					"I"
-				],
-				"font_size": 6
-			},
-			"title": {
-				"add": true,
-				"font_size": 6,
-				"position": [
-					0,
-					1
-				]
-			}
-		},
+	"weights_plot": {
+		"labels": [
+			"U",
+			"C",
+			"I"
+		],
+		"burn_in": 0.2,
+		"k_best": 36,
+		"title": true,
+		"n_columns": 6,
 		"output": {
-			"width_subplot": 3,
-			"height_subplot": 3,
-			"format": "pdf",
-			"resolution": 300,
-			"n_columns": 6
+			"fig_width_subplot": 2,
+			"fig_height_subplot": 2,
+			"spacing_horizontal": 0.13,
+			"spacing_vertical": 0.1
 		}
 	},
 	"probabilities_plot": {
@@ -182,42 +173,18 @@
 			"fig_height": 6
 		}
 	},
-	"preference_plot": {
+	"pie_plot": {
 		"content": {
-			"features": [],
-			"preference": ["family_Arawak"],
 			"burn_in": 0.2
 		},
-		"legend": {
-			"labels": {
-				"add": true,
-				"font_size": 4
-			},
-			"title": {
-				"add": true,
-				"font_size": 6,
-				"position": [
-					0,
-					1
-				]
-			}
-		},
 		"output": {
-			"width_subplot": 3,
-			"height_subplot": 3,
+			"width": 5,
+			"height": 2,
+			"n_columns": 4,
+			"spacing_horizontal": 0.1,
+			"spacing_vertical": 0.1,
 			"format": "pdf",
-			"resolution": 300,
-			"n_columns": 5
+			"resolution": 300
 		}
-	},
-	"pie_plot": {
-		"burn_in":0.2,
-		"n_columns": 2, 
-		"output": {
-			"fig_width_subplot": 5,
-			"fig_height_subplot": 1, 
-			"spacing_horizontal": 0.7,
-			"spacing_vertical": 1.4
-			}
 	}
 }

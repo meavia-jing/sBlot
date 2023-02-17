@@ -13,13 +13,13 @@
 		"path_out":  "../results"
 	},
 	"data": {
-		"features": "./features.csv",
-		"feature_states": "./feature_states.csv",
+		"features": "features.csv",
+		"feature_states": "feature_states.csv",
 		"projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m"
 	},
 	"map": {
 		"content": {
-			"type": "density_map",
+			"type": "consensus_map",
 			"min_posterior_frequency": 0.7,
 			"plot_families": false,
 			"burn_in": 0.2
@@ -130,36 +130,21 @@
 			"resolution": 20
 		}
 	},
-	"weight_plot": {
-		"content": {
-			"features": [5,6],
-			"burn_in": 0.2
-		},
-		"legend": {
-			"labels": {
-				"add": true,
-				"names": [
-					"U",
-					"C",
-					"I"
-				],
-				"font_size": 6
-			},
-			"title": {
-				"add": true,
-				"font_size": 6,
-				"position": [
-					0,
-					1
-				]
-			}
-		},
+	"weights_plot": {
+		"labels": [
+			"U",
+			"C",
+			"I"
+		],
+		"burn_in": 0.2,
+		"k_best": 36,
+		"title": true,
+		"n_columns": 6,
 		"output": {
-			"width_subplot": 3,
-			"height_subplot": 3,
-			"format": "pdf",
-			"resolution": 300,
-			"n_columns": 6
+			"fig_width_subplot": 2,
+			"fig_height_subplot": 2,
+			"spacing_horizontal": 0.13,
+			"spacing_vertical": 0.1
 		}
 	},
 	"probabilities_plot": {
@@ -180,34 +165,6 @@
 		"output": {
 			"fig_width": 9,
 			"fig_height": 6
-		}
-	},
-	"preference_plot": {
-		"content": {
-			"features": [],
-			"preference": ["family_Arawak"],
-			"burn_in": 0.2
-		},
-		"legend": {
-			"labels": {
-				"add": true,
-				"font_size": 4
-			},
-			"title": {
-				"add": true,
-				"font_size": 6,
-				"position": [
-					0,
-					1
-				]
-			}
-		},
-		"output": {
-			"width_subplot": 3,
-			"height_subplot": 3,
-			"format": "pdf",
-			"resolution": 300,
-			"n_columns": 5
 		}
 	},
 	"pie_plot": {

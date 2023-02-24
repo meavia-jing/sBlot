@@ -737,7 +737,7 @@ To run sBlots, you need Python (version >=3.7) and three required system librari
 
 ### 3.1 [How to install SBlot] <a name="installation"></a>
 To run sBlot, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ.Then you can install sBlot. The exact steps to do this depend on your operating system (due to different ways of installing dependencies). Following are the instructions for Linux, MacOS and Windows.
-#### 3.1.1 Linux (Debian/Ubuntu) <a name="Linux"></a>
+#### 3.1.1 Linux <a name="Linux"></a>
 To install sBlot, open a terminal window, navigate to the folder where you want to install it
 and follow these steps:
 1. Get the sBlot source code by running git clone https://github.com/derpetermann/sBayes.

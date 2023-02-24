@@ -22,8 +22,9 @@
     	* 2.3.4 [config_plot.JSON: map > content](#mapcontent)
 	* 2.3.5 [config_plot.JSON: map > output](#mapoutput)
     * 2.4 [How to customize the weight plots? ](#configweight)
-	* 2.4.1 [config_plot.JSON : weights_plot > content](#weightscont)
-    	* 2.4.2 [config_plot.JSON : weights_plot > legend](#weightslegend)
+
+    	* 2.4.1 [config_plot.JSON : weights_plot > content](#weightscontent)
+	* 2.4.2 [config_plot.JSON : weights_plot > legend](#weightslegend)
     	* 2.4.3 [config_plot.JSON : weight_plot > output](#weightoutput) 
     * 2.5 [How to customize the preference plots? ](#configpre)
 	* 2.5.1 [config_plot.JSON : preference_plot > content](#precontent)

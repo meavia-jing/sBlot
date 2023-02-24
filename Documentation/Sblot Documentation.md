@@ -5,7 +5,7 @@
 ## Table of contents
 * 1. [Introduction](#introduction)
     * 1.1 [Maps](#map)
-    	* 1.1.1 [Line map](#line)
+        * 1.1.1 [Line map](#line)
     	* 1.1.2 [Dot map](#dot)
     	* 1.1.3 [Inverse Distance Weighting(IDW) map](#idw)
     * 1.2 [Weight plots](#weight)
@@ -16,11 +16,11 @@
     * 2.1 [How to load the results of an sBayes analysis?  How to save the plots?](#configresult)
     * 2.2 [How to include the original input data of an sBayes analysis?](#configdata)
     * 2.3 [How to customize the maps? ](#configmap)
-    	* 2.3.1 [config_plot.JSON: map > geo](#mapgeo)
+	* 2.3.1 [config_plot.JSON: map > geo](#mapgeo)
     	* 2.3.2 [config_plot.JSON: map > content](#mapcontent)
     	* 2.3.3 [config_plot.JSON: map > graphic](#mapgraphic)
     	* 2.3.4 [config_plot.JSON: map > content](#mapcontent)
-	* 2.3.5 [config_plot.JSON: map > output](#mapoutput)
+        * 2.3.5 [config_plot.JSON: map > output](#mapoutput)
     * 2.4 [How to customize the weight plots? ](#configweight)
 
     	* 2.4.1 [config_plot.JSON : weights_plot > content](#weightscontent)

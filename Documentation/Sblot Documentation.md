@@ -266,10 +266,9 @@ The following code snippet plots the map in the CRS of the World Geodetic System
     padding: 2px;">Figure 11. summarises all keys in config_plot.JSON > map > geo and gives default values and
 expected data types.</div>
 </center>
-
-<center>Table 3: The config_plot.JSON file: keys in map > geo
-</center>
 <br/>
+<center>Table 3: The config_plot.JSON file: keys in map > geo</center>
+
 |<center>Key</center>| data type|default value| description
 | -----------:| ---------|-----| ----|
 |<center>map\_projection</center>|string|*|PROJ4 string or EPSG code to define a CRS| 
@@ -298,13 +297,14 @@ The following code snippet creates a consensus map showing languages which are a
     color: black;
     padding: 2px;">Figure 12. shows all keys in config_plot.JSON > map > content and gives default values and expected data types</div>
 </center>
+	
 <br/>
 <center>Table 4: The config_plot.JSON file: keys in map > content
 </center>
 
 |Key| data type|default value| description
 |:-----------:|:---------:|:-----:|:----:|
-|type|string|consensus_map| type of plot, "density\_map", "consensus\_map",or "idw\_map"| 
+|type|string|consensus_map| type of plot: "density\_map", "consensus\_map",or "idw\_map"| 
 |plot_families|boolean|false| Plot the language families?|
 |label|string|all| add the language lable? |
 |min\_posterior<br>\_frequency| number|0.9|degree of generalization (only for consensus maps)|
@@ -328,8 +328,8 @@ The following code snippet creates a map combinng line and dot graph. The thickn
     padding: 2px;">Figure 13. summarises all keys in config_plot.JSON > map > graphic and gives default values and expected data types.</div>
 </center>
 <br/>
-<center>Table 5: The config_plot.JSON file: keys in map > graphic
-</center>
+	
+<center>Table 5: The config_plot.JSON file: keys in map > graphic</center>
 
 |<center>Key</center>| data type|default value| description
 | -----------:| ---------|-----| ----|

@@ -38,6 +38,9 @@
         * 2.7.2 [config_plot.JSON : pie_plot > output](#pieouput)
 * 3. [Run sBlots](#python)
     * 3.1 [How to install Sblots?](#installation)
+        * 3.1.1 [Linux (Debian/Ubuntu)](#Linux)
+	* 3.1.2 [MacOS](#macos)
+	* 3.1.3 [Windows](#window)
     * 3.2 [Draw a map](#pythonmap)
     * 3.3 [Draw a weight plot](#pythonweight)
     * 3.4 [Draw a preference plot](#pythonpre)
@@ -632,7 +635,7 @@ Table 13: The config_plot.JSON file: keys in preference\_plot > output
 ### 2.6 How to customize the DIC plots? <a name="configdic"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.
 
-#### 2.6.1 config\_plot.JSON : dic\_plot > content <a name="dicontent"></a>
+#### 2.6.1 config\_plot.JSON : dic\_plot > content <a name="diccontent"></a>
 In content, users can change which models appear in the DIC and how they are ordered (models). Typically, models are ordered from simplest to most complex, e.g. from fewest to most areas. When no models are provided by the user, the DIC is plotted for all models from results. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in.
 <br/>
 <br/>
@@ -732,7 +735,7 @@ Table 18: The config_plot.JSON file: keys in pie\_plot > content
 ## 3 Run sBlot <a name="python"></a> 
 To run sBlots, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ. The way of installing these system requirements depends on your operating system.  It can be used as a python library or through a command line interface. 
 
-### 3.1 [How to install SBlot]<a name="installation"></a>
+### 3.1 [How to install SBlot] <a name="installation"></a>
 To run sBlot, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ.Then you can install sBlot. The exact steps to do this depend on your operating system (due to different ways of installing dependencies). Following are the instructions for Linux, MacOS and Windows.
 #### 3.1.1 Linux (Debian/Ubuntu) <a name="Linux"></a>
 To install sBlot, open a terminal window, navigate to the folder where you want to install it

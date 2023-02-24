@@ -269,7 +269,7 @@ expected data types.</div>
 
 <center>Table 3: The config_plot.JSON file: keys in map > geo
 </center>
-
+<br/>
 |<center>Key</center>| data type|default value| description
 | -----------:| ---------|-----| ----|
 |<center>map\_projection</center>|string|*|PROJ4 string or EPSG code to define a CRS| 
@@ -298,7 +298,7 @@ The following code snippet creates a consensus map showing languages which are a
     color: black;
     padding: 2px;">Figure 12. shows all keys in config_plot.JSON > map > content and gives default values and expected data types</div>
 </center>
-
+<br/>
 <center>Table 4: The config_plot.JSON file: keys in map > content
 </center>
 
@@ -327,8 +327,7 @@ The following code snippet creates a map combinng line and dot graph. The thickn
     color: black;
     padding: 2px;">Figure 13. summarises all keys in config_plot.JSON > map > graphic and gives default values and expected data types.</div>
 </center>
-
-
+<br/>
 <center>Table 5: The config_plot.JSON file: keys in map > graphic
 </center>
 
@@ -381,8 +380,7 @@ The following code snippet adds a legend item for clusters and changes its posit
     color: black;
     padding: 2px;">Figure 14. summarises all keys in config_plot.JSON > map > legend and gives default values and expected data types.</div>
 </center>
-
-
+<br/>
 <center>Table 6: The config_plot.JSON file: keys in map > legend
 </center>
 
@@ -428,9 +426,9 @@ In output, users define the width and the height of the output figure, its file 
     padding: 2px;">Figure 15. shows all keys in config_plot.JSON > map > output and gives default values and expected data types</div>
 </center>
 
-
+<br/>
+	
 Table 7: The config_plot.JSON file: keys in map > output
-
 |<center>Key</center>| data type|default value| description
 | -----------| ---------|-----| ----|
 |width|number|14| width of the output figure in cm|
@@ -456,8 +454,8 @@ The following code snippet creates weight plots for features F5,F6, and F8. The 
     color: black;
     padding: 2px;">Figure 16. shows all keys in config\_plot.JSON > weight\_plot > content and gives default values and expected data types</div>
 </center>
-
-Table 8: The config\_plot.JSON file: keys in weight\_plot > content
+<br/>
+<center>Table 8: The config\_plot.JSON file: keys in weight\_plot > content</center>
 
 |Key| data type|default value| description
 | -----------| ---------|-----| ----|
@@ -482,7 +480,7 @@ The following code snippet uses alternative labels and title for each sub-plot.
     color: black;
     padding: 2px;">Figure 17. shows all keys in config\_plot.JSON > weight\_plot > legend and gives default values and expected data types</div>
 </center>
-
+<br/>
 Table 9: The config\_plot.JSON file: keys in weight\_plot > content
 
 |Key| data type|default value| description
@@ -514,8 +512,7 @@ The following code snippet creates 2x2 cm sub-plots. All sub-plots are combined 
     color: black;
     padding: 2px;">Figure 18. shows all keys in config\_plot.JSON > weight\_plot > output and gives default values and expected data types</div>
 </center>
-
-
+<br/>
 Table 10: The config\_plot.JSON file: keys in weight/_plot > output
 
 |Key| data type|default value| description
@@ -547,7 +544,7 @@ The following code snippet creates sub-plots for features 7, 8, and 9 and prefer
     color: black;
     padding: 2px;">Figure 19. shows all keys in config\_plot.JSON > preference\_plot > content and gives default values and expected data types</div>
 </center>
-
+<br/>
 Table 11: The config\_plot.JSON file: keys in preference\_plot > content
 
 |Key| data type|default value| description
@@ -574,7 +571,7 @@ The following code snippet uses the state names as labels and the features names
     color: black;
     padding: 2px;">Figure 20. shows all keys in config\_plot.JSON > preference\_plot > legend and gives default values and expected data types</div>
 </center>
-
+<br/>
 Table 12:  The config\_plot.JSON file: keys in preference_plot > legend
 
 |Key| data type|default value| description
@@ -602,7 +599,7 @@ The following code snippet creates 3x3 cm sub-plots. All sub-plots are combined 
     color: black;
     padding: 2px;">Figure 21. shows all keys in config\_plot.JSON > preference\_plot > output and gives default values and expected data types</div>
 </center>
-
+<br/>
 Table 13: The config_plot.JSON file: keys in preference\_plot > output
 
 |Key| data type|default value| description
@@ -658,8 +655,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
 |format|string|"pdf"|file format of the output figure|
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 
-<br>
-<br>
+<br/>
 <center>
     <img style="border-radius: 0.3125em;
     box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
@@ -686,7 +682,7 @@ Table 17: The config_plot.JSON file: keys in pie\_plot > content
 
 #### 2.7.2 config_plot.JSON : pie\_plot > output
 In output, users define the width and the height of the pie plot (width, height, spacing\_horizontal,spacing\_vertical,the fileformat of the output file and the resolution.) 
-<br/>
+
 <br/>
 The following code snippet creates 4*2cm sub-plots in pdf-format with a resolution of 300 pixels per inch. All sub-plots are combined in an overall
 figure.
@@ -701,7 +697,7 @@ figure.
     color: black;
     padding: 2px;">Figure 23. shows all keys in config\_plot.JSON > pie\_plot  and gives default values and expected data types</div>
 </center>
-
+<br/>
 Table 18: The config_plot.JSON file: keys in pie\_plot > content
 
 |Key| data type|default value| description

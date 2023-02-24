@@ -30,7 +30,7 @@
         * 2.5.2 [config_plot.JSON : preference_plot > legend](#prelegend)
         * 2.5.3 [config_plot.JSON : preference_plot > output](#preoutput)
     * 2.6 [How to customize the DIC plots?](#configdic)
-        * 2.6.1 [config_plot.JSON : dic_plot > content](#diccotent)
+        * 2.6.1 [config_plot.JSON : dic_plot > content](#diccontent)
         * 2.6.2 [config_plot.JSON : dic_plot > graphic](#dicgraphic)
         * 2.6.3 [config_plot.JSON : dic_plot > ouput](#dicoutput)
     * 2.7 [How to customize the Pie plots?](#configpie)
@@ -632,7 +632,7 @@ Table 13: The config_plot.JSON file: keys in preference\_plot > output
 ### 2.6 How to customize the DIC plots? <a name="configdic"></a>
 The Deviance Information criterion (DIC) is a measure for the performance of a model, considering both model fit and model complexity. DIC plots visualize the DIC across several models, usually with increasing number of areas, K. Plotting the DIC is only meaningful when several areas*.txt and stats*.txt files from different models are provided in results.
 
-#### 2.6.1 config\_plot.JSON : dic\_plot > content
+#### 2.6.1 config\_plot.JSON : dic\_plot > content <a name="dicontent"></a>
 In content, users can change which models appear in the DIC and how they are ordered (models). Typically, models are ordered from simplest to most complex, e.g. from fewest to most areas. When no models are provided by the user, the DIC is plotted for all models from results. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in.
 <br/>
 <br/>
@@ -645,7 +645,7 @@ Table 14: The config\_plot.JSON file: keys in dic\_plot > content
 |burn_in|number|0.4| fraction of the posterior samples discarded as burn-in|
 |models|array| all models |models that appear in the DIC plot|
 
-#### 2.6.2 config_plot.JSON : dic\_plot > graphic
+#### 2.6.2 config_plot.JSON : dic\_plot > graphic <a name="dicgraphic"></a>
 In graphic, users can change the appearance of the DIC plot. Specifically, they can label the models in the plot (labels) and change whether consecutive DIC values are connected with a line (line_plot) or a scatter plot is used. As a default, the models are labelled in ascending order, starting from 1. 
 <br/>
 <br/>
@@ -658,7 +658,7 @@ Table 15: The config\_plot.JSON file: keys in dic_plot > content
 |labels|array|\*| labels of the models|
 |lline_plot|boolean|true| Connect consecutive DIC values with a line? |
 
-#### 2.6.3 config_plot.JSON : dic\_plot > output
+#### 2.6.3 config_plot.JSON : dic\_plot > output <a name="dicoutput"></a>
 In output, users define the width and the height of the DIC plot (width, height, the file format of the output file and the resolution)
 <br/>
 <br/>
@@ -688,7 +688,7 @@ Table 16: : The config\_plot.JSON file: keys in dic_plot > output
 ### 2.7 How to customize the pie plots?  <a name="configpie"></a>
 The Pie plots show the frequency at which each site appears in each cluster in the posterior distribution. The config\_plot.JSON: pie\_plot has the following sub-keys: content and output.
 
-#### 2.7.1 config_plot.JSON : pie\_plot > content
+#### 2.7.1 config_plot.JSON : pie\_plot > content <a name="piecontent"></a>
 
 In content, users can specify in burn_in which part of the posterior to discardas burn-in
 
@@ -698,7 +698,7 @@ Table 17: The config_plot.JSON file: keys in pie\_plot > content
 | -----------| ---------|-----| ----|
 |burn_in|number|0.2| fraction of the posterior samples discarded as burn-in|
 
-#### 2.7.2 config_plot.JSON : pie\_plot > output
+#### 2.7.2 config_plot.JSON : pie\_plot > output <a name="pieouput"></a>
 In output, users define the width and the height of the pie plot (width, height, spacing\_horizontal,spacing\_vertical,the fileformat of the output file and the resolution.) 
 
 <br/>
@@ -734,21 +734,21 @@ To run sBlots, you need Python (version >=3.7) and three required system librari
 
 ### 3.1 [How to install SBlot]<a name="installation"></a>
 To run sBlot, you need Python (version >=3.7) and three required system libraries: GEOS, GDAL, PROJ.Then you can install sBlot. The exact steps to do this depend on your operating system (due to different ways of installing dependencies). Following are the instructions for Linux, MacOS and Windows.
-#### 3.1.1 Linux (Debian/Ubuntu)
+#### 3.1.1 Linux (Debian/Ubuntu) <a name="Linux"></a>
 To install sBlot, open a terminal window, navigate to the folder where you want to install it
 and follow these steps:
 1. Get the sBlot source code by running git clone https://github.com/derpetermann/sBayes.
 This will create a sBayes directory on your computer.
 2. Navigate to this new directory by running cd sBlot.
 3. Install GEOS, GDAL and PROJ by running sudo apt-get install -y libproj-dev proj-data proj-bin li4. Install sBayes along with some required python libraries by running pip install .
-#### 3.1.2 MacOS
+#### 3.1.2 MacOS <a name="macos"></a>
 On MacOS, we recommend using homebrew to install the required system packages. Open a terminal window, navigate to the folder where you want to install sBlot and follow these
 steps:
 1. Get the sBlot source code by running git clone https://github.com/derpetermann/sBayes.This will create a sBlot directory on your computer.
 2. Navigate to this new directory by running cd sBlot.
 3. Install GEOS, GDAL and PROJ by running brew install proj geos gdal
 4. Install sBlot along with some required python libraries by running pip install .
-#### 3.1.3 Windows
+#### 3.1.3 Windows <a name="window"></a>
 On Windows, we recommend using https://www.anaconda.com/Anaconda to install the required packages. To do this, download Anaconda from https://www.anaconda.com/, open an Anaconda terminal window, navigate to the folder where you want to install sBlot and follow these steps:
 1. Get the sBlot source code by running git clone https://github.com/derpetermann/sBlot.
 This will create a sBayes directory on your computer.

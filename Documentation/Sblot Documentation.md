@@ -17,8 +17,9 @@
     * 2.2 [How to include the original input data of an sBayes analysis?](#configdata)
     * 2.3 [How to customize the maps? ](#configmap)
     	* 2.3.1 [config_plot.JSON : map > geo](#mapgeo)
-                * 2.3.2 [config_plot.JSON : map > content](#mapcontent)
+        
     	* 2.3.3 [config_plot.JSON : map > graphic](#mapgraphic)
+	* 2.3.2 [config_plot.JSON : map > content](#mapcontent)
     	* 2.3.4 [config_plot.JSON : map > legend](#maplegend)
     	* 2.3.5 [config_plot.JSON : map > output](#mapoutput)
     * 2.4 [How to customize the weight plots? ](#configweight)

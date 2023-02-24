@@ -32,7 +32,7 @@
     * 2.6 [How to customize the DIC plots?](#configdic)
         * 2.6.1 [config_plot.JSON : dic_plot > content](#diccotent)
         * 2.6.2 [config_plot.JSON : dic_plot > graphic](#dicgraphic)
-        * 2.6.3 [config_plot.JSON : dic_plot > ouput] (#dicoutput)
+        * 2.6.3 [config_plot.JSON : dic_plot > ouput](#dicoutput)
     * 2.7 [How to customize the Pie plots?](#configpie)
         * 2.7.1 [config_plot.JSON : pie_plot > content](#piecontent)
         * 2.7.2 [config_plot.JSON : pie_plot > output](#pieouput)
@@ -454,7 +454,8 @@ Table 7: The config_plot.JSON file: keys in map > output
 
 ### 2.4 How to customize the weight plots? <a name="configweight"></a>
 Weight plots visualize the posterior densities of the weights per feature: how well does each of the effects – universal preference, inheritance and contact – explain the distribution of the feature in the data? The densities are displayed in a triangular probability simplex, where the left lower corner is the weight for contact, the right lower corner the weight for inheritance, and the upper corner the weight for universal preference. The weight plots of several features are combined into one overall figure. There are three subkeys in the config_plot.JSON: weight\_plots part: content, graphic,and output.
-#### 2.4.1 config_plot.JSON : weight\_plot > content
+	
+#### 2.4.1 config_plot.JSON : weights\_plot > content <a name="weightscontent"></a>
 In content, users specify for which of the features the weights are plotted (features). Users pass the relevant features in an array. For example, [3] generates a weight plot for feature three only; [3, 4, 17] generates weight plots for features three, four and seventeen. When the array is left empty or features are not provided explicitly, the plotting function generates weight plots for all features. Moreover, users can specify in burn_in which part of the posterior to discard as burn-in. 
 <br/>
 <br/>
@@ -479,7 +480,7 @@ The following code snippet creates weight plots for features F5,F6, and F8. The 
 |burn_in|number|0.2|fraction of the posterior samples discarded as burn-in|
 
 
-#### 2.4.2 config_plot.JSON : weight\_plot > legend
+#### 2.4.2 config_plot.JSON : weights\_plot > legend <a name="weightslegend"></a>
 In graphic, users can label of each of the corners in the triangular probability simplex labels. The default labels are ["U", "C", "I"]. The sub-key title adds the feature name as a title for each weight plot. Moreover, users can specify how the sub-plots for single features are combined
 in the overall figure: n_columns gives the number of columns in the overall figure. 
 <br/>
@@ -497,7 +498,7 @@ The following code snippet uses alternative labels and title for each sub-plot.
     padding: 2px;">Figure 17. shows all keys in config\_plot.JSON > weight\_plot > legend and gives default values and expected data types</div>
 </center>
 <br/>
-Table 9: The config\_plot.JSON file: keys in weight\_plot > content
+Table 9: The config\_plot.JSON file: keys in weight\_plot > legend 
 
 |Key| data type|default value| description
 | -----------:| ---------|-----| ----|
@@ -511,7 +512,7 @@ Table 9: The config\_plot.JSON file: keys in weight\_plot > content
 |<font size=2>position</font>|<font size=2>array</font>| <font size=2>[0,1]</font>| <font size=2> position for the title</font>|
 
 
-#### 2.4.3 config_plot.JSON : weight\_plot > output
+#### 2.4.3 config_plot.JSON : weight\_plot > output <a name="weightsouput"></a>
 
 In output, users define the width and the height of each of the sub-plots (width/_subplot, height/_subplot, the file format of the output file and the resolution, n/_columns). 
 <br/>

@@ -202,7 +202,8 @@ The path\_out specifies the output path for different types of diagrams:
     color: black;
     padding: 2px;">Figure 9. shows all keys in config_plot.JSON > results and gives default values and expected data types.</div>
 </center>
-
+<br/>
+	
 <center>Table 1. The config_plot.JSON file: keys in results</center>
 
 |Key| data type | default value | description

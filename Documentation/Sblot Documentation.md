@@ -38,7 +38,7 @@
         * 2.7.2 [config_plot.JSON : pie_plot > output](#pieouput)
 * 3. [Run sBlots](#python)
     * 3.1 [How to install Sblots?](#installation)
-        * 3.1.1 [Linux (Debian/Ubuntu)](#Linux)
+        * 3.1.1 [Linux](#Linux)
         * 3.1.2 [MacOS](#macos)
         * 3.1.3 [Windows](#window)
     * 3.2 [Draw a map](#pythonmap)

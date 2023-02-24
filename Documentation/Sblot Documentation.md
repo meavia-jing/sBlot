@@ -540,11 +540,11 @@ Table 10: The config\_plot.JSON file: keys in weight/_plot > output
 |resolution|resolution|300|resolution of the output figure in pixels per inch|
 |n_columns|number|5| number of columns in the overall plot|
 
-### 2.5 How to customize the preference plot?<a name="configpre"></a>
+### 2.5 How to customize the preference plot? <a name="configpre"></a>
 The Preference plots visualize the posterior preference for each of the states of a feature, either universally, in a family or in a contact area. The appearance of the plot changes depending on the number of states: densities are displayed as ridge plots for two states (see **Figure 6**), , in
 a triangular probability simplex for three states, a square for four states, a pentagon for five,and so on. preference_plot combines the sub-plot for several features (per family, per area or globally) in a single figure
 
-#### 2.5.1 config_plot.JSON : preference\_plot > content
+#### 2.5.1 config_plot.JSON : preference\_plot > content <a name="precontent"></a>
 In content, users specify for which of the features preferences are plotted. Users pass the relevant features in an array. For example, [3] generates preference plots for feature three only; [3, 4, 17] generates preference plots for features three, four and seventeen. When the array is left empty or features are not provided explicitly, the plotting function generates plots for all features. Moreover, users can define which preference to plot, i.e. preference in one of the areas, in one of the families, or universal preference. For example, ["universal", "area\_1", "Arawak"] creates three plots: a plot for universal preference, for preference in area 1, and for preference in the Arawakan family. General, all sub-plots for one preference are combined in a single figure. When preference is not provided explicitly, preference plots are generated for all the areas as default. Finally, users can specify in burn\_in which part of the posterior to discard as burn-in.
 <br/>
 <br/>
@@ -571,7 +571,7 @@ Table 11: The config\_plot.JSON file: keys in preference\_plot > content
 |burn_in|number|0.2| fraction of the posterior samples discarded as burn-in|
 
 
-#### 2.5.2 config_plot.JSON : preference\_plot > legend
+#### 2.5.2 config_plot.JSON : preference\_plot > legend <a name="prelegend"></a>
 
 In legend, users can change the appearance of the preference plot. Specifically, they can use the state names of the features to label both ends of the ridge, or the corners of the probability simplex in case there are more than two states (labels). The sub-key title adds the feature name as a title for each preference plot. Moreover, users can specify how the sub-plots for single features are combined in the overall figure. 
 <br/>
@@ -600,7 +600,8 @@ Table 12:  The config\_plot.JSON file: keys in preference_plot > legend
 |<font size=2>add</font>|<font size=2>boolean</font>|<font size=2>ture</font>| <font size=2>whether to add the title</font>|
 |<font size=2>font\_<br>size</font>|<font size=2>number</font>| <font size=2>6 </font>| <font size=2>font size for the title</font>|
 |<font size=2>position</font>|<font size=2>array</font>| <font size=2>[0,1]</font>| <font size=2> position for the title</font>|
-#### 2.5.3 config_plot.JSON : preference\_plot > output
+	
+#### 2.5.3 config_plot.JSON : preference\_plot > output <a name="preoutput"></a>
 In output, users define the width and the height of each of the sub-plots (width\_subplot, height\_subplot, the file format of the output file, the resolution, and n\_columns). n\_columns gives the number of columns in the overall figure.
 <br/>
 <br/>

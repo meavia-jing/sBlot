@@ -227,7 +227,7 @@ In the config\_plot.JSON: data part, the key data points to the empirical data w
     color: black;
     padding: 2px;">Figure 10. shows all keys in config_plot.JSON > data and gives default values and expected data types.</div>
 </center>
-
+<br/>
 <center>Table 2: The config_plot.JSON file: keys in data
 </center>
 

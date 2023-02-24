@@ -7,7 +7,7 @@
     * 1.1 [Maps](#map)
         * 1.1.1 [Line map](#line)
     	* 1.1.2 [Dot map](#dot)
-    	* 1.1.3 [Inverse Distance Weighting(IDW) map](#idw)
+    	* 1.1.3 [Inverse Distance Weighting (IDW) map](#idw)
     * 1.2 [Weight plots](#weight)
     * 1.2 [Preference plots](#preference)
     * 1.3 [DIC plots](#DIC)
@@ -512,7 +512,7 @@ Table 9: The config\_plot.JSON file: keys in weight\_plot > legend
 |<font size=2>position</font>|<font size=2>array</font>| <font size=2>[0,1]</font>| <font size=2> position for the title</font>|
 
 
-#### 2.4.3 config_plot.JSON : weight\_plot > output <a name="weightsouput"></a>
+#### 2.4.3 config_plot.JSON : weight\_plot > output <a name="weightsoutput"></a>
 
 In output, users define the width and the height of each of the sub-plots (width/_subplot, height/_subplot, the file format of the output file and the resolution, n/_columns). 
 <br/>

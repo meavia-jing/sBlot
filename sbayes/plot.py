@@ -28,6 +28,7 @@ import numpy as np
 from numpy.typing import NDArray
 import seaborn as sns
 import colorsys
+from fnmatch import fnmatch
 
 from descartes import PolygonPatch
 from matplotlib import patches
@@ -115,16 +116,19 @@ class Plot:
             a dict that contains the  path of cluster and stats file under the datapath folder seperately.
         '''
         namelist = []
+        pattern = "*.txt"
         for filepath, dirnames, filenames in os.walk(datapath):
             for filename in filenames:
-                namelist.append(os.path.join(filepath, filename))
+                if(fnmatch(filename, pattern)):
+                    namelist.append(os.path.join(filepath, filename))
 
         stats = []
         cluster = []
+
         for item in namelist:
             if item.__contains__("stats"):
                 stats.append(item)
-            elif item.__contains__("area"):
+            else:
                 cluster.append(item)
 
         cluster = sorted(cluster)
@@ -180,8 +184,6 @@ class Plot:
 
         input_main_paths = self.config['results']['path_in']
         input_paths = self.get_datapath(input_main_paths)
-        print(input_paths["clusters"])
-        print(input_paths["stats"])
 
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]

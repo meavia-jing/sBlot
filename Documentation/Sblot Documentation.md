@@ -16,6 +16,11 @@
     * 2.1 [How to load the results of an sBayes analysis?  How to save the plots?](#configresult)
     * 2.2 [How to include the original input data of an sBayes analysis?](#configdata)
     * 2.3 [How to customize the maps? ](#configmap)
+	* 2.3.1 [config_plot.JSON : map > geo](#mapgeo)
+    	* 2.3.2 [config_plot.JSON : map > content] (#mapcontent)
+    	* 2.3.3 [config_plot.JSON : map > graphic]( #mapgraphic)
+    	* 2.3.4 [config_plot.JSON : map > legend] (#maplegend)
+    	* 2.3.5 [config_plot.JSON : map > output] (#mapoutput)
     * 2.4 [How to customize the weight plots? ](#configweight)
     * 2.5 [How to customize the preference plots? ](#configpre)
     * 2.6 [How to customize the DIC plots?](#configdic)
@@ -248,7 +253,7 @@ The config_plot.JSON:map is to create a map of the posterior distribution of con
 - legend: adds a legend and/or an overview map
 - output: defines the output format, size and resolution
 
-#### 2.3.1 config_plot.JSON : map > geo
+#### 2.3.1 config_plot.JSON : map > geo <a name="mapgeo"></a>
 
 In geo, users can set the cartographic projection of the map, add base maps and define the map extent. In map\_projection users provide either a PROJ string or an EPSG code to define the coordinate reference system (CRS) of the map. If no CRS is provided, sBlot uses the CRS of the input data. In base\_map, users provide the file paths to polygon and line geometries which are displayed as base maps. base\_map has three sub\-keys: geojson\_polygon, which expects a file path to a GeoJSON polygon geometry, geojson\_line, which expects a file path to a GeoJSON line geometry, and add, which adds the base map when set to true and omits it if set to false (alternatively, the base\_map key can simply be left empty). Finally, in map\_extent
 users give the map extent in the x-direction (x) and y-direction (y) in the CRS of the output map. If no extent is provided, the plotting function uses the bounding box of the data plus an offset as map extent. 
@@ -281,7 +286,7 @@ expected data types.</div>
 |<font size=2>y</font>| <font size=2>array</front>| <font size=2>\*<font> |<font size=2>Range of the extent in y\-direction</font>|
 
 
-#### 2.3.2 config_plot.JSON :  map > content
+#### 2.3.2 config_plot.JSON :  map > content  <a name="mapcontent"></a>
 The key content defines the map type and all map items. User can choose to draw Distance Weighting map("idw\_map"), or line and dot map("density\_map", or "consensus\_map").For the line and dot map, users can either visualize the full posterior density of all contact areas ("density\_map") , a high-level summary of the posterior--the consensus areas ("consensus\_map"). The density map shows all languages that are in the posterior. Line width indicates how often two languages appear together in the same area in the posterior. For consensus areas, the map is generalized. "min\_posterior\_frequency" defines the degree of generalization. For example, a "min\_posterior\_frequency" of 1 retains only those language which are in all posterior contact areas, while a value of 0.3 retains languages which appear in at least 30% of the posterior, preserving more of the posterior uncertainty. After generalization, all remaining languages are connected with a Gabriel graph.With plot\_families users can visualize the language families, burn_in specifies which part of the posterior is discarded as burn-in.
 
 <br/>
@@ -311,7 +316,7 @@ The following code snippet creates a consensus map showing languages which are a
 |burn_in|number|0.2| fraction of posterior samples discarded as burn-in|
 
 
-#### 2.3.3 config_plot.JSON : map > graphic
+#### 2.3.3 config_plot.JSON : map > graphic  <a name="mapgraphic"></a>
 In graphic, users can change the appearance of the individual map items, including the languages (languages), the posterior areas (clusters), the families (families) and the base map(base\_map). Alternatively, users can leave all parameters untouched, in which case the default design is used. The key (languages) tunes how the languages are displayed on the map: the sub\-key size changes the size of the point markers, color changes their color, and (labels) adds labels. For reasons of readability, on the map labels are shown as numeric shorthand notations, for which users can output a correspondence table (see key (output)). The (clusters) key has four sub-keys: users can change the size of the point markers (point\_size), set the color of each contact area (color), and change the width（line\_width) and the transparency (alpha) of the lines connecting the languages in an area. In families, users can change the color and the shape of the family polygons. For a small shape value, each language is assigned to their own circular polygon. Users can set the size of this polygon (size). When the shape value is increased, the family polygons are more and more generalized, such that neighbouring languages from the same family are aggregated to larger polygons using alpha shapes. These polygons have a buffer (in map units). For good results without overlapping polygons expect to tweak the shape and the buffer values iteratively. The key base\_map defines the appearance of the base map polygons (polygon – with sub-keys color, outline\_color, outline\_width, and idw_resolution and the base map lines (line – with sub-keys color and width). 
 <br/>
 The following code snippet creates a map combinng line and dot graph. The thickness of the line show the frequency of two languages gather together, and the size of dot shows the frequency of languages in an area 
@@ -358,7 +363,7 @@ The following code snippet creates a map combinng line and dot graph. The thickn
 | <font size=1>width</font>| <font size=1>number</front>| <font size=1>1<font>|<font size=1>width of the lines</font>|
 
 
-#### 2.3.4 config_plot.JSON : map > legend
+#### 2.3.4 config_plot.JSON : map > legend  <a name="maplegend"></a>
 
 In legend, users can add legend items to the map or remove them. When no legend item is provided the default legend is used. There a five legend items: a legend for the posterior contact areas (clusters), a legend for the lines in a contact area (lines), a legend for the families (families), a correspondence table (correspondence) and an overview map (overview). For each of these, users can decide whether or not to add the item (add) and where to place it on the map canvas (position) (except for the correspondence table will always be placed below the map). The position is given for the lower-left corner of the legend item relative to the lower-left corner of the image and the map extant. For example, [0.1, 0.3] means that the legend item is located 10% of the map width to the right and 30% of the map height up, relative to the lower-left corner of the map. 
 <br/>
@@ -412,7 +417,7 @@ The following code snippet adds a legend item for clusters and changes its posit
 | <font size=2>show_all</font>| <font size=2>boolean</front>| <font size=2>true<font> |<font size=2> add the names of all languages in correspondence table?|
 
 
-#### 2.3.5 config_plot.JSON : map > output
+#### 2.3.5 config_plot.JSON : map > output  <a name="mapoutput"></a>
 In output, users define the width and the height of the output figure, its file format and resolution. The following code snippet creates a figure of size 14x10cm in pdf-format with a resolution of 400 pixels per inch.
 
 <center>

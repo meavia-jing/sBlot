@@ -1,15 +1,15 @@
 {
 	"results": {
-		"path_in":"results/experiment1",
+		"path_in":"results/experiment2",
 		"path_out": "results/plots"
 	}, 
 	"data": {
-		"features": "data/features/features.csv",
-		"feature_states": "data/features/feature_states.csv",
-		"projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m"},
+		"features": "data/south_america/features.csv",
+		"feature_states": "data/south_america/feature_states.csv",
+		"projection": "+proj=eqdc +lat_0=-32 +lon_0=-60 +lat_1=-5 +lat_2=-42 +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs"},
 	"map": {
 		"geo": {
-            "map_projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m",
+            "map_projection": "+proj=eqdc +lat_0=-32 +lon_0=-60 +lat_1=-5 +lat_2=-42 +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs",
 			"base_map": {
 				"add": true,
 				"geojson_river": "data/map/rivers_lake.geojson",
@@ -79,19 +79,15 @@
 				"add": true,
 				"extent": {
 					"x": [
-						-2000000,
-						2500000
 					],
 					"y": [
-						400000, 
-						4300000
 					]
 				},
 				"width": 3,
 				"height": 3,
 				"position": [
 					0.01,
-					0.63
+					0.005
 				]
 			},
 			"clusters": {
@@ -117,9 +113,9 @@
 			},
 			"correspondence": {
 				"add": true,
-				"font_size": 12,
+				"font_size": 6,
 				"table_height": 0.2,
-				"n_columns": 3,
+				"n_columns": 5,
 				"color_labels": true,
 				"show_all": true
 			}
@@ -221,7 +217,7 @@
 	},
 	"feature_plot": {
 		"content": {
-			"features": ["F1"]
+			"features": ["F1","F18"]
 		},
 		"legend": {
 			"labels": {

@@ -108,7 +108,7 @@ class Plot:
     # Configure the parameters
     ####################################
     @staticmethod
-    def get_datapath(datapath:str):
+    def get_datapath(datapath: str):
         '''
         Args
             datapath(str): the path of test data
@@ -117,6 +117,7 @@ class Plot:
         '''
         namelist = []
         pattern = "*.txt"
+
         for filepath, dirnames, filenames in os.walk(datapath):
             for filename in filenames:
                 if(fnmatch(filename, pattern)):
@@ -126,10 +127,13 @@ class Plot:
         cluster = []
 
         for item in namelist:
-            if item.__contains__("stats"):
+            if "stats" in item:
+
                 stats.append(item)
-            else:
+            elif "cluster" in item:
+
                 cluster.append(item)
+
 
         cluster = sorted(cluster)
         stats = sorted(stats)
@@ -182,13 +186,15 @@ class Plot:
         self.path_features = fix_relative_path(self.config['data']['features'], self.base_directory)
         self.path_feature_states = fix_relative_path(self.config['data']['feature_states'], self.base_directory)
 
-        input_main_paths = self.config['results']['path_in']
+        input_main_paths = fix_relative_path(path=self.config['results']['path_in'],
+                                             base_directory=self.base_directory)
+
+
         input_paths = self.get_datapath(input_main_paths)
+
 
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
-
-
 
 
 
@@ -1093,7 +1099,7 @@ class Plot:
         # Visualizes language families
         if cfg_content['plot_families']:
             logging.warning('plotting families is not currently supported.')
-            # self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
+            #self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
 
         # Add main legend
         if cfg_legend['lines']['add']:
@@ -1434,7 +1440,7 @@ class Plot:
     def plot_weights(self, results: Results, file_name: PathLike):
         print('Plotting weights...')
 
-        cfg_weights = self.config['weight_plot']
+        cfg_weights = self.config['weights_plot']
         feature_subset = cfg_weights['content']['features']
         weights = results.weights
         if feature_subset:
@@ -1969,7 +1975,7 @@ class Plot:
                     dpi=cfg_pie['output']['resolution'], format=file_format)
         plt.close(fig)
 
-    ############### inverse distance weights interpolation ############
+    ############### Inverse Distance Weights interpolation ############
     ##################################################################
     def grid_bounds(self,geom, delta):
         '''
@@ -2075,7 +2081,7 @@ class Plot:
     def polygon_height(polygon: shapely.geometry.polygon.Polygon):
         return polygon.bounds[3] - polygon.bounds[1]
 
-    def cal_idw(self, extentpoly, point_rgb, delta, id_power):
+    def cal_idw(self, extentpoly, point_rgb, delta, idw_power, background_weight):
         grid = self.partition(extentpoly, delta)
         grid = gpd.GeoDataFrame(geometry=gpd.GeoSeries(grid))
 
@@ -2087,7 +2093,7 @@ class Plot:
         # diagonal of the whole map away from each grid cell. Seems to give visually
         # pleasing results in the Balkans example.
         dist_diag = sqrt(bbox_width ** 2 + bbox_height ** 2)
-        background_weight = 1 / ((dist_diag / 8) ** id_power + 1)
+        background_weight = background_weight / ((dist_diag / 8) ** idw_power + 1)
 
         # calculating the idw color for the entire grid
         grid_centroids = grid.geometry.centroid
@@ -2104,7 +2110,7 @@ class Plot:
                 longs=x,
                 lats=y,
                 d_values=point_rgb[c].to_numpy(),
-                id_power=id_power,
+                id_power=idw_power,
                 background_weight=background_weight,
                 background_value=255
             ).astype(int)
@@ -2125,6 +2131,7 @@ class Plot:
         cfg_content = self.config['map']['content']
         cfg_geo = self.config['map']['geo']
         cfg_graphic = self.config['map']['graphic']
+        cfg_legend = self.config['map']['legend']
         cfg_output = self.config['map']['output']
 
         fig, ax = plt.subplots(figsize=(cfg_output['width'],
@@ -2134,6 +2141,8 @@ class Plot:
 
         # Get extent
         extent = self.get_extent(cfg_geo, locations_map_crs)
+
+
         bbox = self.compute_bbox(extent)
         extent_file = self.add_background_map(bbox, cfg_geo, cfg_graphic, ax)
         ploys = extent_file['geometry']
@@ -2142,14 +2151,12 @@ class Plot:
 
         ## get_point_frequency
         cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
-        # if (len(results.clusters)> len(cfg_graphic['clusters']['color'])):
-        #     color_for_freq = np.array([ (colors.to_hex(x)) for x in color_for_freq])
 
         # languages which are below the frequency threshold are colored  white
         indices = np.where(in_cluster_point == False)[0]
         color_for_freq[indices] = '#ffffff'
-   
 
+        ## convert rgb to hex
         red,green,blue = self.rgb_color(color_for_freq)
         df = pd.DataFrame({
             'x': locations_map_crs[:, 0],
@@ -2158,31 +2165,90 @@ class Plot:
             'green': green,
             'blue': blue
         })
+        #convert languange point to geopandas
         point_geo = gpd.GeoDataFrame(df, geometry=df.apply(lambda row: geometry.Point(row.x, row.y), axis=1))
-        delta = cfg_graphic["base_map"]["polygon"]["idw_resolution"]
-        idw_grid = self.cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, id_power=2)
 
+        delta = cfg_content["idw_resolution"]
+        idw_power = cfg_content["idw_power"]
+        idw_background_weight = cfg_content["idw_background_weight"]
+        idw_grid = self.cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, idw_power=idw_power, background_weight=idw_background_weight)
+
+        # Style the axes
+        self.style_axes(extent, ax)
+
+        # Add a base map
+        self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
+
+       ### plot the idw map
+        idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
+        point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
+
+        ## get the color for different contact area
         cluster_colors = self.cluster_color(results, cfg_graphic)
-
+        ## get cluster labels and contact cluster legend
         cluster_labels = []
+        #cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
         for i, cluster in enumerate(results.clusters):
             # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
             in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
 
-        idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
-        point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
+
+       ### add the number lable for each language on mqp
         colorOn = False
         if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
             self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, colorOn, ax)
 
+        # Visualizes language families
+        #if cfg_content['plot_families']:
+            #logging.warning('plotting families is not currently supported.')
+            #self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
+
+            # This adds an overview map
+        if cfg_legend['overview']['add']:
+            self.add_overview_map(locations_map_crs, extent, cfg_geo, cfg_graphic, cfg_legend, ax)
+
+        if cfg_legend['correspondence']['add'] and cfg_graphic['languages']['label']:
+            if cfg_content['type'] == "density_map":
+                cluster_labels = [self.objects.indices]
+            if any(len(labels) > 0 for labels in cluster_labels):
+                self.add_correspondence_table(cluster_labels, cluster_colors, cfg_legend, ax)
+
+
         # Match the extent of x- and y-axis to the bounding-box of the grid
         plt.xlim(bbox.bounds[0], bbox.bounds[2])
         plt.ylim(bbox.bounds[1], bbox.bounds[3])
-        file_format = cfg_output['format']
 
+        file_format = cfg_output['format']
         fig.savefig( self.path_plots["map"]/ f"{file_name}.{file_format}", bbox_inches='tight',dpi=cfg_output['resolution'], format=file_format)
+
+
+    ############### Feature map ############
+    ##################################################################
+    def plot_features(self, results: Results, file_name: PathLike):
+        print('Plotting features...')
+
+        cfg_features = self.config['feature_plot']
+        feature_subset = cfg_features['content']['features']
+        locations_map_crs = self.reproject_to_map_crs(self.config['data']['projection'])
+
+        acq_features =results.feature_names
+        if feature_subset:
+            acq_features = feature_subset
+
+        feature_data = read_data_csv(self.path_features)
+
+        for item in acq_features:
+            list = feature_data[item].tolist()
+            dic = {x: list.count(x) for x in list}
+            print(dic)
+
+
+
+
+
+
 
 
 

@@ -1,15 +1,7 @@
 {
 	"results": {
 		"path_in": {
-			"clusters": [
-				"./clusters_K1_0.txt",
-				"./clusters_K3_0.txt"
-			],
-			"stats": [
-				"./stats_K1_0.txt",
-				"./stats_K3_0.txt"
-			]
-		},
+			"clusters": "./experiment2",
 		"path_out":  "../results"
 	},
 	"data": {
@@ -19,7 +11,7 @@
 	},
 	"weights_plot": {
 		"content": {
-			"features": ["F1"],
+			"features": ["F5","F6","F8"],
 			"burn_in": 0
 		},
 		"legend": {

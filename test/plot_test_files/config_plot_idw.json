@@ -1,15 +1,6 @@
 {
 	"results": {
-		"path_in": {
-			"clusters": [
-				"./clusters_K1_0.txt",
-				"./clusters_K3_0.txt"
-			],
-			"stats": [
-				"./stats_K1_0.txt",
-				"./stats_K3_0.txt"
-			]
-		},
+		"path_in": "experiment2",
 		"path_out":  "../results"
 	},
 	"data": {
@@ -20,12 +11,18 @@
 	"map": {
 		"content": {
 			"type": "idw_map",
-			"min_posterior_frequency": 0.3,
 			"plot_families": false,
+			"labels": "all",
+			"min_posterior_frequency": 0.9,
 			"burn_in": 0.2
 		},
 		"geo": {
 			"map_projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m",
+			"base_map": {
+				"add": true,
+				"geojson_river": "/Users/zhanganjing/Downloads/RA/SbayesPlot/test/plot_test_files/map/rivers_lake.geojson",
+				"geojson_map": "/Users/zhanganjing/Downloads/RA/SbayesPlot/test/plot_test_files/map/land.geojson"
+			},
 			"extent": {
 			}
 		},
@@ -65,7 +62,7 @@
 					"color": "white",
 					"outline_color": "black",
 					"outline_width": 1,
-					"idw_resolution": 80000
+					"idw_resolution": 50000
 				},
 				"line": {
 					"color": "skyblue",

@@ -1,15 +1,6 @@
 {
 	"results": {
-		"path_in": {
-			"clusters": [
-				"./clusters_K1_0.txt",
-				"./clusters_K3_0.txt"
-			],
-			"stats": [
-				"./stats_K1_0.txt",
-				"./stats_K3_0.txt"
-			]
-		},
+		"path_in": "./experiment2",
 		"path_out": "../results"
 	},
 	"data": {

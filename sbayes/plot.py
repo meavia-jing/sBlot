@@ -46,6 +46,7 @@ from shapely.ops import unary_union
 from math import sqrt, floor, ceil
 from shapely.geometry import Polygon
 from shapely.prepared import prep
+from collections import OrderedDict
 
 from sbayes.processpost import compute_dic
 from sbayes.results import Results
@@ -176,7 +177,8 @@ class Plot:
                            "map":self.path_plots_main+'/map',
                            "pie":self.path_plots_main+'/pie',
                            "preference":self.path_plots_main+'/preference',
-                           "weights":self.path_plots_main+'/weights'}
+                           "weights":self.path_plots_main+'/weights',
+                           'featureplots':self.path_plots_main+'/featureplots'}
 
         for name,item in self.path_plots.items():
             if not os.path.exists(item):
@@ -2229,26 +2231,98 @@ class Plot:
     def plot_features(self, results: Results, file_name: PathLike):
         print('Plotting features...')
 
-        cfg_features = self.config['feature_plot']
-        feature_subset = cfg_features['content']['features']
-        locations_map_crs = self.reproject_to_map_crs(self.config['data']['projection'])
+        cfg_geo = self.config['map']['geo']
+        cfg_graphic = self.config['map']['graphic']
 
-        acq_features =results.feature_names
+        cfg_features = self.config['feature_plot']
+        feature_content = cfg_features['content']
+        feature_legend = cfg_features['legend']
+        feature_output = cfg_features['output']
+
+        ## get features used to plot the map
+        feature_subset = feature_content['features']
+        acq_features = results.feature_names
         if feature_subset:
             acq_features = feature_subset
 
+        ## read the data from feature.csv
         feature_data = read_data_csv(self.path_features)
+        feature_data = feature_data.fillna('Null')
+        ## get all the feature names and all the unique values in the dataframe
+        cols = list(feature_data.columns[5:])
+
+
+        unique_value = pd.concat([feature_data[col] for col in cols]).unique()
+
+
+        ## get color for each value and store them in a dict
+        allfeature_colors = self.get_cluster_colors(len(unique_value))
+
+        feature_dic = {unique_value[i]: allfeature_colors[i] for i in range(len(unique_value))}
+        feature_dic['Null'] = '#000000'
+
+        # Initialize the plot
+        fig, ax = plt.subplots(figsize=(feature_output['width'],feature_output['height']),
+                               constrained_layout=True)
+
+        locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
+
+        # Get extent
+        extent = self.get_extent(cfg_geo=cfg_geo, locations=locations_map_crs)
+
+        # Initialize the map
+        self.initialize_map(locations_map_crs, cfg_graphic, ax)
+
+        # Style the axes
+        self.style_axes(extent, ax)
+
+        # Add a base map
+        self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
+        file_format = feature_output['format']
 
         for item in acq_features:
-            list = feature_data[item].tolist()
-            dic = {x: list.count(x) for x in list}
-            print(dic)
+            print("Plotting Feature", item)
+            value_list = np.array(feature_data[item].tolist())
+            feature_colors = [feature_dic[i] for i in value_list]
+            unique_value = np.unique(value_list)
+            print(unique_value)
+            for value in unique_value:
+                index = np.where(value_list == value)
+                if value=='Null':
+                    ax.scatter(locations_map_crs.T[0][index],locations_map_crs.T[1][index], s=50, color= feature_dic[value],
+                               marker='x',label= value)
+                else:
+                    ax.scatter(locations_map_crs.T[0][index], locations_map_crs.T[1][index], s=50, color=feature_dic[value],
+                               marker='o', label=value)
 
+            ## add legend
+            if feature_legend["add"] == True:
+                handles, labels = ax.get_legend_handles_labels()
+                print('first',labels)
+                handle_list, label_list = [], []
+                for handle, label in zip(handles, labels):
+                    if label not in label_list and label in unique_value:
+                        handle_list.append(handle)
+                        label_list.append(label)
+                print('latter')
+                print(label_list)
+                #
+                fontsize = feature_legend["font_size"]
+                ax.legend(handle_list, label_list, labelspacing=1, title='Type', loc='center left',
+                            fontsize= fontsize, title_fontsize= fontsize)
+            ##  add language label
+            cluster_labels = []
+            if cfg_graphic['languages']['label']:
+                cluster_labels.append(list(self.objects.indices))
+            Coloron = True
+            if feature_content['labels'] == 'all' or feature_content['labels'] == 'in_cluster':
+                self.add_labels(feature_content, locations_map_crs, cluster_labels, feature_colors, extent, Coloron, ax)
 
-
-
-
-
+           #### save image
+            file_name = 'Feature ' + item
+            fig.savefig(self.path_plots['featureplots'] / f"{file_name}.{file_format}", bbox_inches='tight',
+                        dpi=feature_output['resolution'], format=file_format)
+            plt.close(fig)
 
 
 

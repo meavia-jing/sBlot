@@ -217,31 +217,19 @@
 	},
 	"feature_plot": {
 		"content": {
-			"features": ["F1","F18"]
+			"type": "density",
+			"labels": "all",
+			"features": []
 		},
 		"legend": {
-			"labels": {
-				"add": true,
-				"font_size": 8,
-				"names": [
-					"contact",
-					"universal",
-					"inheritance"
-				]
-			},
-			"title": {
-				"add": true,
-				"font_size": 6,
-				"position": [
-					0,
-					1
-				]
-			}
+			"add": true,
+			"font_size":16
 		},
 		"output": {
+			"width": 14,
+            "height": 10,
 			"format": "pdf",
 			"resolution": 300
 		}
-
 	}
 }

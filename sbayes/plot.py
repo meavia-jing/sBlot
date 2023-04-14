@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import numpy as np
 from numpy.typing import NDArray
-import seaborn as sns
+import random
 import colorsys
 from fnmatch import fnmatch
 
@@ -42,6 +42,7 @@ from scipy.spatial import Delaunay
 from shapely import geometry
 from shapely.ops import cascaded_union, polygonize
 from shapely.ops import unary_union
+import seaborn as sns
 
 from math import sqrt, floor, ceil
 from shapely.geometry import Polygon
@@ -56,7 +57,8 @@ from sbayes.util import gabriel_graph_from_delaunay
 from sbayes.util import parse_cluster_columns
 from sbayes.util import read_data_csv
 from sbayes.util import PathLike
-from sbayes.load_data import Objects
+from sbayes.load_data import Objects,Data
+from sbayes.experiment_setup import Experiment
 from sbayes import config as config_package
 from sbayes import maps as maps_package
 
@@ -131,7 +133,7 @@ class Plot:
             if "stats" in item:
 
                 stats.append(item)
-            elif "cluster" in item:
+            elif "clusters" in item:
 
                 cluster.append(item)
 
@@ -2183,10 +2185,20 @@ class Plot:
 
        ### plot the idw map
         idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
+
+        # markerlist = []
+        # print("len",len(locations_map_crs))
+        # for i in range(len(locations_map_crs)):
+        #     markerlist.append("^")
         point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
+
+        # for xy, c,m in zip(locations_map_crs,color_for_freq,markerlist):
+        #     print(xy[0],xy[1],c,m)
+        #     #ax.scatter(xp,yp,color='black',marker=m)
 
         ## get the color for different contact area
         cluster_colors = self.cluster_color(results, cfg_graphic)
+
         ## get cluster labels and contact cluster legend
         cluster_labels = []
         #cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
@@ -2228,97 +2240,155 @@ class Plot:
 
     ############### Feature map ############
     ##################################################################
-    def plot_features(self, results: Results, file_name: PathLike):
+    @staticmethod
+    def get_family_shapes(n_family: int, custom_shapes=None):
+        # markerlist 15 ('o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X')
+        usefulmarkers = list(Line2D.filled_markers)
+        ## '8' and 'o' is too similar in map
+        usefulmarkers.remove('8')
+        if custom_shapes is None and n_family<= len(usefulmarkers):
+            print(f'No colors for clusters provided in featuremap>graphic>clusters>mark'
+                  f'in the config plot file. I am using default colors instead.')
+            return list(usefulmarkers.keys())[:n_family]
+        elif len(custom_shapes) <= n_family and n_family <= len(usefulmarkers):
+            left_markers = [item for item in usefulmarkers if item not in custom_shapes]
+            addition_num = n_family - len(custom_shapes)
+            additional = random.sample(left_markers,addition_num)
+            # print("custom_shapes",custom_shapes)
+            # print("additional",additional)
+            return custom_shapes+additional
+        elif len(custom_shapes) >= n_family and n_family <= len(usefulmarkers):
+            return custom_shapes
+        else:
+            print("Too many families; Can not provide enough shapes")
+
+    def plot_featuremap(self):
         print('Plotting features...')
 
         cfg_geo = self.config['map']['geo']
         cfg_graphic = self.config['map']['graphic']
 
-        cfg_features = self.config['feature_plot']
+        cfg_features = self.config['featuremap']
         feature_content = cfg_features['content']
         feature_legend = cfg_features['legend']
+        feature_graphic = cfg_features['graphic']
         feature_output = cfg_features['output']
 
-        ## get features used to plot the map
-        feature_subset = feature_content['features']
-        acq_features = results.feature_names
-        if feature_subset:
-            acq_features = feature_subset
-
-        ## read the data from feature.csv
+        ## providing features to plot the map
+        ## read the data from csv
         feature_data = read_data_csv(self.path_features)
-        feature_data = feature_data.fillna('Null')
+        feature_data['family'] = feature_data['family'].fillna("Isolates")
+
+        ### get the subset of language by the language family that users want to plot
+        if "family" in feature_content['confounder']:
+            acq_family = set(feature_data['family'].to_list())
+
+
+            ## get color for each value and store them in a dict
+            familyshapes_dic = feature_graphic['marker']
+            custom_familyvalues = list(familyshapes_dic.keys())
+            custom_familyshape = list(familyshapes_dic.values())
+
+            ## get additional family
+            allfeature_shapes = self.get_family_shapes(len(acq_family), custom_shapes=custom_familyshape)
+
+            ### add additional feature and its color to feature_graphic
+            if len(custom_familyvalues) <= len(acq_family):
+                left_family = [item for item in acq_family if item not in custom_familyvalues]
+                left_shapes = [ss for ss in allfeature_shapes if ss not in custom_familyshape]
+                for i,j in zip(left_family,left_shapes):
+                    familyshapes_dic[i] = j
+            print(familyshapes_dic)
+
+       ## get feature name from user and default color
+        feature_name = [x for x in feature_data.columns if x not in ['name','id','x','y','family']]
+        acq_features = feature_content['features']
+        if not acq_features:
+            acq_features = feature_name
+
+
         ## get all the feature names and all the unique values in the dataframe
-        cols = list(feature_data.columns[5:])
-
-
-        unique_value = pd.concat([feature_data[col] for col in cols]).unique()
-
+        feature_data = feature_data.fillna('Null')
+        unique_value = pd.concat([feature_data[col] for col in feature_name]).unique()
 
         ## get color for each value and store them in a dict
-        allfeature_colors = self.get_cluster_colors(len(unique_value))
+        featurecolor_dic = feature_graphic['color']
+        custom_statecolors = list(feature_graphic['color'].values())
+        custom_statevalues = list(feature_graphic['color'].keys())
+        allfeature_colors = self.get_cluster_colors(len(unique_value),custom_colors= custom_statecolors)
+        ### add additional feature and its color to feature_graphic
+        if len(custom_statevalues) <= len(acq_features):
+            left_color = [item for item in allfeature_colors if item not in custom_statecolors]
+            left_state = [item for item in unique_value if item not in custom_statevalues]
+            for i, j in zip(left_state, left_color):
+                featurecolor_dic[i] = j
 
-        feature_dic = {unique_value[i]: allfeature_colors[i] for i in range(len(unique_value))}
-        feature_dic['Null'] = '#000000'
 
-        # Initialize the plot
-        fig, ax = plt.subplots(figsize=(feature_output['width'],feature_output['height']),
-                               constrained_layout=True)
-
-        locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
 
         # Get extent
+        locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
+
         extent = self.get_extent(cfg_geo=cfg_geo, locations=locations_map_crs)
 
-        # Initialize the map
-        self.initialize_map(locations_map_crs, cfg_graphic, ax)
-
-        # Style the axes
-        self.style_axes(extent, ax)
-
-        # Add a base map
-        self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
-        file_format = feature_output['format']
-
         for item in acq_features:
-            print("Plotting Feature", item)
-            value_list = np.array(feature_data[item].tolist())
-            feature_colors = [feature_dic[i] for i in value_list]
-            unique_value = np.unique(value_list)
-            print(unique_value)
-            for value in unique_value:
-                index = np.where(value_list == value)
-                if value=='Null':
-                    ax.scatter(locations_map_crs.T[0][index],locations_map_crs.T[1][index], s=50, color= feature_dic[value],
-                               marker='x',label= value)
-                else:
-                    ax.scatter(locations_map_crs.T[0][index], locations_map_crs.T[1][index], s=50, color=feature_dic[value],
-                               marker='o', label=value)
+            # Initialize the plot
+            fig, ax = plt.subplots(figsize=(feature_output['width'], feature_output['height']))
+            #Initialize the map
+            self.initialize_map(locations_map_crs, cfg_graphic, ax)
 
-            ## add legend
+            #Style the axes
+            self.style_axes(extent, ax)
+
+            #Add a base map
+            self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
+
+            print("Plotting Feature", item)
+
+            colors_forfeature= [featurecolor_dic[i] for i in feature_data[item].unique()]
+            markers_forfeature = [familyshapes_dic[j] for j in feature_data["family"].unique()]
+            feature_data["x"] = locations_map_crs.T[0]
+            feature_data["y"] = locations_map_crs.T[1]
+
+            if feature_content["plot_feature"] == True and feature_content["plot_family"] == True:
+                sns.scatterplot(data=feature_data, x='x', y='y',style='family',markers= markers_forfeature,hue=item, palette=colors_forfeature,legend="brief",ax=ax)
+            elif feature_content["plot_feature"] == True and feature_content["plot_family"] == False:
+                sns.scatterplot(data=feature_data, x='x', y='y',hue=item, palette=colors_forfeature,legend="brief",ax=ax)
+            elif feature_content["plot_feature"] == False and feature_content["plot_family"] == True:
+                sns.scatterplot(data=feature_data, x='x', y='y',style='family',markers= markers_forfeature,legend="brief",ax=ax)
+            else:
+                sns.scatterplot(data=feature_data, x='x', y='y', legend="brief",ax=ax)
+
+
+            # add legend
             if feature_legend["add"] == True:
-                handles, labels = ax.get_legend_handles_labels()
-                print('first',labels)
-                handle_list, label_list = [], []
-                for handle, label in zip(handles, labels):
-                    if label not in label_list and label in unique_value:
-                        handle_list.append(handle)
-                        label_list.append(label)
-                print('latter')
-                print(label_list)
+                # handles, labels = ax.get_legend_handles_labels()
+                # index = list(range(len(labels)))
+                # index.sort(key=labels.__getitem__)
+                # labels[:] = [labels[i] for i in index]
+                # handles[:] = [handles[i] for i in index]
+                # handle_list, label_list = [], []
+                # for handle, label in zip(handles, labels):
+                #     if label not in label_list:
+                #     # if label not in label_list and label in unique_value:
+                #         handle_list.append(handle)
+                #         label_list.append(label)
                 #
                 fontsize = feature_legend["font_size"]
-                ax.legend(handle_list, label_list, labelspacing=1, title='Type', loc='center left',
-                            fontsize= fontsize, title_fontsize= fontsize)
-            ##  add language label
+                ax.legend(labelspacing=1, title='Legend',fontsize= fontsize, title_fontsize= fontsize+2,loc='center left')
+                #           fontsize= fontsize, title_fontsize= fontsize+2)
+                #sns.move_legend(pscatter, bbox_to_anchor=(.05, .40),loc='center left', frameon=False,fontsize=fontsize)
+
+
+
+                #  add language label
             cluster_labels = []
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(self.objects.indices))
-            Coloron = True
-            if feature_content['labels'] == 'all' or feature_content['labels'] == 'in_cluster':
-                self.add_labels(feature_content, locations_map_crs, cluster_labels, feature_colors, extent, Coloron, ax)
+            Coloron = False
+            self.add_labels(feature_content, locations_map_crs, cluster_labels, allfeature_colors, extent, Coloron, ax)
 
-           #### save image
+           ### save image
+            file_format = feature_output['format']
             file_name = 'Feature ' + item
             fig.savefig(self.path_plots['featureplots'] / f"{file_name}.{file_format}", bbox_inches='tight',
                         dpi=feature_output['resolution'], format=file_format)

@@ -133,7 +133,7 @@ class Plot:
             if "stats" in item:
 
                 stats.append(item)
-            elif "clusters" in item:
+            elif "cluster" in item:
 
                 cluster.append(item)
 
@@ -196,9 +196,10 @@ class Plot:
 
         input_paths = self.get_datapath(input_main_paths)
 
-
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
+        print(self.all_cluster_paths)
+        print(self.all_stats_paths)
 
 
 
@@ -2161,13 +2162,16 @@ class Plot:
         color_for_freq[indices] = '#ffffff'
 
         ## convert rgb to hex
+        feature_data = read_data_csv(self.path_features)
+        feature_data['family'] = feature_data['family'].fillna("Isolates")
         red,green,blue = self.rgb_color(color_for_freq)
         df = pd.DataFrame({
             'x': locations_map_crs[:, 0],
             'y': locations_map_crs[:, 1],
             'red': red,
             'green': green,
-            'blue': blue
+            'blue': blue,
+            'Family': feature_data.family.to_list()
         })
         #convert languange point to geopandas
         point_geo = gpd.GeoDataFrame(df, geometry=df.apply(lambda row: geometry.Point(row.x, row.y), axis=1))
@@ -2185,12 +2189,33 @@ class Plot:
 
        ### plot the idw map
         idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
+        print("confounder",cfg_content['confounder'])
 
-        # markerlist = []
-        # print("len",len(locations_map_crs))
-        # for i in range(len(locations_map_crs)):
-        #     markerlist.append("^")
-        point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
+        if "family" in cfg_content['confounder']:
+            acq_family = df['Family'].unique()
+            ## get color for each value and store them in a dict
+            familyshapes_dic = cfg_graphic["families"]['marker']
+
+            custom_familyvalues = list(familyshapes_dic.keys())
+            custom_familyshape = list(familyshapes_dic.values())
+
+
+            ## get additional family
+            allfeature_shapes = self.get_family_shapes(len(acq_family), custom_shapes=custom_familyshape)
+            ### add additional feature and its color to feature_graphic
+
+            if len(custom_familyvalues) <= len(acq_family):
+                left_family = [item for item in acq_family if item not in custom_familyvalues]
+                left_shapes = [ss for ss in allfeature_shapes if ss not in custom_familyshape]
+
+                for i, j in zip(left_family, left_shapes):
+                    familyshapes_dic[i] = j
+
+
+            markers_forfeature = [familyshapes_dic[j] for j in feature_data["family"].unique()]
+            sns.scatterplot(data=df, x='x', y='y', style = 'Family',markers=markers_forfeature,ax=ax)
+
+        #point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
 
         # for xy, c,m in zip(locations_map_crs,color_for_freq,markerlist):
         #     print(xy[0],xy[1],c,m)
@@ -2220,8 +2245,8 @@ class Plot:
             #self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
 
             # This adds an overview map
-        if cfg_legend['overview']['add']:
-            self.add_overview_map(locations_map_crs, extent, cfg_geo, cfg_graphic, cfg_legend, ax)
+        # if cfg_legend['overview']['add']:
+        #     self.add_overview_map(locations_map_crs, extent, cfg_geo, cfg_graphic, cfg_legend, ax)
 
         if cfg_legend['correspondence']['add'] and cfg_graphic['languages']['label']:
             if cfg_content['type'] == "density_map":
@@ -2298,10 +2323,13 @@ class Plot:
                 left_shapes = [ss for ss in allfeature_shapes if ss not in custom_familyshape]
                 for i,j in zip(left_family,left_shapes):
                     familyshapes_dic[i] = j
-            print(familyshapes_dic)
 
        ## get feature name from user and default color
-        feature_name = [x for x in feature_data.columns if x not in ['name','id','x','y','family']]
+        if feature_content['confounder'] is None:
+            confounder = ["family"]
+
+
+        feature_name = [x for x in feature_data.columns if x not in ['name','id','x','y',]+ confounder]
         acq_features = feature_content['features']
         if not acq_features:
             acq_features = feature_name
@@ -2361,7 +2389,9 @@ class Plot:
 
             # add legend
             if feature_legend["add"] == True:
-                # handles, labels = ax.get_legend_handles_labels()
+                handles, labels = ax.get_legend_handles_labels()
+                labels = list(map(lambda x: x.title(), labels))
+
                 # index = list(range(len(labels)))
                 # index.sort(key=labels.__getitem__)
                 # labels[:] = [labels[i] for i in index]
@@ -2372,10 +2402,10 @@ class Plot:
                 #     # if label not in label_list and label in unique_value:
                 #         handle_list.append(handle)
                 #         label_list.append(label)
-                #
+
                 fontsize = feature_legend["font_size"]
-                ax.legend(labelspacing=1, title='Legend',fontsize= fontsize, title_fontsize= fontsize+2,loc='center left')
-                #           fontsize= fontsize, title_fontsize= fontsize+2)
+                ax.legend(handles = handles,labels = labels, labelspacing=1, title='Legend',fontsize= fontsize,title_fontsize= fontsize+2,loc='center left')
+
                 #sns.move_legend(pscatter, bbox_to_anchor=(.05, .40),loc='center left', frameon=False,fontsize=fontsize)
 
 

@@ -2324,9 +2324,12 @@ class Plot:
                 for i,j in zip(left_family,left_shapes):
                     familyshapes_dic[i] = j
 
+
        ## get feature name from user and default color
         if feature_content['confounder'] is None:
             confounder = ["family"]
+        else:
+            confounder = feature_content['confounder']
 
 
         feature_name = [x for x in feature_data.columns if x not in ['name','id','x','y',]+ confounder]

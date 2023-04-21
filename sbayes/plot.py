@@ -2329,7 +2329,7 @@ class Plot:
         if feature_content['confounder'] is None:
             confounder = ["family"]
         else:
-            confounder = feature_content['confounder']
+            confounder = list(feature_content['confounder'])
 
 
         feature_name = [x for x in feature_data.columns if x not in ['name','id','x','y',]+ confounder]

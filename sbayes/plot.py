@@ -47,7 +47,7 @@ import seaborn as sns
 from math import sqrt, floor, ceil
 from shapely.geometry import Polygon
 from shapely.prepared import prep
-from collections import OrderedDict
+
 
 from sbayes.processpost import compute_dic
 from sbayes.results import Results
@@ -121,10 +121,21 @@ class Plot:
         namelist = []
         pattern = "*.txt"
 
-        for filepath, dirnames, filenames in os.walk(datapath):
-            for filename in filenames:
-                if(fnmatch(filename, pattern)):
-                    namelist.append(os.path.join(filepath, filename))
+        # for filepath, dirnames, filenames in os.walk(datapath):
+        #     print(filepath)
+        #     print(dirnames)
+            # print(filenames)
+            # for filename in filenames:
+            #     if(fnmatch(filename, pattern)):
+            #         namelist.append(os.path.join(filepath, filename))
+        rawdir = []
+        for item in os.listdir(datapath):
+            if item != "newdata" and item != ".DS_Store":
+                rawdatapath = os.path.join(datapath,item)
+                if os.path.exists(rawdatapath):
+                    for filename in os.listdir(rawdatapath):
+                        if (fnmatch(filename, pattern)):
+                            namelist.append(os.path.join(rawdatapath, filename))
 
         stats = []
         cluster = []
@@ -133,8 +144,7 @@ class Plot:
             if "stats" in item:
 
                 stats.append(item)
-            elif "cluster" in item:
-
+            elif "area" in item:
                 cluster.append(item)
 
 
@@ -198,8 +208,103 @@ class Plot:
 
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
-        print(self.all_cluster_paths)
-        print(self.all_stats_paths)
+
+    def extract_lines_with_equal_intervals(self,one_expfiles, output_file,num_lines):
+        # with open(file_path, 'r') as f:
+        #     total_lines = sum(1 for line in f)
+        combined_file_path = 'combined.txt'
+
+        # Combine all input files into a single file
+        with open(combined_file_path, 'w') as combined_file:
+            for i, file_path in enumerate(one_expfiles):
+                with open(file_path, 'r') as input_file:
+                    # Read the first line of the input file
+                    first_line = input_file.readline().strip()
+                    print("first_line", first_line)
+                 # Check if the first line is a header
+                    if any(c.isalpha() for c in first_line):
+                        for line in input_file:
+                            combined_file.write(line)
+                        if i == 0:
+                            with open(output_file, 'w') as output:
+                                output.write(first_line + '\n')
+                    else:
+                        # Write the entire file to the output file
+                        input_file.seek(0)  # move the file pointer back to the beginning of the file
+                        combined_file.write(input_file.read())
+
+
+        # Extract lines with equal intervals from the combined file and write to output file
+        with open(combined_file_path, 'r') as f:
+            total_lines_count = sum(1 for line in f)
+
+        print("total_lines_count",total_lines_count)
+        interval = (total_lines_count - 1) / (num_lines - 1)
+
+        with open(combined_file_path, 'r') as f, open(output_file, 'a') as output:
+            for i in range(num_lines):
+                line_num = int(i * interval) + 1
+                f.seek(0)
+                extracted_line = f.readlines()[line_num - 1]
+                output.write(extracted_line)
+        f.close()
+        output.close()
+        #Delete the combined file
+        os.remove(combined_file_path)
+
+
+    def generate_newfile(self):
+        '''
+
+        combine cluster data selected from differenet experiments and save in a new file
+
+        Returns:
+            a new fold that contains newly generate data
+        '''
+        acq_length = self.config['results']["total_lines"]
+        ## get all unique cluster label
+        label_cluster_list = []
+        for item in self.all_cluster_paths:
+            label = os.path.basename(item).split("_")[1]
+            label_cluster_list.append(label)
+
+        ## get all unique stat label
+        label_stat_list = []
+        for i in self.all_stats_paths:
+            label = os.path.basename(i).split("_")[1]
+            label_stat_list.append(label)
+
+
+        #print("label_cluster_list",label_cluster_list)
+
+        ###### start generate combine cluster file #################
+        ##  for-loop cluster file in each fold by label
+        for item in set(label_cluster_list):
+            one_expfiles = [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == item]
+            num_exp = len(one_expfiles)
+            file_dir = os.path.dirname(one_expfiles[0])
+            newdir = os.path.join(os.path.dirname(file_dir),"newdata")
+            if not os.path.exists(newdir):
+                os.makedirs(newdir)
+            output_file = os.path.join(newdir,(os.path.basename(one_expfiles[0])[:-6]+".txt"))
+
+            self.extract_lines_with_equal_intervals(one_expfiles,output_file,acq_length)
+ ###### start generate combine stats file #################
+        ##  for-loop cluster file in each fold by label
+        for item in set(label_stat_list):
+            one_expstats = [x for x in self.all_stats_paths if os.path.basename(x).split("_")[1] == item]
+            print(one_expstats)
+            num_exp = len(one_expstats)
+            file_dir = os.path.dirname(one_expstats[0])
+            newdir = os.path.join(os.path.dirname(file_dir), "newdata")
+            if not os.path.exists(newdir):
+                os.makedirs(newdir)
+            output_file = os.path.join(newdir, (os.path.basename(one_expstats[0])[:-6] + ".txt"))
+
+            self.extract_lines_with_equal_intervals(one_expstats, output_file, acq_length)
+
+
+
 
 
 
@@ -2189,7 +2294,7 @@ class Plot:
 
        ### plot the idw map
         idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
-        print("confounder",cfg_content['confounder'])
+
 
         if "family" in cfg_content['confounder']:
             acq_family = df['Family'].unique()
@@ -2274,7 +2379,7 @@ class Plot:
         if custom_shapes is None and n_family<= len(usefulmarkers):
             print(f'No colors for clusters provided in featuremap>graphic>clusters>mark'
                   f'in the config plot file. I am using default colors instead.')
-            return list(usefulmarkers.keys())[:n_family]
+            return list(usefulmarkers)[:n_family]
         elif len(custom_shapes) <= n_family and n_family <= len(usefulmarkers):
             left_markers = [item for item in usefulmarkers if item not in custom_shapes]
             addition_num = n_family - len(custom_shapes)
@@ -2308,20 +2413,19 @@ class Plot:
         if "family" in feature_content['confounder']:
             acq_family = set(feature_data['family'].to_list())
 
+            print("acq_family",acq_family)
 
             ## get color for each value and store them in a dict
             familyshapes_dic = feature_graphic['marker']
             custom_familyvalues = list(familyshapes_dic.keys())
             custom_familyshape = list(familyshapes_dic.values())
 
-            ## get additional family
-            allfeature_shapes = self.get_family_shapes(len(acq_family), custom_shapes=custom_familyshape)
+            print("custom_familyvalues",custom_familyvalues)
 
-            ### add additional feature and its color to feature_graphic
-            if len(custom_familyvalues) <= len(acq_family):
-                left_family = [item for item in acq_family if item not in custom_familyvalues]
-                left_shapes = [ss for ss in allfeature_shapes if ss not in custom_familyshape]
-                for i,j in zip(left_family,left_shapes):
+            non_add_family =  [x for x in acq_family if x not in custom_familyvalues]
+            if non_add_family:
+                add_shapes = self.get_family_shapes(len(acq_family), custom_shapes=None)
+                for i,j in zip(non_add_family,add_shapes):
                     familyshapes_dic[i] = j
 
 
@@ -2331,29 +2435,30 @@ class Plot:
         else:
             confounder = list(feature_content['confounder'])
 
-
         feature_name = [x for x in feature_data.columns if x not in ['name','id','x','y',]+ confounder]
+
         acq_features = feature_content['features']
+
         if not acq_features:
             acq_features = feature_name
 
 
         ## get all the feature names and all the unique values in the dataframe
         feature_data = feature_data.fillna('Null')
-        unique_value = pd.concat([feature_data[col] for col in feature_name]).unique()
+        unique_state = pd.concat([feature_data[col] for col in acq_features]).unique()
 
         ## get color for each value and store them in a dict
         featurecolor_dic = feature_graphic['color']
         custom_statecolors = list(feature_graphic['color'].values())
         custom_statevalues = list(feature_graphic['color'].keys())
-        allfeature_colors = self.get_cluster_colors(len(unique_value),custom_colors= custom_statecolors)
         ### add additional feature and its color to feature_graphic
-        if len(custom_statevalues) <= len(acq_features):
-            left_color = [item for item in allfeature_colors if item not in custom_statecolors]
-            left_state = [item for item in unique_value if item not in custom_statevalues]
-            for i, j in zip(left_state, left_color):
-                featurecolor_dic[i] = j
 
+        non_add_state = [x for x in unique_state if x not in custom_statevalues]
+
+        if non_add_state:
+            add_color = self.get_cluster_colors(len(non_add_state),custom_colors=None)
+            for i, j in zip(non_add_state, add_color ):
+                featurecolor_dic[i] = j
 
 
         # Get extent
@@ -2375,8 +2480,9 @@ class Plot:
 
             print("Plotting Feature", item)
 
-            colors_forfeature= [featurecolor_dic[i] for i in feature_data[item].unique()]
+            colors_forfeature = [featurecolor_dic[i] for i in feature_data[item].unique()]
             markers_forfeature = [familyshapes_dic[j] for j in feature_data["family"].unique()]
+
             feature_data["x"] = locations_map_crs.T[0]
             feature_data["y"] = locations_map_crs.T[1]
 
@@ -2418,7 +2524,7 @@ class Plot:
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(self.objects.indices))
             Coloron = False
-            self.add_labels(feature_content, locations_map_crs, cluster_labels, allfeature_colors, extent, Coloron, ax)
+            self.add_labels(feature_content, locations_map_crs, cluster_labels, list(feature_graphic['color'].keys()), extent, Coloron, ax)
 
            ### save image
             file_format = feature_output['format']

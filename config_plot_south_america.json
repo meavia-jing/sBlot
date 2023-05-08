@@ -1,7 +1,8 @@
 {
 	"results": {
-		"path_in":"results/experiment2",
-		"path_out": "results/plots"
+		"path_in":"results/experiment3",
+		"path_out": "results/plots",
+		"total_lines": 4000
 	}, 
 	"data": {
 		"features": "data/south_america/features.csv",
@@ -24,6 +25,7 @@
 		"content": {
 			"type": "idw_map",
 			"plot_families": false,
+			"confounder": ["family"],
 			"labels": "all",
 			"min_posterior_frequency": 0.9,
 			"burn_in": 0.2,
@@ -218,7 +220,7 @@
 	},
 	"featuremap": {
 		"content": {
-			"features": [],
+			"features": ["F1"],
 			"confounder": ["family"],
 			"labels": "all",
 			"type": "consensus_map",

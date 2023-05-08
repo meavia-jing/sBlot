@@ -61,6 +61,8 @@ from sbayes.load_data import Objects,Data
 from sbayes.experiment_setup import Experiment
 from sbayes import config as config_package
 from sbayes import maps as maps_package
+from sbayes.align_clusters_across_logs import *
+from shutil import copyfile
 
 DEFAULT_CONFIG = json.loads(pkg_resources.read_text(config_package, 'default_config_plot.json'))
 
@@ -130,7 +132,7 @@ class Plot:
             #         namelist.append(os.path.join(filepath, filename))
         rawdir = []
         for item in os.listdir(datapath):
-            if item != "newdata" and item != ".DS_Store":
+            if item != "newdata" and item != ".DS_Store" and item!="backup":
                 rawdatapath = os.path.join(datapath,item)
                 if os.path.exists(rawdatapath):
                     for filename in os.listdir(rawdatapath):
@@ -206,54 +208,83 @@ class Plot:
 
         input_paths = self.get_datapath(input_main_paths)
 
+
+
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
 
-    def extract_lines_with_equal_intervals(self,one_expfiles, output_file,num_lines):
-        # with open(file_path, 'r') as f:
-        #     total_lines = sum(1 for line in f)
-        combined_file_path = 'combined.txt'
+
+
+    def align_files(self,folder_names,backupdir):
+        print("Align cluster across logs...")
+        for item in set(folder_names):
+            # get all the files under each folder
+            one_expcluster = [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == item]
+            one_expstats = [x for x in self.all_stats_paths if os.path.basename(x).split("_")[1] == item]
+
+            ## align txt for different runs
+
+            result_list =[]
+            mean_clusters_list = []
+            clusters_backup_list = []
+            parameters_backup_list= []
+
+            for i,j in zip(one_expcluster,one_expstats):
+                # Load results
+                result = Results.from_csv_files(i, j, burn_in=0)
+                # Compute the best permutation
+                mean_clusters = np.mean(result.clusters, axis=1)
+
+                result_list.append(result)
+                mean_clusters_list.append(mean_clusters)
+
+                clusters_backup_path =  os.path.join(backupdir,os.path.basename(i).partition(".")[0]+"_backup.txt" )
+                parameters_backup_path = os.path.join(backupdir,os.path.basename(j).partition(".")[0]+"_backup.txt")
+
+                clusters_backup_list.append(clusters_backup_path)
+                parameters_backup_list.append(parameters_backup_path)
+
+            for i in range(1,len(result_list)):
+                    # Backup the original files of experiment bigger than 1 (which are overwritten by aligned version)
+                    copyfile(one_expcluster[i], clusters_backup_list[i])
+                    copyfile(one_expstats[i], parameters_backup_list[i])
+
+                    # Compute the best permutation
+                    d = cluster_agreement(mean_clusters_list[0], mean_clusters_list[i])
+                    perm = linear_sum_assignment(d, maximize=True)[1]
+
+                    # Permute the clusters and parameters
+                    clusters_aligned = result_list[i].clusters[perm].transpose((1, 0, 2))
+                    params_aligned = get_permuted_params(result_list[i], perm)
+
+                    write_clusters(one_expcluster[i], clusters_aligned)
+                    params_aligned.to_csv(one_expstats[i], index=False, sep="\t")
+
+
+    def extract_lines_with_equal_intervals(self, one_expfiles, output_file, num_lines, has_header=True):
+        header = None
+        all_lines = []
 
         # Combine all input files into a single file
-        with open(combined_file_path, 'w') as combined_file:
-            for i, file_path in enumerate(one_expfiles):
-                with open(file_path, 'r') as input_file:
-                    # Read the first line of the input file
-                    first_line = input_file.readline().strip()
-                    print("first_line", first_line)
-                 # Check if the first line is a header
-                    if any(c.isalpha() for c in first_line):
-                        for line in input_file:
-                            combined_file.write(line)
-                        if i == 0:
-                            with open(output_file, 'w') as output:
-                                output.write(first_line + '\n')
-                    else:
-                        # Write the entire file to the output file
-                        input_file.seek(0)  # move the file pointer back to the beginning of the file
-                        combined_file.write(input_file.read())
-
+        for i, file_path in enumerate(one_expfiles):
+            with open(file_path, 'r') as input_file:
+                file_lines = input_file.readlines()
+                if has_header:
+                    header = file_lines.pop(0)
+                all_lines += file_lines
 
         # Extract lines with equal intervals from the combined file and write to output file
-        with open(combined_file_path, 'r') as f:
-            total_lines_count = sum(1 for line in f)
+        total_lines_count = len(all_lines)
+        interval = (total_lines_count - 1) // (num_lines - 1)
 
-        print("total_lines_count",total_lines_count)
-        interval = (total_lines_count - 1) / (num_lines - 1)
-
-        with open(combined_file_path, 'r') as f, open(output_file, 'a') as output:
-            for i in range(num_lines):
-                line_num = int(i * interval) + 1
-                f.seek(0)
-                extracted_line = f.readlines()[line_num - 1]
-                output.write(extracted_line)
-        f.close()
-        output.close()
-        #Delete the combined file
-        os.remove(combined_file_path)
+        with open(output_file, 'w') as output:
+            if header:
+                output.write(header)
+            output.writelines(all_lines[::interval])
 
 
-    def generate_newfile(self):
+
+    def combine_files(self):
         '''
 
         combine cluster data selected from differenet experiments and save in a new file
@@ -261,51 +292,55 @@ class Plot:
         Returns:
             a new fold that contains newly generate data
         '''
+
+
         acq_length = self.config['results']["total_lines"]
-        ## get all unique cluster label
-        label_cluster_list = []
+
+        ## get all unique folders: n1, n2, n3
+        folder_names = []
         for item in self.all_cluster_paths:
             label = os.path.basename(item).split("_")[1]
-            label_cluster_list.append(label)
+            folder_names.append(label)
 
-        ## get all unique stat label
-        label_stat_list = []
-        for i in self.all_stats_paths:
-            label = os.path.basename(i).split("_")[1]
-            label_stat_list.append(label)
+        #generate new folder for combined files
+        input_main_paths = fix_relative_path(path=self.config['results']['path_in'],
+                                             base_directory=self.base_directory)
+        newdir = os.path.join(input_main_paths, "newdata")
+        if not os.path.exists(newdir):
+            os.makedirs(newdir)
 
 
-        #print("label_cluster_list",label_cluster_list)
+        backupdir = os.path.join(input_main_paths, "backup")
+        if not os.path.exists(backupdir):
+            os.makedirs(backupdir)
 
-        ###### start generate combine cluster file #################
-        ##  for-loop cluster file in each fold by label
-        for item in set(label_cluster_list):
-            one_expfiles = [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == item]
-            num_exp = len(one_expfiles)
-            file_dir = os.path.dirname(one_expfiles[0])
-            newdir = os.path.join(os.path.dirname(file_dir),"newdata")
-            if not os.path.exists(newdir):
-                os.makedirs(newdir)
-            output_file = os.path.join(newdir,(os.path.basename(one_expfiles[0])[:-6]+".txt"))
+         ### align all the others files according to the first files
+        #self.align_files(folder_names,backupdir)
 
-            self.extract_lines_with_equal_intervals(one_expfiles,output_file,acq_length)
- ###### start generate combine stats file #################
-        ##  for-loop cluster file in each fold by label
-        for item in set(label_stat_list):
+        ### start generate combine cluster file
+        ##  for-loop cluster file in each fold
+        print("Combine files...")
+        for item in set(folder_names):
+            one_expcluster = [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == item]
             one_expstats = [x for x in self.all_stats_paths if os.path.basename(x).split("_")[1] == item]
-            print(one_expstats)
-            num_exp = len(one_expstats)
-            file_dir = os.path.dirname(one_expstats[0])
-            newdir = os.path.join(os.path.dirname(file_dir), "newdata")
-            if not os.path.exists(newdir):
-                os.makedirs(newdir)
-            output_file = os.path.join(newdir, (os.path.basename(one_expstats[0])[:-6] + ".txt"))
-
-            self.extract_lines_with_equal_intervals(one_expstats, output_file, acq_length)
+    ### generate name for combined cluster file
+            output_cluster_name = os.path.basename(one_expcluster[0]).rpartition("_")[0]
+            output_cluster_file = os.path.join(newdir,output_cluster_name+".txt")
 
 
 
+            ### generate name for combined stats file
+            output_stats_name = os.path.basename(one_expstats[0]).rpartition("_")[0]
+            output_stats_file = os.path.join(newdir, output_stats_name + ".txt")
 
+
+            ## combine cluster files and generate a new cluster files
+            has_header = False
+            self.extract_lines_with_equal_intervals(one_expcluster,output_cluster_file,acq_length,has_header)
+
+            ## combine stats files and generate a new stats file
+            has_header = True
+            self.extract_lines_with_equal_intervals(one_expstats, output_stats_file, acq_length,has_header)
 
 
     @staticmethod

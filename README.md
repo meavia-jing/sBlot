@@ -6,15 +6,15 @@
 Same as sbayes project
 
 # Running sBlot
-sBot can be used as a python library or through a command line interface. Here we describe how to run sBlot in the command line interface,or run it as a python package. To run sBlots from the command line, simply call:
+sBot can be used as a python library or through a command line interface. Here we describe how to run sBlot in the command line interface,or run it as a python package. 
 
-Command line interface
+To run sBlots from the command line, simply call:
 ```shell 
 python plot.py config_plot.json map
 ```
 
 
-To run sBlot as python package
+To run sBlot as python package, call:
 ```
 plot = Plot()
 plot.load_config(config_file='config_plot.json')

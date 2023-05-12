@@ -63,7 +63,7 @@ from sbayes import config as config_package
 from sbayes import maps as maps_package
 from sbayes.align_clusters_across_logs import *
 from shutil import copyfile
-
+import re
 DEFAULT_CONFIG = json.loads(pkg_resources.read_text(config_package, 'default_config_plot.json'))
 
 
@@ -91,6 +91,7 @@ class Plot:
         self.path_features = None
         self.path_feature_states = None
         self.path_plots = None
+        self.input_main_paths = None
         self.cluster_path = None
         self.stats_path = None
 
@@ -132,21 +133,22 @@ class Plot:
             #         namelist.append(os.path.join(filepath, filename))
         rawdir = []
         for item in os.listdir(datapath):
-            if item != "newdata" and item != ".DS_Store" and item!="backup":
+            if re.match("[nK][0-9]+",item) :
                 rawdatapath = os.path.join(datapath,item)
                 if os.path.exists(rawdatapath):
                     for filename in os.listdir(rawdatapath):
                         if (fnmatch(filename, pattern)):
                             namelist.append(os.path.join(rawdatapath, filename))
 
+
         stats = []
         cluster = []
 
         for item in namelist:
-            if "stats" in item:
+            if "stats" in item and "operator_stats" not in item:
 
                 stats.append(item)
-            elif "area" in item:
+            elif "area" in item or "cluster" in item:
                 cluster.append(item)
 
 
@@ -202,11 +204,11 @@ class Plot:
         self.path_features = fix_relative_path(self.config['data']['features'], self.base_directory)
         self.path_feature_states = fix_relative_path(self.config['data']['feature_states'], self.base_directory)
 
-        input_main_paths = fix_relative_path(path=self.config['results']['path_in'],
+        self.input_main_paths = fix_relative_path(path=self.config['results']['path_in'],
                                              base_directory=self.base_directory)
 
 
-        input_paths = self.get_datapath(input_main_paths)
+        input_paths = self.get_datapath(self.input_main_paths)
 
 
 
@@ -216,11 +218,18 @@ class Plot:
 
 
     def align_files(self,folder_names,backupdir):
-        print("Align cluster across logs...")
+        '''
+        align files before combine files
+        Args:
+            folder_names: the names of folders that store different number of clusters
+            backupdir:  folders that store backup files
+
+        '''
+        print("Aligning cluster across logs...")
         for item in set(folder_names):
             # get all the files under each folder
-            one_expcluster = [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == item]
-            one_expstats = [x for x in self.all_stats_paths if os.path.basename(x).split("_")[1] == item]
+            one_expcluster = self.get_cluster_files(item)
+            one_expstats = self.get_stats_files(item)
 
             ## align txt for different runs
 
@@ -230,19 +239,21 @@ class Plot:
             parameters_backup_list= []
 
             for i,j in zip(one_expcluster,one_expstats):
-                # Load results
-                result = Results.from_csv_files(i, j, burn_in=0)
-                # Compute the best permutation
-                mean_clusters = np.mean(result.clusters, axis=1)
+                #if not str(j).endswith('stats_n1_.txt'):
+                if not re.match("^stats_n1_.*",os.path.basename(j)):
+                    # Load results
+                    result = Results.from_csv_files(i, j, burn_in=0)
+                    # Compute the best permutation
+                    mean_clusters = np.mean(result.clusters, axis=1)
 
-                result_list.append(result)
-                mean_clusters_list.append(mean_clusters)
+                    result_list.append(result)
+                    mean_clusters_list.append(mean_clusters)
 
-                clusters_backup_path =  os.path.join(backupdir,os.path.basename(i).partition(".")[0]+"_backup.txt" )
-                parameters_backup_path = os.path.join(backupdir,os.path.basename(j).partition(".")[0]+"_backup.txt")
+                    clusters_backup_path =  os.path.join(backupdir,os.path.basename(i).partition(".")[0]+".txt" )
+                    parameters_backup_path = os.path.join(backupdir,os.path.basename(j).partition(".")[0]+".txt")
 
-                clusters_backup_list.append(clusters_backup_path)
-                parameters_backup_list.append(parameters_backup_path)
+                    clusters_backup_list.append(clusters_backup_path)
+                    parameters_backup_list.append(parameters_backup_path)
 
             for i in range(1,len(result_list)):
                     # Backup the original files of experiment bigger than 1 (which are overwritten by aligned version)
@@ -262,6 +273,17 @@ class Plot:
 
 
     def extract_lines_with_equal_intervals(self, one_expfiles, output_file, num_lines, has_header=True):
+        '''
+
+        Args:
+            one_expfiles:  files that used to combine
+            output_file: newly generate combined file name
+            num_lines: total number of lines that required by users.
+            has_header:
+
+        Returns:
+
+        '''
         header = None
         all_lines = []
 
@@ -282,7 +304,11 @@ class Plot:
                 output.write(header)
             output.writelines(all_lines[::interval])
 
+    def get_cluster_files(self, folder_name: str) -> list[Path]:
+        return [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == folder_name]
 
+    def get_stats_files(self, folder_name: str) -> list[Path]:
+        return [x for x in self.all_stats_paths if os.path.basename(x).split("_")[1] == folder_name]
 
     def combine_files(self):
         '''
@@ -305,29 +331,28 @@ class Plot:
         #generate new folder for combined files
         input_main_paths = fix_relative_path(path=self.config['results']['path_in'],
                                              base_directory=self.base_directory)
-        newdir = os.path.join(input_main_paths, "newdata")
+        newdir = os.path.join(input_main_paths, "combined_results")
         if not os.path.exists(newdir):
             os.makedirs(newdir)
 
-
+        ### create new folder to store backup file
         backupdir = os.path.join(input_main_paths, "backup")
         if not os.path.exists(backupdir):
             os.makedirs(backupdir)
 
          ### align all the others files according to the first files
-        #self.align_files(folder_names,backupdir)
+        self.align_files(folder_names,backupdir)
 
-        ### start generate combine cluster file
+        ### start generate combined cluster file
         ##  for-loop cluster file in each fold
-        print("Combine files...")
+        print("Combining files...")
         for item in set(folder_names):
-            one_expcluster = [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == item]
-            one_expstats = [x for x in self.all_stats_paths if os.path.basename(x).split("_")[1] == item]
-    ### generate name for combined cluster file
+            one_expcluster = self.get_cluster_files(item)
+            one_expstats = self.get_stats_files(item)
+
+            ### generate name for combined cluster file
             output_cluster_name = os.path.basename(one_expcluster[0]).rpartition("_")[0]
             output_cluster_file = os.path.join(newdir,output_cluster_name+".txt")
-
-
 
             ### generate name for combined stats file
             output_stats_name = os.path.basename(one_expstats[0]).rpartition("_")[0]
@@ -2331,7 +2356,8 @@ class Plot:
         idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
 
 
-        if "family" in cfg_content['confounder']:
+        if cfg_content['confounder'] == "family" :
+            df['Family'] = df['Family'].fillna("Isolates")
             acq_family = df['Family'].unique()
             ## get color for each value and store them in a dict
             familyshapes_dic = cfg_graphic["families"]['marker']
@@ -2343,14 +2369,12 @@ class Plot:
             ## get additional family
             allfeature_shapes = self.get_family_shapes(len(acq_family), custom_shapes=custom_familyshape)
             ### add additional feature and its color to feature_graphic
+            non_add_family = [x for x in acq_family if x not in custom_familyvalues]
 
-            if len(custom_familyvalues) <= len(acq_family):
-                left_family = [item for item in acq_family if item not in custom_familyvalues]
-                left_shapes = [ss for ss in allfeature_shapes if ss not in custom_familyshape]
-
-                for i, j in zip(left_family, left_shapes):
+            if non_add_family:
+                add_shapes = self.get_family_shapes(len(acq_family), custom_shapes=None)
+                for i, j in zip(non_add_family, add_shapes):
                     familyshapes_dic[i] = j
-
 
             markers_forfeature = [familyshapes_dic[j] for j in feature_data["family"].unique()]
             sns.scatterplot(data=df, x='x', y='y', style = 'Family',markers=markers_forfeature,ax=ax)
@@ -2379,14 +2403,7 @@ class Plot:
         if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
             self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, colorOn, ax)
 
-        # Visualizes language families
-        #if cfg_content['plot_families']:
-            #logging.warning('plotting families is not currently supported.')
-            #self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
 
-            # This adds an overview map
-        # if cfg_legend['overview']['add']:
-        #     self.add_overview_map(locations_map_crs, extent, cfg_geo, cfg_graphic, cfg_legend, ax)
 
         if cfg_legend['correspondence']['add'] and cfg_graphic['languages']['label']:
             if cfg_content['type'] == "density_map":
@@ -2445,7 +2462,7 @@ class Plot:
         feature_data['family'] = feature_data['family'].fillna("Isolates")
 
         ### get the subset of language by the language family that users want to plot
-        if "family" in feature_content['confounder']:
+        if feature_content['confounder']=="family":
             acq_family = set(feature_data['family'].to_list())
 
             print("acq_family",acq_family)
@@ -2600,6 +2617,7 @@ def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
             1) is specified in the config file and
             2) is in the requested list of plot types."""
         return (plot_type.value in plot.config) and (plot_type in plot_types)
+
 
     for m, results in plot.iterate_over_models():
         print('f', m)

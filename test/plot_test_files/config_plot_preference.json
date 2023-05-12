@@ -121,9 +121,9 @@
 			"resolution": 20
 		}
 	},
-	"weight_plot": {
+	"weights_plot": {
 		"content": {
-			"features": [5,6],
+			"features": [],
 			"burn_in": 0.2
 		},
 		"legend": {

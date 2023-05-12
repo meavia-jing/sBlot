@@ -12,9 +12,13 @@
 		"content": {
 			"type": "idw_map",
 			"plot_families": false,
+			"confounder": "family",
 			"labels": "all",
 			"min_posterior_frequency": 0.9,
-			"burn_in": 0.2
+			"burn_in": 0.2,
+			"idw_resolution": 50000,
+			"idw_background_weight": 1,
+			"idw_power": 2
 		},
 		"geo": {
 			"map_projection": "+proj=lcc +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=10 +x_0=0 +y_0=0 +ellps=intl +units=m",
@@ -33,7 +37,7 @@
 				"label": true
 			},
 			"clusters": {
-				"point_size":"frequency",
+				"point_size":"30",
 				"color": [
 					"#1b9e77",
 					"#d95f02",
@@ -41,7 +45,7 @@
 					"#e7298a",
 					"#66a61e"
 				],
-				"line_width":"frequency",
+				"line_width":"1",
 				"alpha": 0.8
 			},
 			"families": {
@@ -54,6 +58,9 @@
 					"#e6f5c9",
 					"#d3d3d3"
 				],
+				"marker": {
+					"Albanian": "h"
+				},
 				"buffer": 0.5,
 				"shape": 20
 		},

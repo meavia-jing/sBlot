@@ -25,7 +25,7 @@
 		"content": {
 			"type": "idw_map",
 			"plot_families": false,
-			"confounder": ["family"],
+			"confounder": "family",
 			"labels": "all",
 			"min_posterior_frequency": 0.9,
 			"burn_in": 0.2,
@@ -62,6 +62,9 @@
 					"#e6f5c9",
 					"#d3d3d3"
 				],
+				"marker": {
+					"Albanian": "h"
+				},
 				"buffer": 0.5,
 				"shape": 20
 		},
@@ -221,7 +224,7 @@
 	"featuremap": {
 		"content": {
 			"features": ["F1"],
-			"confounder": ["family"],
+			"confounder": "family",
 			"labels": "all",
 			"type": "consensus_map",
 			"plot_feature":true,

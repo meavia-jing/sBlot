@@ -1,6 +1,6 @@
 {
 	"results": {
-		"path_in":"results/experiment3",
+		"path_in":"results/experiment1",
 		"path_out": "results/plots",
 		"combine_results": true,
 		"total_lines": 4000
@@ -29,7 +29,7 @@
 		},
 		"content": {
 			"type": "idw_map",
-			"confounder": ["family"],
+			"confounder": "family",
 			"labels": "all",
 			"min_posterior_frequency": 0.9,
 			"burn_in": 0.2,
@@ -233,7 +233,7 @@
 	"featuremap": {
 		"content": {
 			"features": ["F1"],
-			"confounder": ["family"],
+			"confounder": "family",
 			"labels": "all",
 			"type": "consensus_map",
 			"plot_feature":true,

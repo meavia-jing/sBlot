@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 import math
-import os
 from argparse import Namespace
 from enum import Enum
 from functools import lru_cache
@@ -26,9 +25,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import numpy as np
 from numpy.typing import NDArray
-import random
-import colorsys
+# import random
+#import colorsys
 from fnmatch import fnmatch
+from math import sqrt
 
 from descartes import PolygonPatch
 from matplotlib import patches
@@ -43,11 +43,7 @@ from shapely import geometry
 from shapely.ops import cascaded_union, polygonize
 from shapely.ops import unary_union
 import seaborn as sns
-
-from math import sqrt, floor, ceil
-from shapely.geometry import Polygon
-from shapely.prepared import prep
-
+import re
 
 from sbayes.processpost import compute_dic
 from sbayes.results import Results
@@ -61,9 +57,8 @@ from sbayes.load_data import Objects,Data
 from sbayes.experiment_setup import Experiment
 from sbayes import config as config_package
 from sbayes import maps as maps_package
-from sbayes.align_clusters_across_logs import *
-from shutil import copyfile
-import re
+
+from sbayes.helper_functions import *
 DEFAULT_CONFIG = json.loads(pkg_resources.read_text(config_package, 'default_config_plot.json'))
 
 
@@ -113,57 +108,11 @@ class Plot:
     ####################################
     # Configure the parameters
     ####################################
-    @staticmethod
-    def get_datapath(datapath: str):
-        '''
-        Args
-            datapath(str): the path of test data
-        Returns:
-            a dict that contains the  path of cluster and stats file under the datapath folder seperately.
-        '''
-        namelist = []
-        pattern = "*.txt"
-
-        # for filepath, dirnames, filenames in os.walk(datapath):
-        #     print(filepath)
-        #     print(dirnames)
-            # print(filenames)
-            # for filename in filenames:
-            #     if(fnmatch(filename, pattern)):
-            #         namelist.append(os.path.join(filepath, filename))
-        rawdir = []
-        for item in os.listdir(datapath):
-            if re.match("[nK][0-9]+",item) :
-                rawdatapath = os.path.join(datapath,item)
-                if os.path.exists(rawdatapath):
-                    for filename in os.listdir(rawdatapath):
-                        if (fnmatch(filename, pattern)):
-                            namelist.append(os.path.join(rawdatapath, filename))
-
-
-        stats = []
-        cluster = []
-
-        for item in namelist:
-            if "stats" in item and "operator_stats" not in item:
-
-                stats.append(item)
-            elif "area" in item or "cluster" in item:
-                cluster.append(item)
-
-
-        cluster = sorted(cluster)
-        stats = sorted(stats)
-        detailed_path = {"clusters": cluster,
-                         "stats": stats}
-
-        return detailed_path
-
 
     def load_config(self, config_file):
         # Get parameters from config_custom (for particular experiment)
 
-        self.base_directory, self.config_file = self.decompose_config_path(config_file)
+        self.base_directory, self.config_file = decompose_config_path(config_file)
 
         # Read the user specified config file
         with open(self.config_file, 'r') as f:
@@ -208,165 +157,11 @@ class Plot:
                                              base_directory=self.base_directory)
 
 
-        input_paths = self.get_datapath(self.input_main_paths)
-
+        input_paths = get_datapath(self.input_main_paths)
 
 
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
-
-
-
-    def align_files(self,folder_names,backupdir):
-        '''
-        align files before combine files
-        Args:
-            folder_names: the names of folders that store different number of clusters
-            backupdir:  folders that store backup files
-
-        '''
-        print("Aligning cluster across logs...")
-        for item in set(folder_names):
-            # get all the files under each folder
-            one_expcluster = self.get_cluster_files(item)
-            one_expstats = self.get_stats_files(item)
-
-            ## align txt for different runs
-
-            result_list =[]
-            mean_clusters_list = []
-            clusters_backup_list = []
-            parameters_backup_list= []
-
-            for i,j in zip(one_expcluster,one_expstats):
-                #if not str(j).endswith('stats_n1_.txt'):
-                if not re.match("^stats_n1_.*",os.path.basename(j)):
-                    # Load results
-                    result = Results.from_csv_files(i, j, burn_in=0)
-                    # Compute the best permutation
-                    mean_clusters = np.mean(result.clusters, axis=1)
-
-                    result_list.append(result)
-                    mean_clusters_list.append(mean_clusters)
-
-                    clusters_backup_path =  os.path.join(backupdir,os.path.basename(i).partition(".")[0]+".txt" )
-                    parameters_backup_path = os.path.join(backupdir,os.path.basename(j).partition(".")[0]+".txt")
-
-                    clusters_backup_list.append(clusters_backup_path)
-                    parameters_backup_list.append(parameters_backup_path)
-
-            for i in range(1,len(result_list)):
-                    # Backup the original files of experiment bigger than 1 (which are overwritten by aligned version)
-                    copyfile(one_expcluster[i], clusters_backup_list[i])
-                    copyfile(one_expstats[i], parameters_backup_list[i])
-
-                    # Compute the best permutation
-                    d = cluster_agreement(mean_clusters_list[0], mean_clusters_list[i])
-                    perm = linear_sum_assignment(d, maximize=True)[1]
-
-                    # Permute the clusters and parameters
-                    clusters_aligned = result_list[i].clusters[perm].transpose((1, 0, 2))
-                    params_aligned = get_permuted_params(result_list[i], perm)
-
-                    write_clusters(one_expcluster[i], clusters_aligned)
-                    params_aligned.to_csv(one_expstats[i], index=False, sep="\t")
-
-
-    def extract_lines_with_equal_intervals(self, one_expfiles, output_file, num_lines, has_header=True):
-        '''
-
-        Args:
-            one_expfiles:  files that used to combine
-            output_file: newly generate combined file name
-            num_lines: total number of lines that required by users.
-            has_header:
-
-        Returns:
-
-        '''
-        header = None
-        all_lines = []
-
-        # Combine all input files into a single file
-        for i, file_path in enumerate(one_expfiles):
-            with open(file_path, 'r') as input_file:
-                file_lines = input_file.readlines()
-                if has_header:
-                    header = file_lines.pop(0)
-                all_lines += file_lines
-
-        # Extract lines with equal intervals from the combined file and write to output file
-        total_lines_count = len(all_lines)
-        interval = (total_lines_count - 1) // (num_lines - 1)
-
-        with open(output_file, 'w') as output:
-            if header:
-                output.write(header)
-            output.writelines(all_lines[::interval])
-
-    def get_cluster_files(self, folder_name: str) -> list[Path]:
-        return [x for x in self.all_cluster_paths if os.path.basename(x).split("_")[1] == folder_name]
-
-    def get_stats_files(self, folder_name: str) -> list[Path]:
-        return [x for x in self.all_stats_paths if os.path.basename(x).split("_")[1] == folder_name]
-
-    def combine_files(self):
-        '''
-
-        combine cluster data selected from differenet experiments and save in a new file
-
-        Returns:
-            a new fold that contains newly generate data
-        '''
-
-
-        acq_length = self.config['results']["total_lines"]
-
-        ## get all unique folders: n1, n2, n3
-        folder_names = []
-        for item in self.all_cluster_paths:
-            label = os.path.basename(item).split("_")[1]
-            folder_names.append(label)
-
-        #generate new folder for combined files
-        input_main_paths = fix_relative_path(path=self.config['results']['path_in'],
-                                             base_directory=self.base_directory)
-        newdir = os.path.join(input_main_paths, "combined_results")
-        if not os.path.exists(newdir):
-            os.makedirs(newdir)
-
-        ### create new folder to store backup file
-        backupdir = os.path.join(input_main_paths, "backup")
-        if not os.path.exists(backupdir):
-            os.makedirs(backupdir)
-
-         ### align all the others files according to the first files
-        self.align_files(folder_names,backupdir)
-
-        ### start generate combined cluster file
-        ##  for-loop cluster file in each fold
-        print("Combining files...")
-        for item in set(folder_names):
-            one_expcluster = self.get_cluster_files(item)
-            one_expstats = self.get_stats_files(item)
-
-            ### generate name for combined cluster file
-            output_cluster_name = os.path.basename(one_expcluster[0]).rpartition("_")[0]
-            output_cluster_file = os.path.join(newdir,output_cluster_name+".txt")
-
-            ### generate name for combined stats file
-            output_stats_name = os.path.basename(one_expstats[0]).rpartition("_")[0]
-            output_stats_file = os.path.join(newdir, output_stats_name + ".txt")
-
-
-            ## combine cluster files and generate a new cluster files
-            has_header = False
-            self.extract_lines_with_equal_intervals(one_expcluster,output_cluster_file,acq_length,has_header)
-
-            ## combine stats files and generate a new stats file
-            has_header = True
-            self.extract_lines_with_equal_intervals(one_expstats, output_stats_file, acq_length,has_header)
-
 
     @staticmethod
     def convert_config(d):
@@ -380,11 +175,12 @@ class Plot:
     def verify_config(self):
         pass
 
-    @staticmethod
-    def decompose_config_path(config_path) -> tuple[Path, Path]:
-        abs_config_path = Path(config_path).absolute()
-        base_directory = abs_config_path.parent
-        return base_directory, abs_config_path
+
+    ####################################
+    # Combine files
+    def file_combine(self):
+        acq_length = self.config['results']["total_lines"]
+        combine_files(acq_length,self.all_cluster_paths,self.all_stats_paths,self.input_main_paths)
 
 
     ####################################
@@ -509,71 +305,71 @@ class Plot:
 
         return extent
 
-    @staticmethod
-    def compute_bbox(extent):
-        bbox = geometry.box(extent['x_min'], extent['y_min'],
-                            extent['x_max'], extent['y_max'])
-        return bbox
+    # @staticmethod
+    # def compute_bbox(extent):
+    #     bbox = geometry.box(extent['x_min'], extent['y_min'],
+    #                         extent['x_max'], extent['y_max'])
+    #     return bbox
 
-    @staticmethod
-    def style_axes(extent, ax):
+    # @staticmethod
+    # def style_axes(extent, ax):
+    #
+    #     # setting axis limits
+    #     ax.set_xlim([extent['x_min'], extent['x_max']])
+    #     ax.set_ylim([extent['y_min'], extent['y_max']])
+    #
+    #     # Removing axis labels
+    #     ax.set_xticks([])
+    #     ax.set_yticks([])
 
-        # setting axis limits
-        ax.set_xlim([extent['x_min'], extent['x_max']])
-        ax.set_ylim([extent['y_min'], extent['y_max']])
-
-        # Removing axis labels
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    @staticmethod
-    def compute_alpha_shapes(points, alpha_shape):
-
-        """Compute the alpha shape (concave hull) of a set of sites
-        Args:
-            points (np.array): subset of locations around which to create the alpha shapes (e.g. family, cluster, ...)
-            alpha_shape (float): parameter controlling the convexity of the alpha shape
-        Returns:
-            (polygon): the alpha shape"""
-
-        tri = Delaunay(points, qhull_options="QJ Pp")
-
-        edges = set()
-        edge_nodes = []
-
-        # loop over triangles:
-        # ia, ib, ic = indices of corner points of the triangle
-        for ia, ib, ic in tri.vertices:
-            pa = points[ia]
-            pb = points[ib]
-            pc = points[ic]
-
-            # Lengths of sides of triangle
-            a = math.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
-            b = math.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
-            c = math.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
-
-            # Semiperimeter of triangle
-            s = (a + b + c) / 2.0
-
-            # Area of triangle by Heron's formula
-            area = math.sqrt(s * (s - a) * (s - b) * (s - c))
-            circum_r = a * b * c / (4.0 * area)
-
-            "alpha value to influence the shape of the convex hull Smaller numbers don't fall inward "
-            "as much as larger numbers. Too large, and you lose everything!"
-
-            if circum_r < 1.0 / alpha_shape:
-                add_edge(edges, edge_nodes, points, ia, ib)
-                add_edge(edges, edge_nodes, points, ib, ic)
-                add_edge(edges, edge_nodes, points, ic, ia)
-
-        m = geometry.MultiLineString(edge_nodes)
-
-        triangles = list(polygonize(m))
-        polygon = cascaded_union(triangles)
-
-        return polygon
+    #@staticmethod
+    # def compute_alpha_shapes(points, alpha_shape):
+    #
+    #     """Compute the alpha shape (concave hull) of a set of sites
+    #     Args:
+    #         points (np.array): subset of locations around which to create the alpha shapes (e.g. family, cluster, ...)
+    #         alpha_shape (float): parameter controlling the convexity of the alpha shape
+    #     Returns:
+    #         (polygon): the alpha shape"""
+    #
+    #     tri = Delaunay(points, qhull_options="QJ Pp")
+    #
+    #     edges = set()
+    #     edge_nodes = []
+    #
+    #     # loop over triangles:
+    #     # ia, ib, ic = indices of corner points of the triangle
+    #     for ia, ib, ic in tri.vertices:
+    #         pa = points[ia]
+    #         pb = points[ib]
+    #         pc = points[ic]
+    #
+    #         # Lengths of sides of triangle
+    #         a = math.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
+    #         b = math.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
+    #         c = math.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
+    #
+    #         # Semiperimeter of triangle
+    #         s = (a + b + c) / 2.0
+    #
+    #         # Area of triangle by Heron's formula
+    #         area = math.sqrt(s * (s - a) * (s - b) * (s - c))
+    #         circum_r = a * b * c / (4.0 * area)
+    #
+    #         "alpha value to influence the shape of the convex hull Smaller numbers don't fall inward "
+    #         "as much as larger numbers. Too large, and you lose everything!"
+    #
+    #         if circum_r < 1.0 / alpha_shape:
+    #             add_edge(edges, edge_nodes, points, ia, ib)
+    #             add_edge(edges, edge_nodes, points, ib, ic)
+    #             add_edge(edges, edge_nodes, points, ic, ia)
+    #
+    #     m = geometry.MultiLineString(edge_nodes)
+    #
+    #     triangles = list(polygonize(m))
+    #     polygon = cascaded_union(triangles)
+    #
+    #     return polygon
 
     @staticmethod
     def clusters_to_graph(cluster, locations_map_crs, cfg_content):
@@ -654,15 +450,15 @@ class Plot:
         ax.scatter(*locations.T, s=cfg_graphic['languages']['size'],
                    color=cfg_graphic['languages']['color'], linewidth=0)
 
-    @staticmethod
-    def get_cluster_colors(n_clusters: int, custom_colors=None):
-        cm = plt.get_cmap('gist_rainbow')
-        if custom_colors is None:
-            return [colors.to_hex(c) for c in cm(np.linspace(0, 1, n_clusters, endpoint=False))]
-        else:
-            provided = np.array([colors.to_rgba(c) for c in custom_colors])
-            additional = cm(np.linspace(0, 1, n_clusters - len(custom_colors), endpoint=False))
-            return [colors.to_hex(c) for c in np.concatenate((provided, additional), axis=0)]
+    #@staticmethod
+    # def get_cluster_colors(n_clusters: int, custom_colors=None):
+    #     cm = plt.get_cmap('gist_rainbow')
+    #     if custom_colors is None:
+    #         return [colors.to_hex(c) for c in cm(np.linspace(0, 1, n_clusters, endpoint=False))]
+    #     else:
+    #         provided = np.array([colors.to_rgba(c) for c in custom_colors])
+    #         additional = cm(np.linspace(0, 1, n_clusters - len(custom_colors), endpoint=False))
+    #         return [colors.to_hex(c) for c in np.concatenate((provided, additional), axis=0)]
 
     def add_labels(self, cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent,colorOn, ax):
         """Add labels to languages"""
@@ -687,32 +483,32 @@ class Plot:
             if cfg_content['labels'] == 'in_cluster' and not in_cluster:
                 pass
             else:
-                self.annotate_label(xy=locations_map_crs[i], label=i + 1, color=label_color,
+                annotate_label(xy=locations_map_crs[i], label=i + 1, color=label_color,
                                     offset_x=offset_x, offset_y=offset_y, ax=ax)
 
-    @staticmethod
-    def annotate_label(xy, label, color, offset_x, offset_y, ax):
-        x = xy[0]+offset_x
-        y = xy[1]+offset_y
-        anno_opts = dict(xy=(x, y), fontsize=10, color=color)
-        ax.annotate(label, **anno_opts)
+    # @staticmethod
+    # def annotate_label(xy, label, color, offset_x, offset_y, ax):
+    #     x = xy[0]+offset_x
+    #     y = xy[1]+offset_y
+    #     anno_opts = dict(xy=(x, y), fontsize=10, color=color)
+    #     ax.annotate(label, **anno_opts)
 
-    @staticmethod
-    def get_cluster_freq(cluster, cfg_content):
-        '''
-        return the frequency of cluster in one area
-        '''
-        # exclude burn-in
-        end_bi = math.ceil(len(cluster) * cfg_content['burn_in'])
-        cluster = cluster[end_bi:]
-
-        # compute frequency of each point in cluster
-        cluster = np.asarray(cluster)
-        n_samples = cluster.shape[0]
-
-        # Plot a density map or consensus map?
-        cluster_freq = np.sum(cluster, axis=0) / n_samples
-        return cluster_freq
+    # @staticmethod
+    # def get_cluster_freq(cluster, burn_in):
+    #     '''
+    #     return the frequency of cluster in one area
+    #     '''
+    #     # exclude burn-in
+    #     end_bi = math.ceil(len(cluster) * burn_in)
+    #     cluster = cluster[end_bi:]
+    #
+    #     # compute frequency of each point in cluster
+    #     cluster = np.asarray(cluster)
+    #     n_samples = cluster.shape[0]
+    #
+    #     # Plot a density map or consensus map?
+    #     cluster_freq = np.sum(cluster, axis=0) / n_samples
+    #     return cluster_freq
 
 
     def cluster_legend(self, results: Results, cfg_legend):
@@ -726,7 +522,7 @@ class Plot:
             """
         # If log-likelihood is displayed: add legend entries with likelihood information per cluster
         if cfg_legend['clusters']['add'] and cfg_legend['clusters']['log-likelihood']:
-            cluster_labels_legend, legend_clusters = self.add_log_likelihood_legend(
+            cluster_labels_legend, legend_clusters = add_log_likelihood_legend(
                 results.likelihood_single_clusters
             )
         else:
@@ -748,14 +544,14 @@ class Plot:
             print(f'No colors for clusters provided in map>graphic>clusters>color '
                   f'in the config plot file ({self.config_file}). I am using default colors instead.')
 
-            cluster_colors = self.get_cluster_colors(n_clusters=len(results.clusters))
+            cluster_colors = get_cluster_colors(n_clusters=len(results.clusters))
 
         elif len(cfg_graphic['clusters']['color']) < len(results.clusters):
 
             print(f"Too few colors for clusters ({len(cfg_graphic['clusters']['color'])} provided, "
                   f"{len(results.clusters)} needed) in map>graphic>clusters>color in the config plot "
                   f"file ({self.config_file}). I am adding default colors.")
-            cluster_colors = self.get_cluster_colors(n_clusters=len(results.clusters),
+            cluster_colors = get_cluster_colors(n_clusters=len(results.clusters),
                                                      custom_colors=cfg_graphic['clusters']['color'])
 
         else:
@@ -774,9 +570,8 @@ class Plot:
                 color_freq: list
          """
         cluster_colors = self.cluster_color(results, cfg_graphic)
-        cluster_freq = np.array([
-            self.get_cluster_freq(cluster, cfg_content) for cluster in results.clusters
-        ])
+        burn_in = cfg_content['burn_in']
+        cluster_freq = np.array([get_cluster_freq(cluster, burn_in) for cluster in results.clusters])
 
         max_cluster_freq = np.max(cluster_freq, axis=0)
         max_row = np.argmax(cluster_freq,axis=0)
@@ -877,11 +672,11 @@ class Plot:
             ax.add_artist(legend_clusters)
         return cluster_labels, cluster_colors
 
-    @staticmethod
-    def lighten_color(color, amount=0.2):
-        # FUnction to lighten up colors
-        c = colorsys.rgb_to_hls(*color)
-        return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
+    # @staticmethod
+    # def lighten_color(color, amount=0.2):
+    #     # FUnction to lighten up colors
+    #     c = colorsys.rgb_to_hls(*color)
+    #     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
     # TODO: generalize to confounders, make a special case or remove
     # def color_families(self, locations_maps_crs, cfg_graphic, cfg_legend, ax):
@@ -1018,7 +813,7 @@ class Plot:
                            'y_min': y_min, 'y_max': y_max}
 
         # Again, this function needs map data to display in the overview map.
-        bbox = self.compute_bbox(overview_extent)
+        bbox = compute_bbox(overview_extent)
         self.add_background_map(bbox, cfg_geo, cfg_graphic, axins)
 
         # add overview to the map
@@ -1034,28 +829,28 @@ class Plot:
         axins.add_patch(bbox)
 
     # Helper function
-    @staticmethod
-    def scientific(x):
-        b = int(np.log10(x))
-        a = x / 10 ** b
-        return '%.2f \cdot 10^{%i}' % (a, b)
+    # @staticmethod
+    # def scientific(x):
+    #     b = int(np.log10(x))
+    #     a = x / 10 ** b
+    #     return '%.2f \cdot 10^{%i}' % (a, b)
 
-    def add_log_likelihood_legend(self, likelihood_single_clusters: dict):
-
-        # Legend for cluster labels
-        cluster_labels = ["      log-likelihood per cluster"]
-
-        lh_per_cluster = np.array(list(likelihood_single_clusters.values()), dtype=float)
-        to_rank = np.mean(lh_per_cluster, axis=1)
-        p = to_rank[np.argsort(-to_rank)]
-
-        for i, lh in enumerate(p):
-            cluster_labels.append(f'$Z_{i + 1}: \, \;\;\; {int(lh)}$')
-
-        extra = patches.Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
-        # Line2D([0], [0], color=None, lw=6, linestyle='-')
-
-        return cluster_labels, [extra]
+    # def add_log_likelihood_legend(self, likelihood_single_clusters: dict):
+    #
+    #     # Legend for cluster labels
+    #     cluster_labels = ["      log-likelihood per cluster"]
+    #
+    #     lh_per_cluster = np.array(list(likelihood_single_clusters.values()), dtype=float)
+    #     to_rank = np.mean(lh_per_cluster, axis=1)
+    #     p = to_rank[np.argsort(-to_rank)]
+    #
+    #     for i, lh in enumerate(p):
+    #         cluster_labels.append(f'$Z_{i + 1}: \, \;\;\; {int(lh)}$')
+    #
+    #     extra = patches.Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor='none', linewidth=0)
+    #     # Line2D([0], [0], color=None, lw=6, linestyle='-')
+    #
+    #     return cluster_labels, [extra]
 
     def add_background_map(self, bbox, cfg_geo, cfg_graphic, ax):
         # Adds the geojson polygon geometries provided by the user as a background map
@@ -1119,7 +914,7 @@ class Plot:
     def visualize_base_map(self, extent, cfg_geo, cfg_graphic, ax):
 
         if cfg_geo['base_map']['add']:
-            bbox = self.compute_bbox(extent)
+            bbox = compute_bbox(extent)
             if not cfg_geo['base_map']['geojson_polygon']:
                 print(f'Cannot add base map. Please provide a geojson_polygon')
             else:
@@ -1236,7 +1031,7 @@ class Plot:
         self.initialize_map(locations_map_crs, cfg_graphic, ax)
 
         # Style the axes
-        self.style_axes(extent, ax)
+        style_axes(extent, ax)
 
         # Add a base map
         self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
@@ -1267,8 +1062,8 @@ class Plot:
             self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, Coloron, ax)
 
         # Visualizes language families
-        if cfg_content['plot_families']:
-            logging.warning('plotting families is not currently supported.')
+        #if cfg_content['plot_families']:
+            #logging.warning('plotting families is not currently supported.')
             #self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
 
         # Add main legend
@@ -1309,53 +1104,55 @@ class Plot:
     ####################################
     # Probability simplex, grid plot
     ####################################
-    @staticmethod
-    @lru_cache(maxsize=128)
-    def get_corner_points(n, offset=0.5 * np.pi):
-        """Generate corner points of a equal sided ´n-eck´."""
-        angles = np.linspace(0, 2 * np.pi, n, endpoint=False) + offset
-        return np.array([np.cos(angles), np.sin(angles)]).T
+    # @staticmethod
+    # @lru_cache(maxsize=128)
+    # def get_corner_points(n, offset=0.5 * np.pi):
+    #     """Generate corner points of a equal sided ´n-eck´."""
+    #     angles = np.linspace(0, 2 * np.pi, n, endpoint=False) + offset
+    #     return np.array([np.cos(angles), np.sin(angles)]).T
 
-    @staticmethod
-    def fill_outside(polygon, color, ax=None):
-        """Fill the area outside the given polygon with ´color´.
-        Args:
-            polygon (np.array): The polygon corners in a numpy array.
-                shape: (n_corners, 2)
-            ax (plt.Axis): The pyplot axis.
-            color (str or tuple): The fill color.
-        """
-        if ax is None:
-            ax = plt.gca()
+    # @staticmethod
+    # def fill_outside(polygon, color, ax=None):
+    #     """Fill the area outside the given polygon with ´color´.
+    #     Args:
+    #         polygon (np.array): The polygon corners in a numpy array.
+    #             shape: (n_corners, 2)
+    #         ax (plt.Axis): The pyplot axis.
+    #         color (str or tuple): The fill color.
+    #     """
+    #     if ax is None:
+    #         ax = plt.gca()
+    #
+    #     n_corners = polygon.shape[0]
+    #     if n_corners <= 2:
+    #         raise ValueError('Can only plot polygons with >2 corners')
+    #
+    #     i_left = np.argmin(polygon[:, 0])
+    #     i_right = np.argmax(polygon[:, 0])
+    #
+    #     # Find corners of bottom face
+    #     i = i_left
+    #     bot_x = [polygon[i, 0]]
+    #     bot_y = [polygon[i, 1]]
+    #     while i % n_corners != i_right:
+    #         i += 1
+    #         bot_x.append(polygon[i, 0])
+    #         bot_y.append(polygon[i, 1])
+    #
+    #     # Find corners of top face
+    #     i = i_left
+    #     top_x = [polygon[i, 0]]
+    #     top_y = [polygon[i, 1]]
+    #     while i % n_corners != i_right:
+    #         i -= 1
+    #         top_x.append(polygon[i, 0])
+    #         top_y.append(polygon[i, 1])
+    #
+    #     ymin, ymax = ax.get_ylim()
+    #     ax.fill_between(bot_x, ymin, bot_y, color=color)
+    #     ax.fill_between(top_x, ymax, top_y, color=color)
 
-        n_corners = polygon.shape[0]
-        if n_corners <= 2:
-            raise ValueError('Can only plot polygons with >2 corners')
 
-        i_left = np.argmin(polygon[:, 0])
-        i_right = np.argmax(polygon[:, 0])
-
-        # Find corners of bottom face
-        i = i_left
-        bot_x = [polygon[i, 0]]
-        bot_y = [polygon[i, 1]]
-        while i % n_corners != i_right:
-            i += 1
-            bot_x.append(polygon[i, 0])
-            bot_y.append(polygon[i, 1])
-
-        # Find corners of top face
-        i = i_left
-        top_x = [polygon[i, 0]]
-        top_y = [polygon[i, 1]]
-        while i % n_corners != i_right:
-            i -= 1
-            top_x.append(polygon[i, 0])
-            top_y.append(polygon[i, 1])
-
-        ymin, ymax = ax.get_ylim()
-        ax.fill_between(bot_x, ymin, bot_y, color=color)
-        ax.fill_between(top_x, ymax, top_y, color=color)
 
     # Transform weights into needed format
     # def transform_weights(self, feature, b_in):
@@ -1464,7 +1261,7 @@ class Plot:
         n_samples, n_weights = samples.shape
 
         # Compute corners
-        corners = Plot.get_corner_points(n_weights)
+        corners = get_corner_points(n_weights)
 
         # Bounding box
         xmin, ymin = np.min(corners, axis=0)
@@ -1495,7 +1292,7 @@ class Plot:
 
         # Draw simplex and crop outside
         ax.fill(*corners.T, edgecolor='k', fill=False, lw=lw)
-        Plot.fill_outside(corners, color='w', ax=ax)
+        fill_outside(corners, color='w', ax=ax)
 
         if mean_weights:
             mean_projected = np.mean(samples, axis=0).dot(corners)
@@ -1563,7 +1360,7 @@ class Plot:
 
         elif n_p > 2:
             # Compute corners
-            corners = Plot.get_corner_points(n_p)
+            corners = get_corner_points(n_p)
             # Bounding box
 
             xmin, ymin = np.min(corners, axis=0)
@@ -1588,7 +1385,7 @@ class Plot:
 
             # Draw simplex and crop outside
             ax.fill(*corners.T, edgecolor='k', fill=False)
-            Plot.fill_outside(corners, color='w', ax=ax)
+            fill_outside(corners, color='w', ax=ax)
 
             if labels['add']:
                 for xy, label in zip(corners, label_names):
@@ -2079,14 +1876,14 @@ class Plot:
                   f'map>graphic>clusters>color in the config plot file ({self.config_file}). '
                   f'I am using default colors instead.')
 
-            all_colors = self.get_cluster_colors(n_clusters=n_clusters)
+            all_colors = get_cluster_colors(n_clusters=n_clusters)
 
         elif len(self.config['map']['graphic']['clusters']['color']) < n_clusters:
 
             print(f'I tried to color the pie charts the same as the map, but not enough colors were provided in '
                   f'map>graphic>clusters>color in the config plot file ({self.config_file}). '
                   f'I am adding default colors.')
-            all_colors = self.get_cluster_colors(n_clusters, custom_colors=self.config['map']['graphic']['clusters']['color'])
+            all_colors = get_cluster_colors(n_clusters, custom_colors=self.config['map']['graphic']['clusters']['color'])
         else:
             print(f'I am using the colors in map>graphic>clusters>color '
                   f'in the config plot file ({self.config_file}) to color the pie charts.')
@@ -2147,147 +1944,7 @@ class Plot:
 
     ############### Inverse Distance Weights interpolation ############
     ##################################################################
-    def grid_bounds(self,geom, delta):
-        '''
-        set the grid for the entire based area
-        Args:
-            geom: shapely polygon
-            delta: resolution
-        '''
-        minx, miny, maxx, maxy = geom.bounds
-        nx = int((maxx - minx) / delta)
-        ny = int((maxy - miny) / delta)
-        gx, gy = np.linspace(minx, maxx, nx), np.linspace(miny, maxy, ny)
-        grid = []
-        for i in range(len(gx) - 1):
-            for j in range(len(gy) - 1):
-                poly_ij = Polygon([[gx[i], gy[j]], [gx[i], gy[j + 1]], [gx[i + 1], gy[j + 1]], [gx[i + 1], gy[j]]])
-                grid.append(poly_ij)
-        return grid
 
-    def partition(self,geom, delta):
-        '''
-         intersect the gird with base map
-        '''
-        prepared_geom = prep(geom)
-        grid = list(filter(prepared_geom.intersects, self.grid_bounds(geom, delta)))
-        return grid
-
-
-    def standard_idw(
-        self,
-        grid_lon: NDArray[float],
-        grid_lat: NDArray[float],
-        longs: NDArray[float],
-        lats: NDArray[float],
-        d_values: NDArray[float],
-        id_power: int = 2,
-        background_weight: float = 0.0,
-        background_value: float = 0.0
-    ):
-        """
-        calculating inverse distance weights
-        """
-
-        # The grid has more than one dimension. We flatten it, but remember the shape so
-        # that we can bring it back to the original shape in the end.
-        grid_shape = grid_lon.shape
-        grid_lon = grid_lon.flatten()
-        grid_lat = grid_lat.flatten()
-
-        # Compute distances from the grid cell (lon, lat) to the values (longs, lats)
-        dists = np.sqrt((longs[np.newaxis, :] - grid_lon[:, np.newaxis]) ** 2 +
-                        (lats[np.newaxis, :] - grid_lat[:, np.newaxis]) ** 2)
-
-        # The IDW weights are given by " w = 1 / (d(x, x_i)^power + 1)"
-        # >> constant 1 is to prevent int divide by zero when distance is zero.
-        weights = 1 / (dists ** id_power + 1)
-
-        # Divide sum of weighted values by sum of weights to get IDW interpolation.
-        # We add a constant background_value with background_weight, so that the
-        # interpolation decays to this background value when no points are nearby.
-        sum_weighted_values = (background_value * background_weight +
-                               np.sum(d_values[None, :] * weights, axis=1))
-        sum_weights = background_weight + np.sum(weights, axis=1)
-        idw = sum_weighted_values / sum_weights
-
-        # Reshape the idw values to match the original grid shape
-        return idw.reshape(grid_shape)
-
-    def Hex_to_RGB(self,hex):
-        '''
-        Convert the hex to RGB
-        "#1b9e77" to "27, 158, 119"
-        '''
-        r = int(hex[1:3], 16)
-        g = int(hex[3:5], 16)
-        b = int(hex[5:7], 16)
-        #     rgb = str(r)+','+str(g)+','+str(b)
-        rgb = [r, g, b]
-
-        return rgb
-
-    def rgb_color(self, colors_area):
-        '''convert of list of hex color to rgb color
-        Args:
-            colors_area: a list of hex color
-        '''
-        rgb = np.array(list((map(self.Hex_to_RGB, colors_area))))
-        red = rgb[:,0]
-        green = rgb[:,1]
-        blue = rgb[:,2]
-        return red, green, blue
-
-    @staticmethod
-    def rgb_to_hex(rgb):
-        ''' convert rgb color to hex'''
-        return '#%02x%02x%02x' % rgb
-
-    @staticmethod
-    def polygon_width(polygon: shapely.geometry.polygon.Polygon):
-        return polygon.bounds[2] - polygon.bounds[0]
-
-    @staticmethod
-    def polygon_height(polygon: shapely.geometry.polygon.Polygon):
-        return polygon.bounds[3] - polygon.bounds[1]
-
-    def cal_idw(self, extentpoly, point_rgb, delta, idw_power, background_weight):
-        grid = self.partition(extentpoly, delta)
-        grid = gpd.GeoDataFrame(geometry=gpd.GeoSeries(grid))
-
-        bbox_width = self.polygon_width(extentpoly)
-        bbox_height = self.polygon_height(extentpoly)
-
-        # Compute weights for the background color.
-        # I decided to weigh the background the same as 1 sample that is 1/8 of the
-        # diagonal of the whole map away from each grid cell. Seems to give visually
-        # pleasing results in the Balkans example.
-        dist_diag = sqrt(bbox_width ** 2 + bbox_height ** 2)
-        background_weight = background_weight / ((dist_diag / 8) ** idw_power + 1)
-
-        # calculating the idw color for the entire grid
-        grid_centroids = grid.geometry.centroid
-        grid_x = grid_centroids.x.to_numpy()
-        grid_y = grid_centroids.y.to_numpy()
-        x = point_rgb.x.to_numpy()
-        y = point_rgb.y.to_numpy()
-
-        # Apply IDW interpolation to each color channel separately
-        for c in ['red', 'green', 'blue']:
-            grid[c] = self.standard_idw(
-                grid_lon=grid_x,
-                grid_lat=grid_y,
-                longs=x,
-                lats=y,
-                d_values=point_rgb[c].to_numpy(),
-                id_power=idw_power,
-                background_weight=background_weight,
-                background_value=255
-            ).astype(int)
-
-        grid['idw_hex'] = [self.rgb_to_hex(rgb) for rgb in zip(grid.red, grid.green, grid.blue)]
-
-        return grid
 
     def get_idw_map(self, results, file_name):
         '''
@@ -2313,7 +1970,7 @@ class Plot:
         extent = self.get_extent(cfg_geo, locations_map_crs)
 
 
-        bbox = self.compute_bbox(extent)
+        bbox = compute_bbox(extent)
         extent_file = self.add_background_map(bbox, cfg_geo, cfg_graphic, ax)
         ploys = extent_file['geometry']
         mergedPolys = unary_union(ploys)
@@ -2329,7 +1986,7 @@ class Plot:
         ## convert rgb to hex
         feature_data = read_data_csv(self.path_features)
         feature_data['family'] = feature_data['family'].fillna("Isolates")
-        red,green,blue = self.rgb_color(color_for_freq)
+        red,green,blue = rgb_color(color_for_freq)
         df = pd.DataFrame({
             'x': locations_map_crs[:, 0],
             'y': locations_map_crs[:, 1],
@@ -2344,10 +2001,10 @@ class Plot:
         delta = cfg_content["idw_resolution"]
         idw_power = cfg_content["idw_power"]
         idw_background_weight = cfg_content["idw_background_weight"]
-        idw_grid = self.cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, idw_power=idw_power, background_weight=idw_background_weight)
+        idw_grid = cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, idw_power=idw_power, background_weight=idw_background_weight)
 
         # Style the axes
-        self.style_axes(extent, ax)
+        style_axes(extent, ax)
 
         # Add a base map
         self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
@@ -2365,16 +2022,14 @@ class Plot:
             custom_familyvalues = list(familyshapes_dic.keys())
             custom_familyshape = list(familyshapes_dic.values())
 
-
-            ## get additional family
-            allfeature_shapes = self.get_family_shapes(len(acq_family), custom_shapes=custom_familyshape)
             ### add additional feature and its color to feature_graphic
             non_add_family = [x for x in acq_family if x not in custom_familyvalues]
 
             if non_add_family:
-                add_shapes = self.get_family_shapes(len(acq_family), custom_shapes=None)
+                add_shapes = get_family_shapes(len(non_add_family), custom_shapes=None)
                 for i, j in zip(non_add_family, add_shapes):
                     familyshapes_dic[i] = j
+            print(familyshapes_dic)
 
             markers_forfeature = [familyshapes_dic[j] for j in feature_data["family"].unique()]
             sns.scatterplot(data=df, x='x', y='y', style = 'Family',markers=markers_forfeature,ax=ax)
@@ -2422,27 +2077,6 @@ class Plot:
 
     ############### Feature map ############
     ##################################################################
-    @staticmethod
-    def get_family_shapes(n_family: int, custom_shapes=None):
-        # markerlist 15 ('o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X')
-        usefulmarkers = list(Line2D.filled_markers)
-        ## '8' and 'o' is too similar in map
-        usefulmarkers.remove('8')
-        if custom_shapes is None and n_family<= len(usefulmarkers):
-            print(f'No colors for clusters provided in featuremap>graphic>clusters>mark'
-                  f'in the config plot file. I am using default colors instead.')
-            return list(usefulmarkers)[:n_family]
-        elif len(custom_shapes) <= n_family and n_family <= len(usefulmarkers):
-            left_markers = [item for item in usefulmarkers if item not in custom_shapes]
-            addition_num = n_family - len(custom_shapes)
-            additional = random.sample(left_markers,addition_num)
-            # print("custom_shapes",custom_shapes)
-            # print("additional",additional)
-            return custom_shapes+additional
-        elif len(custom_shapes) >= n_family and n_family <= len(usefulmarkers):
-            return custom_shapes
-        else:
-            print("Too many families; Can not provide enough shapes")
 
     def plot_featuremap(self):
         print('Plotting features...')
@@ -2462,7 +2096,7 @@ class Plot:
         feature_data['family'] = feature_data['family'].fillna("Isolates")
 
         ### get the subset of language by the language family that users want to plot
-        if feature_content['confounder']=="family":
+        if feature_content['confounder'] == "family":
             acq_family = set(feature_data['family'].to_list())
 
             print("acq_family",acq_family)
@@ -2476,9 +2110,11 @@ class Plot:
 
             non_add_family =  [x for x in acq_family if x not in custom_familyvalues]
             if non_add_family:
-                add_shapes = self.get_family_shapes(len(acq_family), custom_shapes=None)
+                add_shapes = get_family_shapes(len(acq_family), custom_shapes=None)
                 for i,j in zip(non_add_family,add_shapes):
                     familyshapes_dic[i] = j
+
+            print(familyshapes_dic)
 
 
        ## get feature name from user and default color
@@ -2508,7 +2144,7 @@ class Plot:
         non_add_state = [x for x in unique_state if x not in custom_statevalues]
 
         if non_add_state:
-            add_color = self.get_cluster_colors(len(non_add_state),custom_colors=None)
+            add_color = get_cluster_colors(len(non_add_state),custom_colors=None)
             for i, j in zip(non_add_state, add_color ):
                 featurecolor_dic[i] = j
 
@@ -2525,7 +2161,7 @@ class Plot:
             self.initialize_map(locations_map_crs, cfg_graphic, ax)
 
             #Style the axes
-            self.style_axes(extent, ax)
+            style_axes(extent, ax)
 
             #Add a base map
             self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
@@ -2553,22 +2189,10 @@ class Plot:
                 handles, labels = ax.get_legend_handles_labels()
                 labels = list(map(lambda x: x.title(), labels))
 
-                # index = list(range(len(labels)))
-                # index.sort(key=labels.__getitem__)
-                # labels[:] = [labels[i] for i in index]
-                # handles[:] = [handles[i] for i in index]
-                # handle_list, label_list = [], []
-                # for handle, label in zip(handles, labels):
-                #     if label not in label_list:
-                #     # if label not in label_list and label in unique_value:
-                #         handle_list.append(handle)
-                #         label_list.append(label)
-
                 fontsize = feature_legend["font_size"]
                 ax.legend(handles = handles,labels = labels, labelspacing=1, title='Legend',fontsize= fontsize,title_fontsize= fontsize+2,loc='center left')
 
                 #sns.move_legend(pscatter, bbox_to_anchor=(.05, .40),loc='center left', frameon=False,fontsize=fontsize)
-
 
 
                 #  add language label
@@ -2612,6 +2236,7 @@ def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
     plot.load_config(config_file=config)
     plot.read_data()
     print(plot_types)
+
     def should_be_plotted(plot_type: PlotType):
         """A plot type should only be generated if it
             1) is specified in the config file and

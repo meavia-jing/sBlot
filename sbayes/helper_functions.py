@@ -1,5 +1,3 @@
-
-
 import os
 import re
 from fnmatch import fnmatch
@@ -22,19 +20,19 @@ from shapely.prepared import prep
 from shapely.ops import cascaded_union, polygonize
 
 from sbayes.align_clusters_across_logs import *
+from sbayes.results import Results
 from sbayes.util import add_edge
 
 
-
-def get_datapath(datapath: str):
-    '''
+def get_datapath(datapath: str | Path):
+    """
     This helper function gets the file path of the cluster and stats file.
     Args
-        datapath(str): the path of test data
+        datapath: the path to the sBayes results
 
     Returns:
         a dict that contains the  path of cluster and stats file under the datapath folder seperately.
-    '''
+    """
     namelist = []
     pattern = "*.txt"
     for item in os.listdir(datapath):
@@ -62,7 +60,7 @@ def get_datapath(datapath: str):
     return detailed_path
 
 def get_cluster_files(all_cluster_paths,folder_name):
-    '''
+    """
     This function gets a path list for all cluster file in one folder
     Args:
         all_cluster_paths: parameter of Plot: store all the cluster file path under one experiment
@@ -71,11 +69,11 @@ def get_cluster_files(all_cluster_paths,folder_name):
     Returns:
         a list of cluster txt file path  for one
 
-    '''
+    """
     return [x for x in all_cluster_paths if os.path.basename(x).split("_")[1] == folder_name]
 
 def get_stats_files(all_stats_paths,folder_name) :
-    '''
+    """
         This function gets a path list for all stats file in one folder
         Args:
             all_stats_paths: parameter of Plot: store all the stats file path under one experiment
@@ -84,12 +82,12 @@ def get_stats_files(all_stats_paths,folder_name) :
         Returns:
             a list of stats txt file path  for one
 
-        '''
+        """
     return [x for x in all_stats_paths if os.path.basename(x).split("_")[1] == folder_name]
 
 
 def align_files(all_cluster_paths,all_stats_paths,folder_names,backupdir):
-    '''
+    """
     This funciton is to align files before combining files
     Args:
         all_cluster_paths: parameter of Plot: store all the cluster file path under one experiment
@@ -97,7 +95,7 @@ def align_files(all_cluster_paths,all_stats_paths,folder_names,backupdir):
         folder_names: the names of folders that store different number of clusters
         backupdir:  folders that store backup files
 
-    '''
+    """
     print("Aligning cluster across logs...")
     for item in set(folder_names):
         # get all the files under each folder
@@ -146,7 +144,7 @@ def align_files(all_cluster_paths,all_stats_paths,folder_names,backupdir):
 
 
 def extract_lines_with_equal_intervals(one_expfiles, output_file, num_lines, has_header=True):
-    '''
+    """
     This function is to extract lines with equal intervals when combining files
     Args:
         one_expfiles:  files that used to combine
@@ -156,7 +154,7 @@ def extract_lines_with_equal_intervals(one_expfiles, output_file, num_lines, has
 
     Returns:
 
-    '''
+    """
     header = None
     all_lines = []
 
@@ -179,13 +177,13 @@ def extract_lines_with_equal_intervals(one_expfiles, output_file, num_lines, has
 
 
 def combine_files(acq_length,all_cluster_paths,all_stats_paths,input_main_paths):
-    '''
+    """
 
     This function is to  combine cluster data selected from differenet experiments and save in a new file
 
     Returns:
         a new fold that contains newly generate data
-    '''
+    """
 
     ## get all unique folders: n1, n2, n3
     folder_names = []
@@ -236,20 +234,20 @@ def combine_files(acq_length,all_cluster_paths,all_stats_paths,input_main_paths)
 
 
 # def decompose_config_path(config_path) :
-#     '''
+#     """
 #
 #     Args:
 #         config_path: Path like
 #
 #     Returns:
 #          -> tuple[Path, Path]
-#     '''
+#     """
 #     abs_config_path = Path(config_path).absolute()
 #     base_directory = abs_config_path.parent
 #     return base_directory, abs_config_path
 
 def decompose_config_path(config_path):
-    '''
+    """
     This helper function gets parent path and absolute path for a file
 
     Args:
@@ -257,7 +255,7 @@ def decompose_config_path(config_path):
 
     Returns:
 
-    '''
+    """
 
     abs_config_path = Path(config_path).absolute()
     base_directory = abs_config_path.parent
@@ -265,10 +263,10 @@ def decompose_config_path(config_path):
 
 
 def Hex_to_RGB(hex):
-    '''
+    """
     This function converts hex to RGB
     "#1b9e77" to "27, 158, 119"
-    '''
+    """
     r = int(hex[1:3], 16)
     g = int(hex[3:5], 16)
     b = int(hex[5:7], 16)
@@ -278,11 +276,11 @@ def Hex_to_RGB(hex):
     return rgb
 
 def rgb_color(colors_area):
-    '''
+    """
     convert of list of hex color to rgb color
     Args:
         colors_area: a list of hex color
-    '''
+    """
     rgb = np.array(list((map(Hex_to_RGB, colors_area))))
     red = rgb[:,0]
     green = rgb[:,1]
@@ -290,23 +288,20 @@ def rgb_color(colors_area):
     return red, green, blue
 
 
-def rgb_to_hex(rgb):
-
-    '''
-    convert rgb color to hex
-    '''
+def rgb_to_hex(rgb: tuple) -> str:
+    """Convert rgb color to hex"""
     return '#%02x%02x%02x' % rgb
 
 
-def grid_bounds(geom, delta):
-    '''
+def grid_bounds(geom: Polygon, delta: float) -> list[Polygon]:
+    """
      This function generates grid for a polygon
     Args:
         geom: shapely polygon want to convert to grid
         delta: resolution for the grid
     Returns:
         a grid polygon
-    '''
+    """
     minx, miny, maxx, maxy = geom.bounds
     nx = int((maxx - minx) / delta)
     ny = int((maxy - miny) / delta)
@@ -318,97 +313,93 @@ def grid_bounds(geom, delta):
             grid.append(poly_ij)
     return grid
 
-def partition(geom, delta):
-    '''
+
+def partition(geom: Polygon, delta: float) -> list[Polygon]:
+    """
      This function is to clip the gird with a polygon
      Args:
         geom: shapely polygon want to convert to grid
         delta: resolution for the grid
     Returns:
         a grid polygon clipped by geom
-    '''
+    """
     prepared_geom = prep(geom)
-    grid = list(filter(prepared_geom.intersects,grid_bounds(geom, delta)))
+    grid = [cell for cell in grid_bounds(geom, delta)
+            if prepared_geom.contains(cell.centroid)]
     return grid
 
 
-def polygon_width(polygon):
-    '''
-    This funcitons gets the width for a polygon
-    Args:
-        polygon: : shapely.geometry.polygon.Polygon
-
-    Returns:
-
-    '''
+def polygon_width(polygon: Polygon) -> float:
+    """This funcitons gets the width for a polygon."""
     return polygon.bounds[2] - polygon.bounds[0]
 
 
-def polygon_height(polygon):
-    '''
-     This funcitons gets the height for a polygon
-    Args:
-        polygon: shapely.geometry.polygon.Polygon
-
-    Returns:
-
-    '''
+def polygon_height(polygon: Polygon) -> float:
+    """This function gets the height for a polygon"""
     return polygon.bounds[3] - polygon.bounds[1]
 
 
 def get_cluster_colors(n_clusters: int, custom_colors=None):
-    '''
-    This function return a list of colro at a given number
+    """
+    This function return a list of color at a given number
     Args:
         n_clusters: number of colors
         custom_colors: custom colors
     Returns:
         a list of colors
-
-    '''
-    cm = plt.get_cmap('gist_rainbow')
+    """
     if custom_colors is None:
-        return [colors.to_hex(c) for c in cm(np.linspace(0, 1, n_clusters, endpoint=False))]
+        clrs = []
+        for i, x in enumerate(np.linspace(0, 1, n_clusters, endpoint=False)):
+            b = i % 2
+            h = x % 1
+            s = 0.6 + 0.4 * (1 - b)
+            v = 0.5 + 0.3 * (b)
+            clrs.append(
+                colors.to_hex(colors.hsv_to_rgb((h, s, v)))
+            )
+        return clrs
     else:
         provided = np.array([colors.to_rgba(c) for c in custom_colors])
-        additional = cm(np.linspace(0, 1, n_clusters - len(custom_colors), endpoint=False))
-        return [colors.to_hex(c) for c in np.concatenate((provided, additional), axis=0)]
+        additional = get_cluster_colors(n_clusters - len(custom_colors))
+        return list(np.concatenate((provided, additional), axis=0))
 
-def annotate_label(xy, label, color, offset_x, offset_y, ax):
-    '''
+
+def annotate_label(xy, label, color, offset_x, offset_y, ax, fontsize=10):
+    """
     This function is to annotate label in figure
-    '''
+    """
     x = xy[0]+offset_x
     y = xy[1]+offset_y
-    anno_opts = dict(xy=(x, y), fontsize=10, color=color)
+    anno_opts = dict(xy=(x, y), fontsize=fontsize, color=color)
     ax.annotate(label, **anno_opts)
 
 def lighten_color(color, amount=0.2):
-    '''
+    """
     This functon is to lighten color
 
-    '''
+    """
     c = colorsys.rgb_to_hls(*color)
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 def scientific(x):
-    '''
+    """
     using scientific notation to note a number
 
-    '''
+    """
     b = int(np.log10(x))
     a = x / 10 ** b
     return '%.2f \cdot 10^{%i}' % (a, b)
 
 
 def add_log_likelihood_legend(likelihood_single_clusters: dict):
-    '''
+    """
     This function is to sort cluster accroding to its likehood
 
     Returns:
         a list of cluster lables and an empty list contianing patch.Rectangle like objects
 
-    '''
+    """
 
     # Legend for cluster labels
     cluster_labels = ["      log-likelihood per cluster"]
@@ -477,7 +468,7 @@ def fill_outside(polygon, color, ax=None):
 
 
 def get_family_shapes(n_family, custom_shapes=None):
-    '''
+    """
     This funcition gets a list of shape with a given number
     Args:
         n_family: int
@@ -486,7 +477,7 @@ def get_family_shapes(n_family, custom_shapes=None):
     Returns:
         List of shape
 
-    '''
+    """
     # markerlist 15 ('o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X')
     usefulmarkers = list(Line2D.filled_markers)
     ## '8' and 'o' is too similar in map
@@ -510,22 +501,22 @@ def get_family_shapes(n_family, custom_shapes=None):
 
 
 def compute_bbox(extent):
-    '''
+    """
     This function compute bounding box for extent
     Args:
         extent:
 
     Returns:
 
-    '''
+    """
     bbox = geometry.box(extent['x_min'], extent['y_min'],
                         extent['x_max'], extent['y_max'])
     return bbox
 
 def get_cluster_freq(cluster, burn_in):
-    '''
+    """
     This funtion gets the frequency of cluster in one area
-    '''
+    """
     # exclude burn-in
     end_bi = math.ceil(len(cluster) * burn_in)
     cluster = cluster[end_bi:]
@@ -580,7 +571,7 @@ def standard_idw(
 
 
 def cal_idw(extentpoly, point_rgb, delta, idw_power, background_weight):
-    '''
+    """
     This function is to generate grid based a base polygon and calculate IDW value for each cell
     Args:
         extentpoly: base polygon used to generate grid
@@ -590,7 +581,7 @@ def cal_idw(extentpoly, point_rgb, delta, idw_power, background_weight):
         background_weight:  a constant background_value; the interpolation decays to this background value when no points are nearby.
     Returns:
 
-    '''
+    """
     grid = partition(extentpoly, delta)
     grid = gpd.GeoDataFrame(geometry=gpd.GeoSeries(grid))
 
@@ -680,9 +671,9 @@ def compute_alpha_shapes(points, alpha_shape):
 
 
 def style_axes(extent, ax):
-    '''
+    """
     set extent for a plot
-    '''
+    """
 
     # setting axis limits
     ax.set_xlim([extent['x_min'], extent['x_max']])

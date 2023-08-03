@@ -1,23 +1,6 @@
 {
 	"results": {
-		"path_in": {
-			"clusters": [
-			"results/n1/areas_n1_0.txt",
-			"results/n2/areas_n2_0.txt",
-			"results/n3/areas_n3_0.txt",
-			"results/n4/areas_n4_0.txt",
-			"results/n5/areas_n5_0.txt",
-			"results/n6/areas_n6_0.txt",
-			"results/n7/areas_n7_0.txt"],
-			"stats": [
-			"results/n1/stats_n1_0.txt",
-			"results/n2/stats_n2_0.txt",
-			"results/n3/stats_n3_0.txt",
-			"results/n4/stats_n4_0.txt",
-			"results/n5/stats_n5_0.txt",
-			"results/n6/stats_n6_0.txt",
-			"results/n7/stats_n7_0.txt"]
-		},
+		"path_in": "results",
 		"path_out": "results/plots"
 	}, 
 	"data": {
@@ -42,10 +25,10 @@
 			}
 		},
 		"content": {
-			"type": "density_map",
+			"type": "consensus_map",
 			"plot_families": false,
 			"labels": "all",
-			"min_posterior_frequency": 0.9,
+			"min_posterior_frequency": 0.95,
 			"burn_in": 0.2
 		},
 
@@ -84,8 +67,8 @@
 				"polygon": {
 					"color": "white",
 					"outline_color": "black",
-					"outline_width": 1,
-					"resolution": 80000
+					"outline_width": 2,
+					"idw_resolution": 8000
 				},
 				"line": {
 					"color": "skyblue",

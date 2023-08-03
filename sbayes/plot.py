@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os;
+
+os.environ['USE_PYGEOS'] = '0'  # Fix for Pandas deprecation warning
+
 import json
 import logging
 import math
@@ -12,11 +16,12 @@ import typing as typ
 
 import shapely.geometry.polygon
 from numpy.ma import indices
+from webcolors import hex_to_rgb
 
 try:
-    import importlib.resources as pkg_resources     # PYTHON >= 3.7
+    import importlib.resources as pkg_resources  # PYTHON >= 3.7
 except ImportError:
-    import importlib_resources as pkg_resources     # PYTHON < 3.7
+    import importlib_resources as pkg_resources  # PYTHON < 3.7
 
 import pandas as pd
 import geopandas as gpd
@@ -26,7 +31,7 @@ import matplotlib.ticker as mtick
 import numpy as np
 from numpy.typing import NDArray
 # import random
-#import colorsys
+# import colorsys
 from fnmatch import fnmatch
 from math import sqrt
 
@@ -39,9 +44,7 @@ from matplotlib import colors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from pyproj import CRS
 from scipy.spatial import Delaunay
-from shapely import geometry
-from shapely.ops import cascaded_union, polygonize
-from shapely.ops import unary_union
+from shapely import geometry, unary_union
 import seaborn as sns
 import re
 
@@ -53,17 +56,17 @@ from sbayes.util import gabriel_graph_from_delaunay
 from sbayes.util import parse_cluster_columns
 from sbayes.util import read_data_csv
 from sbayes.util import PathLike
-from sbayes.load_data import Objects,Data
+from sbayes.load_data import Objects, Data, Confounder
 from sbayes.experiment_setup import Experiment
 from sbayes import config as config_package
 from sbayes import maps as maps_package
 
 from sbayes.helper_functions import *
+
 DEFAULT_CONFIG = json.loads(pkg_resources.read_text(config_package, 'default_config_plot.json'))
 
 
 class Plot:
-
     # Attributes
     config: dict[str, ...]
     config_file: Path
@@ -73,6 +76,7 @@ class Plot:
 
     # Constant class attributes
     pref_color_map = sns.cubehelix_palette(light=1, start=.5, rot=-.75, as_cmap=True)
+
     # pref_color_map = sns.color_palette("rocket_r", as_cmap=True)
 
     def __init__(self):
@@ -136,16 +140,16 @@ class Plot:
         # Fix relative paths and assign global variables for more convenient workflow
         # 1. Read the base directory
 
-        #self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
+        # self.path_plots = fix_relative_path(self.config['results']['path_out'], self.base_directory)
         self.path_plots_main = self.config['results']['path_out']
-        self.path_plots = {"dic":self.path_plots_main+'/DIC',
-                           "map":self.path_plots_main+'/map',
-                           "pie":self.path_plots_main+'/pie',
-                           "preference":self.path_plots_main+'/preference',
-                           "weights":self.path_plots_main+'/weights',
-                           'featureplots':self.path_plots_main+'/featureplots'}
+        self.path_plots = {"dic": self.path_plots_main + '/DIC',
+                           "map": self.path_plots_main + '/map',
+                           "pie": self.path_plots_main + '/pie',
+                           "preference": self.path_plots_main + '/preference',
+                           "weights": self.path_plots_main + '/weights',
+                           'featureplots': self.path_plots_main + '/featureplots'}
 
-        for name,item in self.path_plots.items():
+        for name, item in self.path_plots.items():
             if not os.path.exists(item):
                 os.makedirs(item)
             self.path_plots[name] = fix_relative_path(item, self.base_directory)
@@ -154,11 +158,9 @@ class Plot:
         self.path_feature_states = fix_relative_path(self.config['data']['feature_states'], self.base_directory)
 
         self.input_main_paths = fix_relative_path(path=self.config['results']['path_in'],
-                                             base_directory=self.base_directory)
-
+                                                  base_directory=self.base_directory)
 
         input_paths = get_datapath(self.input_main_paths)
-
 
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
@@ -175,13 +177,11 @@ class Plot:
     def verify_config(self):
         pass
 
-
     ####################################
     # Combine files
     def file_combine(self):
         acq_length = self.config['results']["total_lines"]
-        combine_files(acq_length,self.all_cluster_paths,self.all_stats_paths,self.input_main_paths)
-
+        combine_files(acq_length, self.all_cluster_paths, self.all_stats_paths, self.input_main_paths)
 
     ####################################
     # Read the data and the results
@@ -203,6 +203,10 @@ class Plot:
         data = read_data_csv(self.path_features)
         self.objects = Objects.from_dataframe(data)
         self.locations = self.objects.locations
+        if "family" in data.columns:
+            fams = Confounder.from_dataframe(data, "family")
+            self.families = fams.group_assignment
+            self.family_names = fams.group_names
 
     # Read clusters
     # Read the data from the files:
@@ -322,7 +326,7 @@ class Plot:
     #     ax.set_xticks([])
     #     ax.set_yticks([])
 
-    #@staticmethod
+    # @staticmethod
     # def compute_alpha_shapes(points, alpha_shape):
     #
     #     """Compute the alpha shape (concave hull) of a set of sites
@@ -450,7 +454,7 @@ class Plot:
         ax.scatter(*locations.T, s=cfg_graphic['languages']['size'],
                    color=cfg_graphic['languages']['color'], linewidth=0)
 
-    #@staticmethod
+    # @staticmethod
     # def get_cluster_colors(n_clusters: int, custom_colors=None):
     #     cm = plt.get_cmap('gist_rainbow')
     #     if custom_colors is None:
@@ -460,14 +464,16 @@ class Plot:
     #         additional = cm(np.linspace(0, 1, n_clusters - len(custom_colors), endpoint=False))
     #         return [colors.to_hex(c) for c in np.concatenate((provided, additional), axis=0)]
 
-    def add_labels(self, cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent,colorOn, ax):
+    @staticmethod
+    def add_labels(self, cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, color_on, ax,
+                   label_size=10):
         """Add labels to languages"""
 
         all_loc = list(range(locations_map_crs.shape[0]))
 
         # Offset
-        offset_x = (extent['x_max'] - extent['x_min'])/200
-        offset_y = (extent['y_max'] - extent['y_min'])/200
+        offset_x = (extent['x_max'] - extent['x_min']) / 200
+        offset_y = (extent['y_max'] - extent['y_min']) / 200
 
         # Label languages
         for i in all_loc:
@@ -476,7 +482,7 @@ class Plot:
             for j in range(len(cluster_labels)):
                 if i in cluster_labels[j]:
                     # Recolor labels (only for consensus_map)
-                    if cfg_content['type'] == 'consensus_map' and colorOn==True:
+                    if cfg_content['type'] == 'consensus_map' and color_on == True:
                         label_color = cluster_colors[j]
                     in_cluster = True
 
@@ -484,7 +490,8 @@ class Plot:
                 pass
             else:
                 annotate_label(xy=locations_map_crs[i], label=i + 1, color=label_color,
-                                    offset_x=offset_x, offset_y=offset_y, ax=ax)
+                               offset_x=offset_x, offset_y=offset_y, fontsize=label_size,
+                               ax=ax)
 
     # @staticmethod
     # def annotate_label(xy, label, color, offset_x, offset_y, ax):
@@ -509,7 +516,6 @@ class Plot:
     #     # Plot a density map or consensus map?
     #     cluster_freq = np.sum(cluster, axis=0) / n_samples
     #     return cluster_freq
-
 
     def cluster_legend(self, results: Results, cfg_legend):
         """ This function returns legend
@@ -552,14 +558,14 @@ class Plot:
                   f"{len(results.clusters)} needed) in map>graphic>clusters>color in the config plot "
                   f"file ({self.config_file}). I am adding default colors.")
             cluster_colors = get_cluster_colors(n_clusters=len(results.clusters),
-                                                     custom_colors=cfg_graphic['clusters']['color'])
+                                                custom_colors=cfg_graphic['clusters']['color'])
 
         else:
             cluster_colors = list(cfg_graphic['clusters']['color'])
 
         return cluster_colors
 
-    def get_point_weight_color(self, results: Results,cfg_content, cfg_graphic):
+    def get_point_weight_color(self, results: Results, cfg_content, cfg_graphic):
         """ This functions returns the frequency and colors for each  language
             Args:
                 results : Results
@@ -574,7 +580,7 @@ class Plot:
         cluster_freq = np.array([get_cluster_freq(cluster, burn_in) for cluster in results.clusters])
 
         max_cluster_freq = np.max(cluster_freq, axis=0)
-        max_row = np.argmax(cluster_freq,axis=0)
+        max_row = np.argmax(cluster_freq, axis=0)
         color_for_freq = np.array([cluster_colors[item] for item in max_row])
 
         if cfg_content['type'] == 'density_map':
@@ -589,11 +595,11 @@ class Plot:
         """ This function displays density map
         """
         cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
-        cluster_colors =self.cluster_color(results,cfg_graphic)
+        cluster_colors = self.cluster_color(results, cfg_graphic)
         cluster_labels = []
         ## plot the point plot
 
-        cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
+        cluster_freq, color_for_freq, in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         max_size = 50
         point_size = cfg_graphic['clusters']['point_size']
         if cfg_graphic['clusters']['point_size'] == "frequency":
@@ -616,29 +622,28 @@ class Plot:
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
         if cfg_legend['clusters']['add']:
-                # add to legend
+            # add to legend
             legend_clusters = ax.legend(legend_clusters, cluster_labels_legend, title_fontsize=18,
                                         title='Contact clusters',
-                                        frameon=True, edgecolor='#ffffff', framealpha=1, fontsize=16, ncol=1,
-                                        columnspacing=1, loc='upper left',
+                                        frameon=False, edgecolor='#000000', framealpha=1,
+                                        fontsize=16, ncol=1, columnspacing=1, loc='upper left',
                                         bbox_to_anchor=cfg_legend['clusters']['position'])
 
             legend_clusters._legend_box.align = "left"
             ax.add_artist(legend_clusters)
         return cluster_labels, cluster_colors
 
-
-    def consensus_map(self, results: Results, locations_map_crs,cfg_content, cfg_graphic, cfg_legend, ax):
+    def consensus_map(self, results: Results, locations_map_crs, cfg_content, cfg_graphic, cfg_legend, ax):
         """ This function displays consensus map , return
         """
         cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
         cluster_colors = self.cluster_color(results, cfg_graphic)
         cluster_labels = []
-        cluster_freq,color_for_freq, in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
+        cluster_freq, color_for_freq, in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
         ## plot the point
         max_size = 50
         point_size = cfg_graphic['clusters']['point_size']
-        #in_cluster_point = cluster_freq > cfg_content['min_posterior_frequency']
+        # in_cluster_point = cluster_freq > cfg_content['min_posterior_frequency']
         if cfg_graphic['clusters']['point_size'] == "frequency":
             point_size = cluster_freq[cluster_freq > cfg_content['min_posterior_frequency']] * max_size
 
@@ -663,92 +668,154 @@ class Plot:
 
         if cfg_legend['clusters']['add']:
             # add to legend
-            legend_clusters = ax.legend(legend_clusters, cluster_labels_legend, title_fontsize=18, title='Contact clusters',
-                             frameon=True, edgecolor='#ffffff', framealpha=1, fontsize=16, ncol=1,
-                             columnspacing=1, loc='upper left',
-                             bbox_to_anchor=cfg_legend['clusters']['position'])
+            legend_clusters = ax.legend(legend_clusters, cluster_labels_legend, title_fontsize=18,
+                                        title='Contact clusters',
+                                        frameon=False, edgecolor='#ffffff', framealpha=1, fontsize=16, ncol=1,
+                                        columnspacing=1, loc='upper left',
+                                        bbox_to_anchor=cfg_legend['clusters']['position'])
 
             legend_clusters._legend_box.align = "left"
             ax.add_artist(legend_clusters)
         return cluster_labels, cluster_colors
 
-    # @staticmethod
-    # def lighten_color(color, amount=0.2):
-    #     # FUnction to lighten up colors
-    #     c = colorsys.rgb_to_hls(*color)
-    #     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
+    @staticmethod
+    def compute_alpha_shapes(points, alpha_shape):
+
+        """Compute the alpha shape (concave hull) of a set of sites
+        Args:
+            points (np.array): subset of locations around which to create the alpha shapes (e.g. family, cluster, ...)
+            alpha_shape (float): parameter controlling the convexity of the alpha shape
+        Returns:
+            (polygon): the alpha shape"""
+
+        tri = Delaunay(points, qhull_options="QJ Pp")
+
+        edges = set()
+        edge_nodes = []
+
+        # loop over triangles:
+        # ia, ib, ic = indices of corner points of the triangle
+        for ia, ib, ic in tri.vertices:
+            pa = points[ia]
+            pb = points[ib]
+            pc = points[ic]
+
+            # Lengths of sides of triangle
+            a = math.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
+            b = math.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
+            c = math.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
+
+            # Semiperimeter of triangle
+            s = (a + b + c) / 2.0
+
+            # Area of triangle by Heron's formula
+            area = math.sqrt(s * (s - a) * (s - b) * (s - c))
+            circum_r = a * b * c / (4.0 * area)
+
+            "alpha value to influence the shape of the convex hull Smaller numbers don't fall inward "
+            "as much as larger numbers. Too large, and you lose everything!"
+
+            if circum_r < 1.0 / alpha_shape:
+                add_edge(edges, edge_nodes, points, ia, ib)
+                add_edge(edges, edge_nodes, points, ib, ic)
+                add_edge(edges, edge_nodes, points, ic, ia)
+
+        m = geometry.MultiLineString(edge_nodes)
+
+        triangles = list(polygonize(m))
+        polygon = unary_union(triangles)
+
+        return polygon
+
+    @staticmethod
+    def lighten_color(color, amount=0.2):
+        # FUnction to lighten up colors
+        c = colorsys.rgb_to_hls(*color)
+        return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
+
+    @staticmethod
+    def darken_color(color, amount=0.2):
+        if isinstance(color, str):
+            color = hex_to_rgb(color)
+        # FUnction to lighten up colors
+        c = colorsys.rgb_to_hls(*color)
+        return colorsys.hls_to_rgb(c[0], (1 - amount) * c[1], c[2])
 
     # TODO: generalize to confounders, make a special case or remove
-    # def color_families(self, locations_maps_crs, cfg_graphic, cfg_legend, ax):
-    #     family_array = self.family_names['external']
-    #     families = self.families
-    #     cm = plt.get_cmap('gist_rainbow')
-    #
-    #     if len(cfg_graphic['families']['color']) == 0:
-    #         print(f'No colors for families provided in map>graphic>families>color '
-    #               f'in the config plot file ({self.config_file}). I am using default colors instead.')
-    #         family_colors = cm(np.linspace(0.0, 0.8, len(self.families)))
-    #
-    #         # lighten colors up a bit
-    #         family_colors = [self.lighten_color(c[:3]) for c in family_colors]
-    #
-    #     elif len(cfg_graphic['families']['color']) < len(self.families):
-    #
-    #         print(f"Too few colors for families ({len(cfg_graphic['families']['color'])} provided, "
-    #               f"{len(self.families)} needed) in map>graphic>clusters>color in the config plot "
-    #               f"file ({self.config_file}). I am adding default colors.")
-    #         provided = [colors.to_rgba(c) for c in cfg_graphic['families']['color']]
-    #         additional = cm(np.linspace(0, 0.8, len(self.families) - len(cfg_graphic['families']['color'])))
-    #         family_colors = provided + [self.lighten_color(c[:3]) for c in additional]
-    #
-    #     else:
-    #         family_colors = cfg_graphic['families']['color']
-    #
-    #     # Initialize empty legend handle
-    #     handles = []
-    #
-    #     # Iterate over all family names
-    #     for i, family in enumerate(family_array):
-    #
-    #         family_color = family_colors[i]
-    #
-    #         # Find all languages belonging to a family
-    #         is_in_family = families[i] == 1
-    #         family_locations = locations_maps_crs[is_in_family, :]
-    #
-    #         # Adds a color overlay for each language in a family
-    #         ax.scatter(*family_locations.T, s=cfg_graphic['families']['size'],
-    #                    color=family_color, linewidth=0, zorder=-i, label=family)
-    #
-    #         # For languages with more than three members combine several languages in an alpha shape (a polygon)
-    #         if np.count_nonzero(is_in_family) > 3:
-    #             try:
-    #                 alpha_shape = self.compute_alpha_shapes(points=family_locations,
-    #                                                         alpha_shape=cfg_graphic['families']['shape'])
-    #
-    #                 # making sure that the alpha shape is not empty
-    #                 if not alpha_shape.is_empty:
-    #                     smooth_shape = alpha_shape.buffer(cfg_graphic['families']['buffer'], resolution=16,
-    #                                                       cap_style=1, join_style=1,
-    #                                                       mitre_limit=5.0)
-    #                     patch = PolygonPatch(smooth_shape, fc=family_color, ec=family_color,
-    #                                          lw=1, ls='-', fill=True, zorder=-i)
-    #                     ax.add_patch(patch)
-    #             # When languages in the same family have identical locations, alpha shapes cannot be computed
-    #             except ZeroDivisionError:
-    #                 pass
-    #
-    #         # Add legend handle
-    #         handle = Patch(facecolor=family_color, edgecolor=family_color, label=family)
-    #         handles.append(handle)
-    #
-    #     if cfg_legend['families']['add']:
-    #
-    #         legend_families = ax.legend(handles=handles, title='Language family', title_fontsize=18,
-    #                                     fontsize=16, frameon=True, edgecolor='#ffffff', framealpha=1,
-    #                                     ncol=1, columnspacing=1, loc='upper left',
-    #                                     bbox_to_anchor=cfg_legend['families']['position'])
-    #         ax.add_artist(legend_families)
+    def color_families(self, locations_maps_crs, cfg_graphic, cfg_legend, ax):
+        family_array = self.family_names
+        families = self.families
+        cm = plt.get_cmap('gist_rainbow')
+
+        if len(cfg_graphic['families']['color']) == 0:
+            print(f'No colors for families provided in map>graphic>families>color '
+                  f'in the config plot file ({self.config_file}). I am using default colors instead.')
+            family_colors = cm(np.linspace(0.0, 0.8, len(self.families)))
+
+            # lighten colors up a bit
+            family_colors = [self.lighten_color(c[:3]) for c in family_colors]
+
+        elif len(cfg_graphic['families']['color']) < len(self.families):
+
+            print(f"Too few colors for families ({len(cfg_graphic['families']['color'])} provided, "
+                  f"{len(self.families)} needed) in map>graphic>clusters>color in the config plot "
+                  f"file ({self.config_file}). I am adding default colors.")
+            provided = [colors.to_rgba(c) for c in cfg_graphic['families']['color']]
+            additional = cm(np.linspace(0, 0.8, len(self.families) - len(cfg_graphic['families']['color'])))
+            family_colors = provided + [self.lighten_color(c[:3]) for c in additional]
+
+        else:
+            family_colors = cfg_graphic['families']['color']
+
+        edge_colors = [tuple(x / 255 for x in self.darken_color(c)) for c in family_colors]
+
+        # Initialize empty legend handle
+        handles = []
+
+        # Iterate over all family names
+        for i, family in enumerate(family_array):
+
+            family_color = family_colors[i]
+
+            # Find all languages belonging to a family
+            is_in_family = families[i] == 1
+            family_locations = locations_maps_crs[is_in_family, :]
+
+            # Adds a color overlay for each language in a family
+            ax.scatter(*family_locations.T, s=cfg_graphic['families']['size'],
+                       color=family_color,
+                       # edgecolors=edge_colors[i],
+                       linewidth=0,
+                       zorder=-i, label=family)
+
+            # For languages with more than three members combine several languages in an alpha shape (a polygon)
+            if np.count_nonzero(is_in_family) > 3:
+                try:
+                    alpha_shape = self.compute_alpha_shapes(points=family_locations,
+                                                            alpha_shape=cfg_graphic['families']['shape'])
+
+                    # making sure that the alpha shape is not empty
+                    if not alpha_shape.is_empty:
+                        smooth_shape = alpha_shape.buffer(cfg_graphic['families']['buffer'], resolution=16,
+                                                          cap_style=1, join_style=1,
+                                                          mitre_limit=5.0)
+                        patch = PolygonPatch(smooth_shape, fc=family_color, ec=family_color,
+                                             lw=1, ls='-', fill=True, zorder=-i)
+                        ax.add_patch(patch)
+                # When languages in the same family have identical locations, alpha shapes cannot be computed
+                except ZeroDivisionError:
+                    pass
+
+            # Add legend handle
+            handle = Patch(facecolor=family_color, edgecolor=family_color, label=family)
+            handles.append(handle)
+
+        if cfg_legend['families']['add']:
+            legend_families = ax.legend(handles=handles, title='Language family', title_fontsize=18,
+                                        fontsize=16, frameon=False, edgecolor='#ffffff', framealpha=0,
+                                        ncol=1, columnspacing=1, loc='upper left',
+                                        bbox_to_anchor=cfg_legend['families']['position'])
+            ax.add_artist(legend_families)
 
     @staticmethod
     def add_legend_lines(cfg_graphic, cfg_legend, ax):
@@ -852,7 +919,7 @@ class Plot:
     #
     #     return cluster_labels, [extra]
 
-    def add_background_map(self, bbox, cfg_geo, cfg_graphic, ax):
+    def add_background_map(self, bbox, cfg_geo, cfg_graphic, ax, zorder=-100000):
         # Adds the geojson polygon geometries provided by the user as a background map
 
         if cfg_geo['base_map'].get('geojson_polygon') == '<DEFAULT>':
@@ -893,7 +960,7 @@ class Plot:
         world.plot(ax=ax, facecolor=cfg_polygon['color'],
                    edgecolor=cfg_polygon['outline_color'],
                    lw=cfg_polygon['outline_width'],
-                   zorder=-100000)
+                   zorder=zorder)
         return world
 
     def add_rivers(self, cfg_geo, cfg_graphic, ax):
@@ -937,7 +1004,7 @@ class Plot:
         sites_names = []
         sites_color = []
 
-        for obj_id, obj_name  in zip(self.objects.indices, self.objects.names):
+        for obj_id, obj_name in zip(self.objects.indices, self.objects.names):
             label_added = False
 
             for s in range(len(cluster_labels)):
@@ -1022,10 +1089,8 @@ class Plot:
 
         locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
 
-
         # Get extent
         extent = self.get_extent(cfg_geo, locations_map_crs)
-
 
         # Initialize the map
         self.initialize_map(locations_map_crs, cfg_graphic, ax)
@@ -1056,15 +1121,15 @@ class Plot:
                 ax=ax
             )
 
-
-        Coloron = True
+        color_on = True
         if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
-            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, Coloron, ax)
+            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, color_on, ax,
+                            label_size=cfg_graphic['languages']['font_size'])
 
         # Visualizes language families
-        #if cfg_content['plot_families']:
-            #logging.warning('plotting families is not currently supported.')
-            #self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
+        if cfg_content['plot_families']:  # and cfg_content['confounder'] == "family":
+            # logging.warning('plotting families is not currently supported.')
+            self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
 
         # Add main legend
         if cfg_legend['lines']['add']:
@@ -1080,7 +1145,6 @@ class Plot:
 
         # This adds an overview map
         if cfg_legend['overview']['add']:
-
             self.add_overview_map(locations_map_crs, extent, cfg_geo, cfg_graphic, cfg_legend, ax)
 
         if cfg_legend['correspondence']['add'] and cfg_graphic['languages']['label']:
@@ -1092,8 +1156,6 @@ class Plot:
 
         # Save the plot
         file_format = cfg_output['format']
-
-
 
         fig.savefig(self.path_plots['map'] / f"{file_name}.{file_format}", bbox_inches='tight',
                     dpi=cfg_output['resolution'], format=file_format)
@@ -1151,8 +1213,6 @@ class Plot:
     #     ymin, ymax = ax.get_ylim()
     #     ax.fill_between(bot_x, ymin, bot_y, color=color)
     #     ax.fill_between(top_x, ymax, top_y, color=color)
-
-
 
     # Transform weights into needed format
     # def transform_weights(self, feature, b_in):
@@ -1232,7 +1292,6 @@ class Plot:
     #     ordering = sorted(sort_by, key=sort_by.get, reverse=True)
     #     return ordering
 
-
     @staticmethod
     def plot_weight(
         samples: NDArray[float],
@@ -1242,6 +1301,7 @@ class Plot:
         mean_weights: bool = False,
         plot_samples: bool = False,
         lw: float | None = None,
+        color: str | tuple | None = None,
     ):
         """Plot a set of weight vectors in a 2D representation of the probability simplex.
 
@@ -1259,19 +1319,9 @@ class Plot:
             ax = plt.gca()
 
         n_samples, n_weights = samples.shape
-
-        # Compute corners
-        corners = get_corner_points(n_weights)
-
-        # Bounding box
-        xmin, ymin = np.min(corners, axis=0)
-        xmax, ymax = np.max(corners, axis=0)
-
-        # Project the samples
-        samples_projected = samples.dot(corners)
-
-        # Density and scatter plot
+        labels = cfg_legend['labels']
         title = cfg_legend['title']
+
         if title['add']:
             # ax.set_title(str(feature), pad=15,
             #              fontdict={'fontweight': 'bold', 'fontsize': title['font_size']})
@@ -1281,33 +1331,66 @@ class Plot:
                 transform=ax.transAxes
             )
 
-        x = samples_projected.T[0]
-        y = samples_projected.T[1]
+        if n_weights == 1:
+            logging.warning("Weights can't be plotted in a model without confounders.")
+        elif n_weights == 2:
+            x = samples.T[1]
+            sns.kdeplot(x, color=color, ax=ax, fill=True, lw=1, clip=(0, 1))
+            # if cfg_legend['rug']:     # TODO Make the rug plot option?
+            #     sns.rugplot(x, color="k", alpha=0.02, height=-0.03, ax=ax, clip_on=False)
 
-        sns.kdeplot(x=x, y=y, shade=True,  cut=30, n_levels=20,
-                    clip=([xmin, xmax], [ymin, ymax]), cmap=Plot.pref_color_map, ax=ax)
+            ax.axes.get_yaxis().set_visible(False)
 
-        if plot_samples:
-            ax.scatter(x, y, color='k', lw=0, s=1, alpha=0.2)
+            if labels['add']:
+                for x, label in enumerate(labels['names']):
+                    if x == 0:
+                        x = 0.05
+                    if x == 1:
+                        x = 0.95
+                    ax.text(x, -0.05, label, ha='center', va='top',
+                            fontdict={'fontsize': labels['font_size']}, transform=ax.transAxes)
 
-        # Draw simplex and crop outside
-        ax.fill(*corners.T, edgecolor='k', fill=False, lw=lw)
-        fill_outside(corners, color='w', ax=ax)
+            ax.plot([0, 1], [0, 0], lw=1, color=color, clip_on=False)
 
-        if mean_weights:
-            mean_projected = np.mean(samples, axis=0).dot(corners)
-            ax.scatter(*mean_projected.T, color="#ed1696", lw=0, s=50, marker="o")
+            ax.set_ylim([0, None])
+            ax.set_xlim([-0.01, 1.01])
+            ax.axis('off')
+        else:
+            # Compute corners
+            corners = get_corner_points(n_weights)
 
-        labels = cfg_legend['labels']
+            # Bounding box
+            xmin, ymin = np.min(corners, axis=0)
+            xmax, ymax = np.max(corners, axis=0)
 
-        if labels['add']:
-            for xy, label in zip(corners, labels['names']):
-                xy = xy*1.15 - 0.05  # Stretch, s.t. labels don't overlap with corners
-                ax.text(*xy, label, ha='center', va='center', fontdict={'fontsize': labels['font_size']})
+            # Project the samples
+            samples_projected = samples.dot(corners)
 
-        ax.set_xlim([xmin - 0.1, xmax + 0.1])
-        ax.set_ylim([ymin - 0.1, ymax + 0.1])
-        ax.axis('off')
+            x = samples_projected.T[0]
+            y = samples_projected.T[1]
+
+            sns.kdeplot(x=x, y=y, fill=True, cut=30, n_levels=20,
+                        clip=([xmin, xmax], [ymin, ymax]), cmap=Plot.pref_color_map, ax=ax)
+
+            if plot_samples:
+                ax.scatter(x, y, color='k', lw=0, s=1, alpha=0.2)
+
+            # Draw simplex and crop outside
+            ax.fill(*corners.T, edgecolor='k', fill=False, lw=lw)
+            fill_outside(corners, color='w', ax=ax)
+
+            if mean_weights:
+                mean_projected = np.mean(samples, axis=0).dot(corners)
+                ax.scatter(*mean_projected.T, color="#ed1696", lw=0, s=50, marker="o")
+
+            if labels['add']:
+                for xy, label in zip(corners, labels['names']):
+                    xy = xy * 1.15 - 0.05  # Stretch, s.t. labels don't overlap with corners
+                    ax.text(*xy, label, ha='center', va='center', fontdict={'fontsize': labels['font_size']})
+
+            ax.set_xlim([xmin - 0.1, xmax + 0.1])
+            ax.set_ylim([ymin - 0.1, ymax + 0.1])
+            ax.axis('off')
 
     @staticmethod
     def plot_preference(samples, feature, cfg_legend, label_names, ax=None, plot_samples=False, color=None):
@@ -1346,10 +1429,10 @@ class Plot:
                     if x == 1:
                         x = 0.95
                     ax.text(x, -0.05, label, ha='center', va='top',
-                             fontdict={'fontsize': labels['font_size']}, transform=ax.transAxes)
+                            fontdict={'fontsize': labels['font_size']}, transform=ax.transAxes)
             if title['add']:
                 ax.text(title['position'][0], title['position'][1],
-                         str(feature), fontsize=title['font_size'], fontweight='bold', transform=ax.transAxes)
+                        str(feature), fontsize=title['font_size'], fontweight='bold', transform=ax.transAxes)
 
             ax.plot([0, 1], [0, 0], lw=1, color=color, clip_on=False)
 
@@ -1372,12 +1455,12 @@ class Plot:
             # Density and scatter plot
             if title['add']:
                 ax.text(title['position'][0], title['position'][1],
-                         str(feature), fontsize=title['font_size'], fontweight='bold', transform=ax.transAxes)
+                        str(feature), fontsize=title['font_size'], fontweight='bold', transform=ax.transAxes)
 
             x = samples_projected.T[0]
             y = samples_projected.T[1]
 
-            sns.kdeplot(x=x, y=y, shade=True, thresh=0, cut=30, n_levels=100, ax=ax,
+            sns.kdeplot(x=x, y=y, fill=True, thresh=0, cut=30, n_levels=100, ax=ax,
                         clip=([xmin, xmax], [ymin, ymax]), cmap=Plot.pref_color_map)
 
             if plot_samples:
@@ -1393,12 +1476,12 @@ class Plot:
                     # Split long labels
                     if (" " in label or "-" in label) and len(label) > 10:
                         white_or_dash = [i for i, ltr in enumerate(label) if (ltr == " " or ltr == "-")]
-                        mid_point = len(label)/2
+                        mid_point = len(label) / 2
                         break_label = min(white_or_dash, key=lambda x: abs(x - mid_point))
                         label = label[:break_label] + "\n" + label[break_label:]
 
                     ax.text(*xy, label, ha='center', va='center',
-                             fontdict={'fontsize': labels['font_size']})
+                            fontdict={'fontsize': labels['font_size']})
 
             ax.set_xlim([xmin - 0.1, xmax + 0.1])
             ax.set_ylim([ymin - 0.1, ymax + 0.1])
@@ -1428,9 +1511,14 @@ class Plot:
         for e in range(1, n_empty + 1):
             axs.flatten()[-e].axis('off')
 
+        if isinstance(cfg_weights['legend']['labels']['names'], dict):
+            conf_labels = cfg_weights['legend']['labels']['names']
+            cfg_weights['legend']['labels']['names'] = [conf_labels[c] for c in (["areal"] + results.confounders)]
+
         for f in features:
             plt.subplot(n_row, n_col, position)
-            self.plot_weight(weights[f], feature=f, cfg_legend=cfg_weights['legend'], mean_weights=True)
+            self.plot_weight(weights[f], feature=f, cfg_legend=cfg_weights['legend'], mean_weights=True,
+                             color='#005570')
             print(position, "of", n_plots, "plots finished")
             position += 1
 
@@ -1447,16 +1535,17 @@ class Plot:
         plt.close(fig)
 
     def plot_weights_and_prefs(
-        self,
-        results: Results,
-        feature_name: str,
-        # file_name: PathLike,
+            self,
+            results: Results,
+            feature_name: str,
+            file_name: PathLike,
     ):
         n_components = 1 + results.n_confounders
         max_groups = max(len(groups) for groups in results.groups_by_confounders.values())
+        max_groups = max(max_groups, results.n_clusters)
         fig, axes = plt.subplots(nrows=n_components, ncols=2 + max_groups,
                                  figsize=(4 + max_groups, 2 + n_components),
-                                 gridspec_kw={'width_ratios': [1.8, .8] + [1]*max_groups})
+                                 gridspec_kw={'width_ratios': [1.8, .8] + [1] * max_groups})
 
         plt.tight_layout()
         axes[0, 0].text(
@@ -1470,14 +1559,20 @@ class Plot:
         for ax in axes.flatten():
             ax.axis('off')
 
+        cfg_featplot = self.config['feature_plot']
+        if isinstance(cfg_featplot['legend']['labels']['names'], dict):
+            conf_labels = cfg_featplot['legend']['labels']['names']
+            cfg_featplot['legend']['labels']['names'] = [conf_labels[c] for c in (["areal"] + results.confounders)]
+
         self.plot_weight(
             samples=results.weights[feature_name],
             # feature='weights',
             feature='',
-            cfg_legend=self.config['feature_plot']['legend'],
+            cfg_legend=cfg_featplot['legend'],
             mean_weights=True,
             ax=axes[n_components // 2, 0],
             lw=.8,
+            color='#005570',
         )
 
         preferences = {
@@ -1490,6 +1585,7 @@ class Plot:
                             component.replace('cluster', 'contact').replace('family', 'inheritance'),
                             fontsize=8)
             axes[i, 1].set_ylim([-2, 3])
+
             for j, (group, pref_by_feat) in enumerate(prefs_by_group.items()):
                 axes[i, j + 2].get_shared_y_axes().join(axes[i, 2], axes[i, j + 2])
 
@@ -1504,9 +1600,12 @@ class Plot:
                     color='#005570',
                 )
 
-
-
-        plt.show()
+        # plt.show()
+        file_format = self.config['feature_plot']['output']['format']
+        resolution = self.config['feature_plot']['output']['resolution']
+        plt.savefig(self.path_plots['featureplots'] / f'{file_name}.{file_format}',
+                    bbox_inches='tight', dpi=resolution, format=file_format)
+        plt.close(fig)
 
     # This is not changed yet
     def plot_preferences(self, results: Results, file_name: str):
@@ -1523,7 +1622,6 @@ class Plot:
 
         width = cfg_preference['output']['width_subplot']
         height = cfg_preference['output']['height_subplot']
-
 
         # todo: spacing in config?
         width_spacing = 0.2
@@ -1584,7 +1682,6 @@ class Plot:
         """
         print('Plotting DIC...')
 
-
         cfg_dic = self.config['dic_plot']
 
         width = cfg_dic['output']['width']
@@ -1598,7 +1695,7 @@ class Plot:
         if not cfg_dic['content']['model']:
             x = available_models
         else:
-            x = [available_models[i-1] for i in cfg_dic['content']['model']]
+            x = [available_models[i - 1] for i in cfg_dic['content']['model']]
         y = []
 
         if len(x) < 0:
@@ -1644,7 +1741,7 @@ class Plot:
         yticklabels = [f'{y_tick:.0f}' for y_tick in y_ticks]
         ax.set_yticklabels(yticklabels, fontsize=10)
 
-        fig.savefig( self.path_plots["dic"]/ f'{file_name}.{file_format}', bbox_inches='tight',
+        fig.savefig(self.path_plots["dic"] / f'{file_name}.{file_format}', bbox_inches='tight',
                     dpi=resolution, format=file_format)
 
     def plot_trace(self, results: Results, file_name="trace", show_every_k_sample=1, file_format="pdf"):
@@ -1883,15 +1980,16 @@ class Plot:
             print(f'I tried to color the pie charts the same as the map, but not enough colors were provided in '
                   f'map>graphic>clusters>color in the config plot file ({self.config_file}). '
                   f'I am adding default colors.')
-            all_colors = get_cluster_colors(n_clusters, custom_colors=self.config['map']['graphic']['clusters']['color'])
+            all_colors = get_cluster_colors(n_clusters,
+                                            custom_colors=self.config['map']['graphic']['clusters']['color'])
         else:
             print(f'I am using the colors in map>graphic>clusters>color '
                   f'in the config plot file ({self.config_file}) to color the pie charts.')
             all_colors = list(self.config['map']['graphic']['clusters']['color'])
 
-        for l in range(n_col*n_row):
+        for l in range(n_col * n_row):
 
-            ax_col = int(np.floor(l/n_row))
+            ax_col = int(np.floor(l / n_row))
             ax_row = l - n_row * ax_col
 
             if l < n_plots:
@@ -1915,9 +2013,9 @@ class Plot:
                     mid_point = len(label) / 2
                     break_label = min(white_or_dash, key=lambda x: abs(x - mid_point))
                     if " " in label:
-                        label = label[:break_label] + '\n' + label[break_label+1:]
+                        label = label[:break_label] + '\n' + label[break_label + 1:]
                     elif "-" in label:
-                        label = label[:break_label] + '-\n' + label[break_label+1:]
+                        label = label[:break_label] + '-\n' + label[break_label + 1:]
 
                 axs[ax_row, ax_col].text(0.20, 0.5, str(self.objects.indices[l] + 1), size=15, va='center', ha="right",
                                          transform=axs[ax_row, ax_col].transAxes)
@@ -1945,7 +2043,6 @@ class Plot:
     ############### Inverse Distance Weights interpolation ############
     ##################################################################
 
-
     def get_idw_map(self, results, file_name):
         '''
         This function is to preprocess the language data and extract the base map,and save the final interpolation map
@@ -1968,16 +2065,15 @@ class Plot:
 
         # Get extent
         extent = self.get_extent(cfg_geo, locations_map_crs)
-
-
         bbox = compute_bbox(extent)
-        extent_file = self.add_background_map(bbox, cfg_geo, cfg_graphic, ax)
+        cfg_graphic['base_map']['polygon']['color'] = "#00000000"
+        extent_file = self.add_background_map(bbox, cfg_geo, cfg_graphic, ax, zorder=100)
         ploys = extent_file['geometry']
         mergedPolys = unary_union(ploys)
-        #poly = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[mergedPolys])
+        # poly = gpd.GeoDataFrame(index=[0], crs='epsg:4326', geometry=[mergedPolys])
 
         ## get_point_frequency
-        cluster_freq,color_for_freq,in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
+        cluster_freq, color_for_freq, in_cluster_point = self.get_point_weight_color(results, cfg_content, cfg_graphic)
 
         # languages which are below the frequency threshold are colored  white
         indices = np.where(in_cluster_point == False)[0]
@@ -1986,7 +2082,7 @@ class Plot:
         ## convert rgb to hex
         feature_data = read_data_csv(self.path_features)
         feature_data['family'] = feature_data['family'].fillna("Isolates")
-        red,green,blue = rgb_color(color_for_freq)
+        red, green, blue = rgb_color(color_for_freq)
         df = pd.DataFrame({
             'x': locations_map_crs[:, 0],
             'y': locations_map_crs[:, 1],
@@ -1995,13 +2091,14 @@ class Plot:
             'blue': blue,
             'Family': feature_data.family.to_list()
         })
-        #convert languange point to geopandas
+        # convert languange point to geopandas
         point_geo = gpd.GeoDataFrame(df, geometry=df.apply(lambda row: geometry.Point(row.x, row.y), axis=1))
 
         delta = cfg_content["idw_resolution"]
         idw_power = cfg_content["idw_power"]
         idw_background_weight = cfg_content["idw_background_weight"]
-        idw_grid = cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, idw_power=idw_power, background_weight=idw_background_weight)
+        idw_grid = cal_idw(extentpoly=mergedPolys, point_rgb=point_geo, delta=delta, idw_power=idw_power,
+                           background_weight=idw_background_weight)
 
         # Style the axes
         style_axes(extent, ax)
@@ -2009,11 +2106,10 @@ class Plot:
         # Add a base map
         self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
 
-       ### plot the idw map
+        ### plot the idw map
         idw_grid.plot(ax=ax, color=idw_grid.idw_hex)
 
-
-        if cfg_content['confounder'] == "family" :
+        if cfg_content.get('confounder') == "family":
             df['Family'] = df['Family'].fillna("Isolates")
             acq_family = df['Family'].unique()
             ## get color for each value and store them in a dict
@@ -2032,9 +2128,9 @@ class Plot:
             print(familyshapes_dic)
 
             markers_forfeature = [familyshapes_dic[j] for j in feature_data["family"].unique()]
-            sns.scatterplot(data=df, x='x', y='y', style = 'Family',markers=markers_forfeature,ax=ax)
-
-        #point_geo.plot(ax=ax,color=color_for_freq, edgecolor='black')
+            sns.scatterplot(data=df, x='x', y='y', style='Family', markers=markers_forfeature, ax=ax)
+        else:
+            point_geo.plot(ax=ax, color=color_for_freq, edgecolor='black')
 
         # for xy, c,m in zip(locations_map_crs,color_for_freq,markerlist):
         #     print(xy[0],xy[1],c,m)
@@ -2045,20 +2141,18 @@ class Plot:
 
         ## get cluster labels and contact cluster legend
         cluster_labels = []
-        #cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
+        # cluster_labels_legend, legend_clusters = self.cluster_legend(results, cfg_legend)
         for i, cluster in enumerate(results.clusters):
             # This function computes a Gabriel graph for all points which are in the posterior with at least p_freq
             in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
 
-
-       ### add the number lable for each language on mqp
+        ### add the number lable for each language on mqp
         colorOn = False
         if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
-            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, colorOn, ax)
-
-
+            self.add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, colorOn, ax,
+                            label_size=cfg_graphic['languages']['font_size'])
 
         if cfg_legend['correspondence']['add'] and cfg_graphic['languages']['label']:
             if cfg_content['type'] == "density_map":
@@ -2066,14 +2160,13 @@ class Plot:
             if any(len(labels) > 0 for labels in cluster_labels):
                 self.add_correspondence_table(cluster_labels, cluster_colors, cfg_legend, ax)
 
-
         # Match the extent of x- and y-axis to the bounding-box of the grid
         plt.xlim(bbox.bounds[0], bbox.bounds[2])
         plt.ylim(bbox.bounds[1], bbox.bounds[3])
 
         file_format = cfg_output['format']
-        fig.savefig( self.path_plots["map"]/ f"{file_name}.{file_format}", bbox_inches='tight',dpi=cfg_output['resolution'], format=file_format)
-
+        fig.savefig(self.path_plots["map"] / f"{file_name}.{file_format}", bbox_inches='tight',
+                    dpi=cfg_output['resolution'], format=file_format)
 
     ############### Feature map ############
     ##################################################################
@@ -2099,37 +2192,35 @@ class Plot:
         if feature_content['confounder'] == "family":
             acq_family = set(feature_data['family'].to_list())
 
-            print("acq_family",acq_family)
+            print("acq_family", acq_family)
 
             ## get color for each value and store them in a dict
             familyshapes_dic = feature_graphic['marker']
             custom_familyvalues = list(familyshapes_dic.keys())
             custom_familyshape = list(familyshapes_dic.values())
 
-            print("custom_familyvalues",custom_familyvalues)
+            print("custom_familyvalues", custom_familyvalues)
 
-            non_add_family =  [x for x in acq_family if x not in custom_familyvalues]
+            non_add_family = [x for x in acq_family if x not in custom_familyvalues]
             if non_add_family:
                 add_shapes = get_family_shapes(len(acq_family), custom_shapes=None)
-                for i,j in zip(non_add_family,add_shapes):
+                for i, j in zip(non_add_family, add_shapes):
                     familyshapes_dic[i] = j
 
             print(familyshapes_dic)
 
-
-       ## get feature name from user and default color
+        ## get feature name from user and default color
         if feature_content['confounder'] is None:
             confounder = ["family"]
         else:
             confounder = list(feature_content['confounder'])
 
-        feature_name = [x for x in feature_data.columns if x not in ['name','id','x','y',]+ confounder]
+        feature_name = [x for x in feature_data.columns if x not in ['name', 'id', 'x', 'y', ] + confounder]
 
         acq_features = feature_content['features']
 
         if not acq_features:
             acq_features = feature_name
-
 
         ## get all the feature names and all the unique values in the dataframe
         feature_data = feature_data.fillna('Null')
@@ -2144,10 +2235,9 @@ class Plot:
         non_add_state = [x for x in unique_state if x not in custom_statevalues]
 
         if non_add_state:
-            add_color = get_cluster_colors(len(non_add_state),custom_colors=None)
-            for i, j in zip(non_add_state, add_color ):
+            add_color = get_cluster_colors(len(non_add_state), custom_colors=None)
+            for i, j in zip(non_add_state, add_color):
                 featurecolor_dic[i] = j
-
 
         # Get extent
         locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
@@ -2157,13 +2247,13 @@ class Plot:
         for item in acq_features:
             # Initialize the plot
             fig, ax = plt.subplots(figsize=(feature_output['width'], feature_output['height']))
-            #Initialize the map
+            # Initialize the map
             self.initialize_map(locations_map_crs, cfg_graphic, ax)
 
-            #Style the axes
+            # Style the axes
             style_axes(extent, ax)
 
-            #Add a base map
+            # Add a base map
             self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
 
             print("Plotting Feature", item)
@@ -2175,14 +2265,16 @@ class Plot:
             feature_data["y"] = locations_map_crs.T[1]
 
             if feature_content["plot_feature"] == True and feature_content["plot_family"] == True:
-                sns.scatterplot(data=feature_data, x='x', y='y',style='family',markers= markers_forfeature,hue=item, palette=colors_forfeature,legend="brief",ax=ax)
+                sns.scatterplot(data=feature_data, x='x', y='y', style='family', markers=markers_forfeature, hue=item,
+                                palette=colors_forfeature, legend="brief", ax=ax)
             elif feature_content["plot_feature"] == True and feature_content["plot_family"] == False:
-                sns.scatterplot(data=feature_data, x='x', y='y',hue=item, palette=colors_forfeature,legend="brief",ax=ax)
+                sns.scatterplot(data=feature_data, x='x', y='y', hue=item, palette=colors_forfeature, legend="brief",
+                                ax=ax)
             elif feature_content["plot_feature"] == False and feature_content["plot_family"] == True:
-                sns.scatterplot(data=feature_data, x='x', y='y',style='family',markers= markers_forfeature,legend="brief",ax=ax)
+                sns.scatterplot(data=feature_data, x='x', y='y', style='family', markers=markers_forfeature,
+                                legend="brief", ax=ax)
             else:
-                sns.scatterplot(data=feature_data, x='x', y='y', legend="brief",ax=ax)
-
+                sns.scatterplot(data=feature_data, x='x', y='y', legend="brief", ax=ax)
 
             # add legend
             if feature_legend["add"] == True:
@@ -2190,25 +2282,26 @@ class Plot:
                 labels = list(map(lambda x: x.title(), labels))
 
                 fontsize = feature_legend["font_size"]
-                ax.legend(handles = handles,labels = labels, labelspacing=1, title='Legend',fontsize= fontsize,title_fontsize= fontsize+2,loc='center left')
+                ax.legend(handles=handles, labels=labels, labelspacing=1, title='Legend', fontsize=fontsize,
+                          title_fontsize=fontsize + 2, loc='center left')
 
-                #sns.move_legend(pscatter, bbox_to_anchor=(.05, .40),loc='center left', frameon=False,fontsize=fontsize)
-
+                # sns.move_legend(pscatter, bbox_to_anchor=(.05, .40),loc='center left', frameon=False,fontsize=fontsize)
 
                 #  add language label
             cluster_labels = []
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(self.objects.indices))
-            Coloron = False
-            self.add_labels(feature_content, locations_map_crs, cluster_labels, list(feature_graphic['color'].keys()), extent, Coloron, ax)
+            color_on = False
+            self.add_labels(feature_content, locations_map_crs, cluster_labels, list(feature_graphic['color'].keys()),
+                            extent, color_on, ax,
+                            label_size=cfg_graphic['languages']['font_size'])
 
-           ### save image
+            ### save image
             file_format = feature_output['format']
             file_name = 'Feature ' + item
             fig.savefig(self.path_plots['featureplots'] / f"{file_name}.{file_format}", bbox_inches='tight',
                         dpi=feature_output['resolution'], format=file_format)
             plt.close(fig)
-
 
 
 class PlotType(Enum):
@@ -2225,17 +2318,12 @@ class PlotType(Enum):
 
 
 def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
-    # TODO adapt paths according to experiment_name (if provided)
-    # If no plot type is specified, plot everything in the config file
-
     if plot_types is None:
         plot_types = list(PlotType)
-
 
     plot = Plot()
     plot.load_config(config_file=config)
     plot.read_data()
-    print(plot_types)
 
     def should_be_plotted(plot_type: PlotType):
         """A plot type should only be generated if it
@@ -2243,10 +2331,7 @@ def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
             2) is in the requested list of plot types."""
         return (plot_type.value in plot.config) and (plot_type in plot_types)
 
-
     for m, results in plot.iterate_over_models():
-        print('f', m)
-
         # Plot the reconstructed clusters on a map
         if should_be_plotted(PlotType.map):
             plot_map(plot, results, m)
@@ -2262,15 +2347,17 @@ def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
         # Plot the reconstructed clusters in pie-charts
         # (one per language, showing how likely the language is to be in each cluster)
         if should_be_plotted(PlotType.pie_plot):
-            plot.plot_pies(results, file_name= 'plot_pies_' + m)
+            plot.plot_pies(results, file_name='plot_pies_' + m)
 
-        # if should_be_plotted(PlotType.feature_plot):
         if should_be_plotted(PlotType.feature_plot):
-            if feature_name is None:
-                logging.warning("Skipping 'feature_plot', since not feature_name was provided.")
-                # TODO: If feature_name is None, iterate over all features and save to file.
+            if feature_name:
+                features = [feature_name]
             else:
-                plot.plot_weights_and_prefs(results, feature_name)
+                # If feature_name is None, plot all features
+                features = results.feature_names
+
+            for f in features:
+                plot.plot_weights_and_prefs(results, f, file_name=f'feature_plot_{m}_{f}')
 
     # Plot DIC over all models
     if should_be_plotted(PlotType.dic_plot):
@@ -2295,14 +2382,13 @@ def plot_map(plot: Plot, results: Results, m: str):
             plot.posterior_map(results, file_name=f'posterior_map_{m}_{min_posterior_frequency}')
 
     elif map_type == 'idw_map':
-        plot.get_idw_map(results,m)
+        plot.get_idw_map(results, m)
     else:
         raise ValueError(f'Unknown map type: {map_type}  (in the config file "map" -> "content" -> "type")')
 
 
-if __name__ == '__main__':
+def cli():
     import argparse
-
     parser = argparse.ArgumentParser(description='Plot the results of a sBayes run.')
     parser.add_argument('config', type=Path, help='The JSON configuration file')
     parser.add_argument('type', nargs='?', type=str, help='The type of plot to generate')
@@ -2316,3 +2402,8 @@ if __name__ == '__main__':
         plot_types = [PlotType(args.type)]
 
     main(args.config, plot_types=plot_types, feature_name=args.feature_name)
+
+
+if __name__ == '__main__':
+    cli()
+

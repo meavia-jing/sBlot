@@ -1,9 +1,6 @@
 {
 	"results": {
-		"path_in": {
-			"clusters": "<REQUIRED>",
-			"stats": "<REQUIRED>"
-		},
+		"path_in": "<REQUIRED>",
 		"path_out": "./plots"
 	},
 	"data": {
@@ -17,7 +14,11 @@
 			"min_posterior_frequency": 0.5,
 			"labels": "in_cluster",
 			"plot_families": true,
-			"burn_in": 0.2
+			"burn_in": 0.2,
+			"idw_resolution": 2000,
+			"idw_power": 4,
+			"idw_background_weight": 1,
+			"confounder": null
 		},
 		"geo": {
 			"map_projection": "epsg:4326",
@@ -35,7 +36,8 @@
 			"languages": {
 				"size": 15,
 				"color": "grey",
-				"label": true
+				"label": true,
+				"font_size": 10,
 			},
 			"clusters": {
 				"point_size": 20,
@@ -120,7 +122,7 @@
 			"resolution": 400
 		}
 	},
-	"weight_plot": {
+	"weights_plot": {
 		"content": {
 			"features": [],
 			"burn_in": 0.2
@@ -185,11 +187,11 @@
 			"labels": {
 				"add": true,
 				"font_size": 8,
-				"names": [
-					"contact",
-					"universal",
-					"inheritance"
-				]
+				"names": {
+					"universal": "universal",
+					"areal": "contact",
+					"family": "inheritance"
+				}
 			},
 			"title": {
 				"add": true,

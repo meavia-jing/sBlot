@@ -277,103 +277,19 @@ class Plot:
         name = [str(p).rsplit('_')[1] for p in last_part]
         return name
 
-    # From map.py:
-    ##############################################################
-    # Copy-pasted functions needed for plot_posterior_map
-    ##############################################################
-    # Load default config parameters
-
     @staticmethod
     def get_extent(cfg_geo, locations):
         if not cfg_geo['extent']['x']:
-            x_min, x_max = np.min(locations[:, 0]), np.max(locations[:, 0])
-            x_offset = (x_max - x_min) * 0.3
-            x_min = x_min - x_offset
-            x_max = x_max + x_offset
+            x_min, x_max = min_and_max_with_padding(locations[:, 0], pad=0.05)
         else:
             x_min, x_max = cfg_geo['extent']['x']
 
         if not cfg_geo['extent']['y']:
-            y_min, y_max = np.min(locations[:, 1]), np.max(locations[:, 1])
-            y_offset = (y_max - y_min) * 0.1
-            y_min = y_min - y_offset
-            y_max = y_max + y_offset
-
+            y_min, y_max = min_and_max_with_padding(locations[:, 1], pad=0.05)
         else:
             y_min, y_max = cfg_geo['extent']['y']
 
-        extent = {'x_min': x_min,
-                  'x_max': x_max,
-                  'y_min': y_min,
-                  'y_max': y_max}
-
-        return extent
-
-    # @staticmethod
-    # def compute_bbox(extent):
-    #     bbox = geometry.box(extent['x_min'], extent['y_min'],
-    #                         extent['x_max'], extent['y_max'])
-    #     return bbox
-
-    # @staticmethod
-    # def style_axes(extent, ax):
-    #
-    #     # setting axis limits
-    #     ax.set_xlim([extent['x_min'], extent['x_max']])
-    #     ax.set_ylim([extent['y_min'], extent['y_max']])
-    #
-    #     # Removing axis labels
-    #     ax.set_xticks([])
-    #     ax.set_yticks([])
-
-    # @staticmethod
-    # def compute_alpha_shapes(points, alpha_shape):
-    #
-    #     """Compute the alpha shape (concave hull) of a set of sites
-    #     Args:
-    #         points (np.array): subset of locations around which to create the alpha shapes (e.g. family, cluster, ...)
-    #         alpha_shape (float): parameter controlling the convexity of the alpha shape
-    #     Returns:
-    #         (polygon): the alpha shape"""
-    #
-    #     tri = Delaunay(points, qhull_options="QJ Pp")
-    #
-    #     edges = set()
-    #     edge_nodes = []
-    #
-    #     # loop over triangles:
-    #     # ia, ib, ic = indices of corner points of the triangle
-    #     for ia, ib, ic in tri.vertices:
-    #         pa = points[ia]
-    #         pb = points[ib]
-    #         pc = points[ic]
-    #
-    #         # Lengths of sides of triangle
-    #         a = math.sqrt((pa[0] - pb[0]) ** 2 + (pa[1] - pb[1]) ** 2)
-    #         b = math.sqrt((pb[0] - pc[0]) ** 2 + (pb[1] - pc[1]) ** 2)
-    #         c = math.sqrt((pc[0] - pa[0]) ** 2 + (pc[1] - pa[1]) ** 2)
-    #
-    #         # Semiperimeter of triangle
-    #         s = (a + b + c) / 2.0
-    #
-    #         # Area of triangle by Heron's formula
-    #         area = math.sqrt(s * (s - a) * (s - b) * (s - c))
-    #         circum_r = a * b * c / (4.0 * area)
-    #
-    #         "alpha value to influence the shape of the convex hull Smaller numbers don't fall inward "
-    #         "as much as larger numbers. Too large, and you lose everything!"
-    #
-    #         if circum_r < 1.0 / alpha_shape:
-    #             add_edge(edges, edge_nodes, points, ia, ib)
-    #             add_edge(edges, edge_nodes, points, ib, ic)
-    #             add_edge(edges, edge_nodes, points, ic, ia)
-    #
-    #     m = geometry.MultiLineString(edge_nodes)
-    #
-    #     triangles = list(polygonize(m))
-    #     polygon = cascaded_union(triangles)
-    #
-    #     return polygon
+        return {'x_min': x_min, 'x_max': x_max, 'y_min': y_min, 'y_max': y_max}
 
     @staticmethod
     def clusters_to_graph(cluster, locations_map_crs, cfg_content):
@@ -465,7 +381,7 @@ class Plot:
     #         return [colors.to_hex(c) for c in np.concatenate((provided, additional), axis=0)]
 
     @staticmethod
-    def add_labels(self, cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, color_on, ax,
+    def add_labels(cfg_content, locations_map_crs, cluster_labels, cluster_colors, extent, color_on, ax,
                    label_size=10):
         """Add labels to languages"""
 
@@ -614,23 +530,24 @@ class Plot:
             for li in range(len(lines)):
                 lineweight = cfg_graphic['clusters']['line_width']
                 if lineweight == "frequency":
-                    lineweight = line_w[li]
+                    lineweight = 2 * line_w[li]
                 ax.plot(*lines[li].T, color=current_color, lw=lineweight,
                         alpha=cfg_graphic['clusters']['alpha'])
-            line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
+            line_legend = Line2D([0, 100], [0, 0], color=current_color, lw=6, linestyle='-')
             legend_clusters.append(line_legend)
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
+
         if cfg_legend['clusters']['add']:
             # add to legend
             legend_clusters = ax.legend(legend_clusters, cluster_labels_legend, title_fontsize=18,
                                         title='Contact clusters',
-                                        frameon=False, edgecolor='#000000', framealpha=1,
+                                        frameon=False, edgecolor='#000000', framealpha=0,
                                         fontsize=16, ncol=1, columnspacing=1, loc='upper left',
                                         bbox_to_anchor=cfg_legend['clusters']['position'])
-
             legend_clusters._legend_box.align = "left"
             ax.add_artist(legend_clusters)
+
         return cluster_labels, cluster_colors
 
     def consensus_map(self, results: Results, locations_map_crs, cfg_content, cfg_graphic, cfg_legend, ax):
@@ -662,6 +579,7 @@ class Plot:
                 ax.plot(*lines[li].T, color=current_color, lw=lineweight,
                         alpha=cfg_graphic['clusters']['alpha'])
             line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
+
             legend_clusters.append(line_legend)
             if cfg_graphic['languages']['label']:
                 cluster_labels.append(list(compress(self.objects.indices, in_cluster)))
@@ -670,7 +588,7 @@ class Plot:
             # add to legend
             legend_clusters = ax.legend(legend_clusters, cluster_labels_legend, title_fontsize=18,
                                         title='Contact clusters',
-                                        frameon=False, edgecolor='#ffffff', framealpha=1, fontsize=16, ncol=1,
+                                        frameon=False, edgecolor='#ffffff', framealpha=0, fontsize=16, ncol=1,
                                         columnspacing=1, loc='upper left',
                                         bbox_to_anchor=cfg_legend['clusters']['position'])
 
@@ -812,10 +730,11 @@ class Plot:
 
         if cfg_legend['families']['add']:
             legend_families = ax.legend(handles=handles, title='Language family', title_fontsize=18,
-                                        fontsize=16, frameon=False, edgecolor='#ffffff', framealpha=0,
-                                        ncol=1, columnspacing=1, loc='upper left',
-                                        bbox_to_anchor=cfg_legend['families']['position'])
+                                        fontsize=cfg_legend['families']['font_size'], frameon=False,
+                                        edgecolor='#ffffff', framealpha=0, ncol=1, columnspacing=1,
+                                        loc='upper left', bbox_to_anchor=cfg_legend['families']['position'])
             ax.add_artist(legend_families)
+            legend_families._legend_box.align = "left"
 
     @staticmethod
     def add_legend_lines(cfg_graphic, cfg_legend, ax):

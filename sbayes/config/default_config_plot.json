@@ -37,7 +37,7 @@
 				"size": 15,
 				"color": "grey",
 				"label": true,
-				"font_size": 10,
+				"font_size": 10
 			},
 			"clusters": {
 				"point_size": 20,
@@ -91,7 +91,8 @@
 				"position": [
 					0.02,
 					0.98
-				]
+				],
+				"font_size": 16
 			},
 			"correspondence": {
 				"add": false,

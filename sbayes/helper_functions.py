@@ -682,3 +682,12 @@ def style_axes(extent, ax):
     # Removing axis labels
     ax.set_xticks([])
     ax.set_yticks([])
+
+
+def min_and_max_with_padding(x: list[float], pad=0.05) -> (float, float):
+    """Compute the minimum and maximum of a list of numbers and add a padding that is
+    given relative to the total range: `pad*(max-min)`."""
+    lower = np.min(x)
+    upper = np.max(x)
+    diff = upper - lower
+    return lower - pad * diff, upper + pad * diff

@@ -964,7 +964,7 @@ class Plot:
                     table_fill[i].append("")
                     color_fill[i].append("#000000")
 
-        widths = [0.02, 0.2] * int(((len(table_fill[0])) / 2))
+        widths = [0.025, 0.2] * int(((len(table_fill[0])) / 2))
         y_min = -(cfg_legend['correspondence']['table_height'] + 0.01)
         table = ax_c.table(cellText=table_fill, cellLoc="left", colWidths=widths,
                            bbox=(0.01, y_min, 0.98, cfg_legend['correspondence']['table_height']))

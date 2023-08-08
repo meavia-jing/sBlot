@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import warnings
 from typing import Sequence, TypeVar
 
 import numpy as np
@@ -143,35 +145,43 @@ class Results:
     def read_clusters(txt_path: PathLike) -> NDArray[bool]:  # shape: (n_clusters, n_samples, n_sites)
         """Read the cluster samples from the text file at `txt_path` and return as a
         boolean numpy array."""
-        clusters_list = []
         with open(txt_path, "r") as f_sample:
-            # This makes len(result) = number of clusters (flipped array)
+            samples_list = [
+                [list(c) for c in line.split('\t')]
+                for line in f_sample.read().split("\n")
+                if line.strip()
+            ]
+            return np.array(samples_list, dtype=int).astype(bool).transpose((1, 0, 2))
 
-            # Split the sample
-            # len(byte_results) equals the number of samples
-            byte_results = (f_sample.read()).split("\n")
-
-            # Get the number of clusters
-            n_clusters = len(byte_results[0].split("\t"))
-
-            # Append empty arrays to result, so that len(result) = n_clusters
-            for i in range(n_clusters):
-                clusters_list.append([])
-
-            # Process each sample
-            for sample in byte_results:
-                if len(sample) == 0:
-                    continue
-
-                # Parse each sample
-                parsed_sample = parse_cluster_columns(sample)
-                # shape: (n_clusters, n_sites)
-
-                # Add each item in parsed_area_columns to the corresponding array in result
-                for j in range(len(parsed_sample)):
-                    clusters_list[j].append(parsed_sample[j])
-
-        return np.array(clusters_list, dtype=bool)
+        # clusters_list = []
+        # with open(txt_path, "r") as f_sample:
+        #     # This makes len(result) = number of clusters (flipped array)
+        #
+        #     # Split the sample
+        #     # len(byte_results) equals the number of samples
+        #     byte_results = (f_sample.read()).split("\n")
+        #
+        #     # Get the number of clusters
+        #     n_clusters = len(byte_results[0].split("\t"))
+        #
+        #     # Append empty arrays to result, so that len(result) = n_clusters
+        #     for i in range(n_clusters):
+        #         clusters_list.append([])
+        #
+        #     # Process each sample
+        #     for sample in byte_results:
+        #         if len(sample) == 0:
+        #             continue
+        #
+        #         # Parse each sample
+        #         parsed_sample = parse_cluster_columns(sample)
+        #         # shape: (n_clusters, n_sites)
+        #
+        #         # Add each item in parsed_area_columns to the corresponding array in result
+        #         for j in range(len(parsed_sample)):
+        #             clusters_list[j].append(parsed_sample[j])
+        #
+        # return np.array(clusters_list, dtype=bool)
 
     @staticmethod
     def read_stats(txt_path: PathLike) -> pd.DataFrame:
@@ -180,7 +190,11 @@ class Results:
         Args:
             txt_path: path to results file
         """
-        return pd.read_csv(txt_path, delimiter="\t")
+        try:
+            return pd.read_csv(txt_path, delimiter="\t", engine="pyarrow")
+        except Exception as e:
+            warnings.warn(str(e))
+            return pd.read_csv(txt_path, delimiter="\t")
 
     @staticmethod
     def read_dictionary(dataframe, search_key):

@@ -1,22 +1,16 @@
 from __future__ import annotations
 
-import os;
-
+import colorsys
+import os
 os.environ['USE_PYGEOS'] = '0'  # Fix for Pandas deprecation warning
 
 import json
 import logging
 import math
-from argparse import Namespace
 from enum import Enum
-from functools import lru_cache
 from itertools import compress
 from pathlib import Path
 import typing as typ
-
-import shapely.geometry.polygon
-from numpy.ma import indices
-from webcolors import hex_to_rgb
 
 try:
     import importlib.resources as pkg_resources  # PYTHON >= 3.7
@@ -30,10 +24,9 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import numpy as np
 from numpy.typing import NDArray
-# import random
-# import colorsys
-from fnmatch import fnmatch
-from math import sqrt
+
+from webcolors import hex_to_rgb
+from shapely.ops import polygonize
 
 from descartes import PolygonPatch
 from matplotlib import patches
@@ -46,9 +39,7 @@ from pyproj import CRS
 from scipy.spatial import Delaunay
 from shapely import geometry, unary_union
 import seaborn as sns
-import re
 
-from sbayes.processpost import compute_dic
 from sbayes.results import Results
 from sbayes.util import add_edge, compute_delaunay, set_defaults
 from sbayes.util import fix_relative_path
@@ -56,14 +47,20 @@ from sbayes.util import gabriel_graph_from_delaunay
 from sbayes.util import parse_cluster_columns
 from sbayes.util import read_data_csv
 from sbayes.util import PathLike
-from sbayes.load_data import Objects, Data, Confounder
-from sbayes.experiment_setup import Experiment
+from sbayes.load_data import Objects, Confounder
 from sbayes import config as config_package
 from sbayes import maps as maps_package
 
-from sbayes.helper_functions import *
+from sbayes.helper_functions import (combine_files, decompose_config_path, get_datapath, min_and_max_with_padding,
+                                     annotate_label, add_log_likelihood_legend, get_cluster_colors, get_cluster_freq,
+                                     compute_bbox, get_corner_points,
+                                     fill_outside, cal_idw, style_axes, get_family_shapes, rgb_color, compute_dic)
 
-DEFAULT_CONFIG = json.loads(pkg_resources.read_text(config_package, 'default_config_plot.json'))
+
+ref = pkg_resources.files(config_package) / 'default_config_plot.json'
+with pkg_resources.as_file(ref) as config_path:
+    with open(config_path, 'r') as config_file:
+        DEFAULT_CONFIG = json.load(config_file)
 
 
 class Plot:
@@ -85,6 +82,7 @@ class Plot:
         self.config = {}
         self.config_file = None
         self.base_directory = None
+        self.burn_in = None
 
         # Path variables
         self.path_features = None
@@ -106,7 +104,7 @@ class Plot:
         self.results: typ.Dict[str, Results] = {}
 
         # Needed for the weights and parameters plotting
-        plt.style.use('seaborn-paper')
+        plt.style.use('seaborn-v0_8-paper')
         # plt.tight_layout()
 
     ####################################
@@ -153,6 +151,7 @@ class Plot:
             if not os.path.exists(item):
                 os.makedirs(item)
             self.path_plots[name] = fix_relative_path(item, self.base_directory)
+            os.makedirs(self.path_plots[name], exist_ok=True)
 
         self.path_features = fix_relative_path(self.config['data']['features'], self.base_directory)
         self.path_feature_states = fix_relative_path(self.config['data']['feature_states'], self.base_directory)
@@ -164,6 +163,8 @@ class Plot:
 
         self.all_cluster_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['clusters']]
         self.all_stats_paths = [fix_relative_path(i, self.base_directory) for i in input_paths['stats']]
+
+        self.burn_in = self.config['results']['burn_in']
 
     @staticmethod
     def convert_config(d):
@@ -208,45 +209,6 @@ class Plot:
             self.families = fams.group_assignment
             self.family_names = fams.group_names
 
-    # Read clusters
-    # Read the data from the files:
-    # <experiment_path>/clusters_<scenario>.txt
-    @staticmethod
-    def read_clusters(txt_path):
-        result = []
-
-        with open(txt_path, 'r') as f_sample:
-
-            # This makes len(result) = number of clusters (flipped array)
-
-            # Split the sample
-            # len(byte_results) equals the number of samples
-            byte_results = (f_sample.read()).split('\n')
-
-            # Get the number of clusters
-            n_clusters = len(byte_results[0].split('\t'))
-
-            # Append empty arrays to result, so that len(result) = n_clusters
-            for i in range(n_clusters):
-                result.append([])
-
-            # Process each sample
-            for sample in byte_results:
-
-                # Exclude empty lines
-                if len(sample) > 0:
-
-                    # Parse each sample
-                    # len(parsed_result) equals the number of clusters
-                    # parse_cluster_columns.shape equals (n_clusters, n_sites)
-                    parsed_sample = parse_cluster_columns(sample)
-
-                    # Add each item in parsed_cluster_columns to the corresponding array in result
-                    for j in range(len(parsed_sample)):
-                        result[j].append(parsed_sample[j])
-
-        return result
-
     @staticmethod
     def read_dictionary(dataframe: pd.DataFrame, search_key: str) -> typ.Dict[str, NDArray]:
         """Helper function for read_stats. Used for reading weights and preferences. """
@@ -264,8 +226,7 @@ class Plot:
             results = Results.from_csv_files(
                 clusters_path=clusters_path,
                 parameters_path=stats_path,
-                burn_in=self.config['map']['content']['burn_in'],
-                # TODO move burn_in to results section of config
+                burn_in=self.burn_in,
             )
 
             self.results[model_name] = results
@@ -293,11 +254,6 @@ class Plot:
 
     @staticmethod
     def clusters_to_graph(cluster, locations_map_crs, cfg_content):
-
-        # exclude burn-in
-        end_bi = math.ceil(len(cluster) * cfg_content['burn_in'])
-        cluster = cluster[end_bi:]
-
         # compute frequency of each point in cluster
         cluster = np.asarray(cluster)
         n_samples = cluster.shape[0]
@@ -409,30 +365,6 @@ class Plot:
                                offset_x=offset_x, offset_y=offset_y, fontsize=label_size,
                                ax=ax)
 
-    # @staticmethod
-    # def annotate_label(xy, label, color, offset_x, offset_y, ax):
-    #     x = xy[0]+offset_x
-    #     y = xy[1]+offset_y
-    #     anno_opts = dict(xy=(x, y), fontsize=10, color=color)
-    #     ax.annotate(label, **anno_opts)
-
-    # @staticmethod
-    # def get_cluster_freq(cluster, burn_in):
-    #     '''
-    #     return the frequency of cluster in one area
-    #     '''
-    #     # exclude burn-in
-    #     end_bi = math.ceil(len(cluster) * burn_in)
-    #     cluster = cluster[end_bi:]
-    #
-    #     # compute frequency of each point in cluster
-    #     cluster = np.asarray(cluster)
-    #     n_samples = cluster.shape[0]
-    #
-    #     # Plot a density map or consensus map?
-    #     cluster_freq = np.sum(cluster, axis=0) / n_samples
-    #     return cluster_freq
-
     def cluster_legend(self, results: Results, cfg_legend):
         """ This function returns legend
             Args:
@@ -451,7 +383,7 @@ class Plot:
             cluster_labels_legend = []
             legend_clusters = []
             for i, _ in enumerate(results.clusters):
-                cluster_labels_legend.append(f'$Z_{i + 1}$')
+                cluster_labels_legend.append(f'$Z_{{{i + 1}}}$')
         return cluster_labels_legend, legend_clusters
 
     def cluster_color(self, results: Results, cfg_graphic):
@@ -492,8 +424,7 @@ class Plot:
                 color_freq: list
          """
         cluster_colors = self.cluster_color(results, cfg_graphic)
-        burn_in = cfg_content['burn_in']
-        cluster_freq = np.array([get_cluster_freq(cluster, burn_in) for cluster in results.clusters])
+        cluster_freq = np.array([get_cluster_freq(cluster) for cluster in results.clusters])
 
         max_cluster_freq = np.max(cluster_freq, axis=0)
         max_row = np.argmax(cluster_freq, axis=0)
@@ -530,9 +461,14 @@ class Plot:
             for li in range(len(lines)):
                 lineweight = cfg_graphic['clusters']['line_width']
                 if lineweight == "frequency":
-                    lineweight = 2 * line_w[li]
-                ax.plot(*lines[li].T, color=current_color, lw=lineweight,
-                        alpha=cfg_graphic['clusters']['alpha'])
+                    lineweight = cfg_graphic['clusters']['line_max_width'] * line_w[li]
+
+                alpha = cfg_graphic['clusters']['alpha']
+                if alpha == "frequency":
+                    alpha = line_w[li]
+
+                ax.plot(*lines[li].T, color=current_color, lw=lineweight, alpha=alpha)
+
             line_legend = Line2D([0, 100], [0, 0], color=current_color, lw=6, linestyle='-')
             legend_clusters.append(line_legend)
             if cfg_graphic['languages']['label']:
@@ -575,9 +511,13 @@ class Plot:
             for li in range(len(lines)):
                 lineweight = cfg_graphic['clusters']['line_width']
                 if lineweight == "frequency":
-                    lineweight = line_w[li]
-                ax.plot(*lines[li].T, color=current_color, lw=lineweight,
-                        alpha=cfg_graphic['clusters']['alpha'])
+                    lineweight = cfg_graphic['clusters']['line_max_width'] * line_w[li]
+
+                alpha = cfg_graphic['clusters']['alpha']
+                if alpha == "frequency":
+                    alpha = line_w[li]
+
+                ax.plot(*lines[li].T, color=current_color, lw=lineweight, alpha=alpha)
             line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
 
             legend_clusters.append(line_legend)
@@ -709,6 +649,8 @@ class Plot:
             # For languages with more than three members combine several languages in an alpha shape (a polygon)
             if np.count_nonzero(is_in_family) > 3:
                 try:
+
+                    # alpha_shape = alphashape(family_locations, cfg_graphic['families']['shape'])
                     alpha_shape = self.compute_alpha_shapes(points=family_locations,
                                                             alpha_shape=cfg_graphic['families']['shape'])
 
@@ -717,11 +659,18 @@ class Plot:
                         smooth_shape = alpha_shape.buffer(cfg_graphic['families']['buffer'], resolution=16,
                                                           cap_style=1, join_style=1,
                                                           mitre_limit=5.0)
+
                         patch = PolygonPatch(smooth_shape, fc=family_color, ec=family_color,
-                                             lw=1, ls='-', fill=True, zorder=-i)
+                                             lw = 1, ls = '-', fill = True, zorder = -i)
                         ax.add_patch(patch)
+
+                        # for poly in smooth_shape.geoms:
+                        #     patch = PolygonPatch(poly, fc=family_color, ec=family_color, lw=1, ls='-', fill=True, zorder=-i)
+                        #     ax.add_patch(patch)
+
                 # When languages in the same family have identical locations, alpha shapes cannot be computed
                 except ZeroDivisionError:
+                    logging.warning("Alpha shapes for families not plotted due to ZeroDivisionError (set shape != 0 to avoid this).")
                     pass
 
             # Add legend handle
@@ -842,7 +791,8 @@ class Plot:
         # Adds the geojson polygon geometries provided by the user as a background map
 
         if cfg_geo['base_map'].get('geojson_polygon') == '<DEFAULT>':
-            with pkg_resources.path(maps_package, 'land.geojson') as world_path:
+            ref = pkg_resources.files(maps_package) / 'land.geojson'
+            with pkg_resources.as_file(ref) as world_path:
                 world = gpd.read_file(world_path)
         else:
             world_path = fix_relative_path(cfg_geo['base_map']['geojson_polygon'], self.base_directory)
@@ -885,7 +835,8 @@ class Plot:
     def add_rivers(self, cfg_geo, cfg_graphic, ax):
         # The user can provide geojson line geometries, for example those for rivers. Looks good on a map :)
         if cfg_geo['base_map'].get('geojson_line', '') == '<DEFAULT>':
-            with pkg_resources.path(maps_package, 'rivers_lake.geojson') as rivers_path:
+            ref = pkg_resources.files(maps_package) / 'rivers_lake.geojson'
+            with pkg_resources.as_file(ref) as rivers_path:
                 rivers = gpd.read_file(rivers_path)
         else:
             rivers_path = fix_relative_path(cfg_geo['base_map']['geojson_line'], self.base_directory)
@@ -1312,7 +1263,8 @@ class Plot:
             ax.axis('off')
 
     @staticmethod
-    def plot_preference(samples, feature, cfg_legend, label_names, ax=None, plot_samples=False, color=None):
+    def plot_preference(samples, feature, cfg_legend, label_names, ax=None,
+                        plot_samples=False, color=None, reference_samples=None):
         """Plot a set of weight vectors in a 2D representation of the probability simplex.
 
         Args:
@@ -1326,7 +1278,7 @@ class Plot:
         if ax is None:
             ax = plt.gca()
         if color is None:
-            color = 'g'
+            color = '#005870'
 
         n_samples, n_p = samples.shape
         # color map
@@ -1335,9 +1287,16 @@ class Plot:
 
         if n_p == 2:
             x = samples.T[1]
-            sns.kdeplot(x, color=color, ax=ax, fill=True, lw=1, clip=(0, 1))
+            sns.kdeplot(x, color=color, ax=ax, fill=True, lw=1, clip=(0, 1), zorder=1, alpha=0.6)
+            ax.axvline(np.mean(x), color=color, lw=1)
             # if cfg_legend['rug']:     # TODO Make the rug plot option?
             #     sns.rugplot(x, color="k", alpha=0.02, height=-0.03, ax=ax, clip_on=False)
+            ymax = 1.3 * ax.get_ylim()[1]
+
+            if reference_samples is not None:
+                x_reference = reference_samples.T[1]
+                sns.kdeplot(x_reference, color="#aaaaaa", ax=ax, fill=True, lw=1, clip=(0, 1), zorder=0, alpha=0.5)
+                ax.axvline(np.mean(x_reference), color="#aaaaaa", lw=1, zorder=0)
 
             ax.axes.get_yaxis().set_visible(False)
 
@@ -1355,7 +1314,7 @@ class Plot:
 
             ax.plot([0, 1], [0, 0], lw=1, color=color, clip_on=False)
 
-            ax.set_ylim([0, None])
+            ax.set_ylim([0, ymax])
             ax.set_xlim([-0.01, 1.01])
 
             ax.axis('off')
@@ -1379,11 +1338,20 @@ class Plot:
             x = samples_projected.T[0]
             y = samples_projected.T[1]
 
-            sns.kdeplot(x=x, y=y, fill=True, thresh=0, cut=30, n_levels=100, ax=ax,
-                        clip=([xmin, xmax], [ymin, ymax]), cmap=Plot.pref_color_map)
+            sns.kdeplot(x=x, y=y, fill=True, thresh=0, cut=30, n_levels=20, ax=ax,
+                        clip=([xmin, xmax], [ymin, ymax]), cmap=Plot.pref_color_map,
+                        zorder=1)
 
             if plot_samples:
                 ax.scatter(x, y, color='k', lw=0, s=1, alpha=0.05)
+
+            mean_projected = np.mean(samples, axis=0).dot(corners)
+            # ax.scatter(*mean_projected.T, color="#ed1696", lw=1, ec="white", s=50, marker="o", zorder=10)
+            ax.scatter(*mean_projected.T, color=color, lw=1, ec="#ffeeaa", s=50, marker="o", zorder=10)
+
+            if reference_samples is not None:
+                reference_mean_projected = np.mean(reference_samples, axis=0).dot(corners)
+                ax.scatter(*reference_mean_projected.T, color="#606060", lw=1, ec="#a0a0a0", s=40, marker="o", alpha=0.9, zorder=10)
 
             # Draw simplex and crop outside
             ax.fill(*corners.T, edgecolor='k', fill=False)
@@ -1537,8 +1505,6 @@ class Plot:
         print('Plotting preferences...')
 
         cfg_preference = self.config['preference_plot']
-        # burn_in = int(len(self.results['posterior']) * cfg_preference['content']['burn_in'])
-
         width = cfg_preference['output']['width_subplot']
         height = cfg_preference['output']['height_subplot']
 
@@ -1563,9 +1529,17 @@ class Plot:
 
         # Only show the specified list of preferences, if present in the config
         which_prefs = cfg_preference['content']['preference']
-
         if which_prefs:
             preferences = {k: v for k, v in preferences.items() if k in which_prefs}
+
+
+        reference_confounder = cfg_preference['content']['reference_confounder']
+        if reference_confounder is None:
+            reference_samples = None
+        else:
+            groups = results.groups_by_confounders[reference_confounder]
+            assert len(groups) == 1 and groups[0] == "<ALL>"
+            reference_samples = preferences[f"{reference_confounder}_<ALL>"]
 
         # Plot each preference in a separate plot
         for component, pref_by_feat in preferences.items():
@@ -1581,8 +1555,10 @@ class Plot:
                 plt.subplot(n_row, n_col, position)
 
                 states = results.get_states_for_feature_name(f)
-                self.plot_preference(pref, feature=f, label_names=states,
-                                     cfg_legend=cfg_preference['legend'])
+                self.plot_preference(
+                    pref, feature=f, label_names=states, cfg_legend=cfg_preference['legend'],
+                    reference_samples=reference_samples[f] if reference_confounder != component else None
+                )
 
                 print(component, ": ", position, "of", n_plots, "plots finished")
                 position += 1
@@ -1624,7 +1600,7 @@ class Plot:
         # Compute the DIC for each model
         for m in x:
             lh = models[m]['likelihood']
-            dic = compute_dic(lh, self.config['dic_plot']['content']['burn_in'])
+            dic = compute_dic(lh)
             y.append(dic)
 
         if cfg_dic['graphic']['line_plot']:
@@ -1702,8 +1678,8 @@ class Plot:
         x_min, x_max = 0, x[-1]
 
         # Show burn-in in plot
-        end_bi = math.ceil(x[-1] * self.config['plot_trace']['burn_in'])
-        end_bi_label = math.ceil(x[-1] * (self.config['plot_trace']['burn_in'] - 0.03))
+        end_bi = math.ceil(x[-1] * self.burn_in)
+        end_bi_label = math.ceil(x[-1] * (self.burn_in - 0.03))
 
         color_burn_in = 'grey'
         ax.axvline(x=end_bi, lw=1, color=color_burn_in, linestyle='--')
@@ -1711,7 +1687,7 @@ class Plot:
         plt.text(end_bi_label, ypos_label, 'Burn-in', rotation=90, size=10, color=color_burn_in)
 
         # Ticks and labels
-        n_ticks = 6 if int(self.config['plot_trace']['burn_in'] * 100) % 20 == 0 else 12
+        n_ticks = 6 if int(self.burn_in * 100) % 20 == 0 else 12
         x_ticks = np.linspace(x_min, x_max, n_ticks)
         x_ticks = [round(t, -5) for t in x_ticks]
         ax.set_xticks(x_ticks)
@@ -1869,9 +1845,7 @@ class Plot:
 
         clusters = np.array(results.clusters)
         n_clusters = clusters.shape[0]
-        end_bi = math.ceil(clusters.shape[1] * cfg_pie['content']['burn_in'])
-
-        samples = clusters[:, end_bi:, ]
+        samples = clusters
 
         n_plots = samples.shape[2]
         n_samples = samples.shape[1]

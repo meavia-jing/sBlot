@@ -59,8 +59,7 @@ def format_cluster_columns(clusters: NDArray[bool]) -> str:
 
 def parse_cluster_columns(clusters_encoded: str) -> NDArray[bool]:
     """Read tab-separated area encodings into a two-dimensional area array."""
-    clusters_decoded = map(decode_cluster, clusters_encoded.split('\t'))
-    return np.array(list(clusters_decoded))
+    return np.array([list(c) for c in clusters_encoded.split('\t')]).astype(int).astype(bool)
 
 
 def compute_distance(a, b):

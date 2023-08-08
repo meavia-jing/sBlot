@@ -1,7 +1,8 @@
 {
 	"results": {
 		"path_in": "<REQUIRED>",
-		"path_out": "./plots"
+		"path_out": "./plots",
+		"burn_in": 0.2
 	},
 	"data": {
 		"features": "<REQUIRED>",
@@ -14,7 +15,6 @@
 			"min_posterior_frequency": 0.5,
 			"labels": "in_cluster",
 			"plot_families": true,
-			"burn_in": 0.2,
 			"idw_resolution": 2000,
 			"idw_power": 4,
 			"idw_background_weight": 1,
@@ -43,6 +43,7 @@
 				"point_size": 20,
 				"max_point_size": 80,
 				"line_width": "frequency",
+				"line_max_width": 1,
 				"color": [],
 				"width": 2,
 				"alpha": 1.0
@@ -125,8 +126,7 @@
 	},
 	"weights_plot": {
 		"content": {
-			"features": [],
-			"burn_in": 0.2
+			"features": []
 		},
 		"legend": {
 			"labels": {
@@ -159,7 +159,7 @@
 		"content": {
 			"features": [],
 			"preference": [],
-			"burn_in": 0.2
+			"reference_confounder": null
 		},
 		"legend": {
 			"labels": {
@@ -213,8 +213,7 @@
 	},
 	"dic_plot": {
 		"content": {
-			"model": [],
-			"burn_in": 0.2
+			"model": []
 		},
 		"graphic": {
 			"labels": [],
@@ -228,9 +227,7 @@
 		}
 	},
 	"pie_plot": {
-		"content": {
-			"burn_in": 0.2
-		},
+		"content": {},
 		"output": {
 			"width": 5,
 			"height": 2,

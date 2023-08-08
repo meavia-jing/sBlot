@@ -1,8 +1,8 @@
 {
 	"results": {
-		"path_in":"results/experiment3",
+		"path_in":"results/experiment",
 		"path_out": "results/plots",
-		"total_lines": 4000
+		"total_lines": 2000
 	}, 
 	"data": {
 		"features": "data/south_america/features.csv",

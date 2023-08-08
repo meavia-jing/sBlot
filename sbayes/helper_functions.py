@@ -1,25 +1,33 @@
 import os
+from pathlib import Path
+
+os.environ['USE_PYGEOS'] = '0'  # Fix for Pandas deprecation warning
+
 import re
 from fnmatch import fnmatch
 from functools import lru_cache
 from shutil import copyfile
 import colorsys
+import math
 
+import matplotlib.pyplot as plt
 from matplotlib import patches
 from matplotlib.lines import Line2D
 from matplotlib import colors
 
-from scipy.spatial import Delaunay
-import math
 from random import random
 import geopandas as gpd
+import numpy as np
+from numpy.typing import NDArray
+from scipy.spatial import Delaunay
+from scipy.optimize import linear_sum_assignment
 
 from shapely import geometry
 from shapely.geometry import Polygon
 from shapely.prepared import prep
 from shapely.ops import cascaded_union, polygonize
 
-from sbayes.align_clusters_across_logs import *
+from sbayes.align_clusters_across_logs import write_clusters, cluster_agreement, get_permuted_params
 from sbayes.results import Results
 from sbayes.util import add_edge
 
@@ -513,21 +521,11 @@ def compute_bbox(extent):
                         extent['x_max'], extent['y_max'])
     return bbox
 
-def get_cluster_freq(cluster, burn_in):
-    """
-    This funtion gets the frequency of cluster in one area
-    """
-    # exclude burn-in
-    end_bi = math.ceil(len(cluster) * burn_in)
-    cluster = cluster[end_bi:]
 
-    # compute frequency of each point in cluster
+def get_cluster_freq(cluster):
+    """Computes the frequency at which each object occurs in each area."""
     cluster = np.asarray(cluster)
-    n_samples = cluster.shape[0]
-
-    # Plot a density map or consensus map?
-    cluster_freq = np.sum(cluster, axis=0) / n_samples
-    return cluster_freq
+    return np.mean(cluster, axis=0)
 
 
 def standard_idw(
@@ -691,3 +689,17 @@ def min_and_max_with_padding(x: list[float], pad=0.05) -> (float, float):
     upper = np.max(x)
     diff = upper - lower
     return lower - pad * diff, upper + pad * diff
+
+
+def compute_dic(lh):
+    """This function computes the deviance information criterion
+    (see for example Celeux et al. 2006) using the posterior mode as a point estimate
+    Args:
+        lh: (dict): log-likelihood of samples in hte posterior
+        burn_in(float): percentage of samples, which are discarded as burn-in
+        """
+    # max(ll) likelihood evaluated at the posterior mode
+    d_phi_pm = -2 * np.max(lh)
+    mean_d_phi = -4 * np.mean(lh)
+    dic = mean_d_phi + d_phi_pm
+    return dic

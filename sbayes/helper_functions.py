@@ -21,6 +21,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.spatial import Delaunay
 from scipy.optimize import linear_sum_assignment
+import seaborn as sns
 
 from shapely import geometry
 from shapely.geometry import Polygon
@@ -703,3 +704,25 @@ def compute_dic(lh):
     mean_d_phi = -4 * np.mean(lh)
     dic = mean_d_phi + d_phi_pm
     return dic
+
+
+def add_mean_line_to_kde(x: NDArray[float], ax: plt.Axes, color, lw):
+    print(ax.lines)
+    kdeline = ax.lines[0]
+    mean = np.mean(x)
+    xs = kdeline.get_xdata()
+    ys = kdeline.get_ydata()
+    height = np.interp(mean, xs, ys)
+    ax.vlines(mean, 0, height, color=color, lw=lw, ls=':')
+
+
+def kdeplot(x: NDArray[float], ax: plt.Axes, color=None, lw=1, alpha=0.2, clip=None, zorder=None):
+    sns.kdeplot(x, fill=False, color=color, ax=ax, lw=lw, clip=clip, zorder=zorder)
+    kdeline = ax.lines[-1]
+    mean = np.mean(x)
+    xs = kdeline.get_xdata()
+    ys = kdeline.get_ydata()
+    height = np.interp(mean, xs, ys)
+    ax.vlines(mean, 0, height, color=color, lw=lw, ls=':', zorder=zorder)
+    ax.fill_between(xs, 0, ys, facecolor=color, alpha=alpha, zorder=zorder)
+

@@ -54,7 +54,8 @@ from sbayes import maps as maps_package
 from sbayes.helper_functions import (combine_files, decompose_config_path, get_datapath, min_and_max_with_padding,
                                      annotate_label, add_log_likelihood_legend, get_cluster_colors, get_cluster_freq,
                                      compute_bbox, get_corner_points,
-                                     fill_outside, cal_idw, style_axes, get_family_shapes, rgb_color, compute_dic)
+                                     fill_outside, cal_idw, style_axes, get_family_shapes, rgb_color, compute_dic,
+                                     add_mean_line_to_kde, kdeplot)
 
 
 ref = pkg_resources.files(config_package) / 'default_config_plot.json'
@@ -1287,16 +1288,20 @@ class Plot:
 
         if n_p == 2:
             x = samples.T[1]
-            sns.kdeplot(x, color=color, ax=ax, fill=True, lw=1, clip=(0, 1), zorder=1, alpha=0.6)
-            ax.axvline(np.mean(x), color=color, lw=1)
+            # sns.kdeplot(x, color=color, ax=ax, fill=True, lw=1, clip=(0, 1), zorder=1, alpha=0.6)
+            # # add_mean_line_to_kde(x, ax, color=color, lw=1)
+            # ax.axvline(np.mean(x), color=color, lw=1)
+            kdeplot(x, color=color, ax=ax, lw=1, clip=(0, 1), zorder=1, alpha=0.6)
+
             # if cfg_legend['rug']:     # TODO Make the rug plot option?
             #     sns.rugplot(x, color="k", alpha=0.02, height=-0.03, ax=ax, clip_on=False)
             ymax = 1.3 * ax.get_ylim()[1]
 
             if reference_samples is not None:
                 x_reference = reference_samples.T[1]
-                sns.kdeplot(x_reference, color="#aaaaaa", ax=ax, fill=True, lw=1, clip=(0, 1), zorder=0, alpha=0.5)
-                ax.axvline(np.mean(x_reference), color="#aaaaaa", lw=1, zorder=0)
+                # sns.kdeplot(x_reference, color="#aaaaaa", ax=ax, fill=True, lw=1, clip=(0, 1), zorder=0, alpha=0.5)
+                # ax.axvline(np.mean(x_reference), color="#aaaaaa", lw=1, zorder=0)
+                kdeplot(x_reference, color="#b0b0b0", ax=ax, lw=1, clip=(0, 1), zorder=0, alpha=0.6)
 
             ax.axes.get_yaxis().set_visible(False)
 
@@ -1527,12 +1532,6 @@ class Plot:
             for group, preference in conf_effect.items():
                 preferences[f'{conf_name}_{group}'] = preference
 
-        # Only show the specified list of preferences, if present in the config
-        which_prefs = cfg_preference['content']['preference']
-        if which_prefs:
-            preferences = {k: v for k, v in preferences.items() if k in which_prefs}
-
-
         reference_confounder = cfg_preference['content']['reference_confounder']
         if reference_confounder is None:
             reference_samples = None
@@ -1540,6 +1539,11 @@ class Plot:
             groups = results.groups_by_confounders[reference_confounder]
             assert len(groups) == 1 and groups[0] == "<ALL>"
             reference_samples = preferences[f"{reference_confounder}_<ALL>"]
+
+        # Only show the specified list of preferences, if present in the config
+        which_prefs = cfg_preference['content']['preference']
+        if which_prefs:
+            preferences = {k: v for k, v in preferences.items() if k in which_prefs}
 
         # Plot each preference in a separate plot
         for component, pref_by_feat in preferences.items():

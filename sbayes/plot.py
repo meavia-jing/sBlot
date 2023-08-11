@@ -44,7 +44,6 @@ from sbayes.results import Results
 from sbayes.util import add_edge, compute_delaunay, set_defaults
 from sbayes.util import fix_relative_path
 from sbayes.util import gabriel_graph_from_delaunay
-from sbayes.util import parse_cluster_columns
 from sbayes.util import read_data_csv
 from sbayes.util import PathLike
 from sbayes.load_data import Objects, Confounder
@@ -53,9 +52,8 @@ from sbayes import maps as maps_package
 
 from sbayes.helper_functions import (combine_files, decompose_config_path, get_datapath, min_and_max_with_padding,
                                      annotate_label, add_log_likelihood_legend, get_cluster_colors, get_cluster_freq,
-                                     compute_bbox, get_corner_points,
-                                     fill_outside, cal_idw, style_axes, get_family_shapes, rgb_color, compute_dic,
-                                     add_mean_line_to_kde, kdeplot)
+                                     compute_bbox, get_corner_points, fill_outside, cal_idw, style_axes,
+                                     get_family_shapes, rgb_color, compute_dic, kdeplot)
 
 
 ref = pkg_resources.files(config_package) / 'default_config_plot.json'
@@ -101,8 +99,8 @@ class Plot:
         self.families = None
         self.family_names = None
 
-        # Dictionary with all the MCMC results
-        self.results: typ.Dict[str, Results] = {}
+        # Logged likelihood values for DIC plots
+        self.model_likelihoods = None
 
         # Needed for the weights and parameters plotting
         plt.style.use('seaborn-v0_8-paper')
@@ -221,6 +219,7 @@ class Plot:
         return param_dict
 
     def iterate_over_models(self) -> str:
+        self.model_likelihoods = {}
         for clusters_path, stats_path in zip(sorted(self.all_cluster_paths),
                                              sorted(self.all_stats_paths)):
             prefix, _, model_name = str(clusters_path.stem).partition('_')
@@ -228,9 +227,11 @@ class Plot:
                 clusters_path=clusters_path,
                 parameters_path=stats_path,
                 burn_in=self.burn_in,
+                subsample_interval=self.config["results"]["subsample_interval"],
             )
 
-            self.results[model_name] = results
+            # Remember the model likelihood for DIC plots
+            self.model_likelihoods[model_name] = results["likelihood"]
 
             yield model_name, results
 
@@ -1033,136 +1034,6 @@ class Plot:
 
         plt.close(fig)
 
-    # From general_plot.py
-    ####################################
-    # Probability simplex, grid plot
-    ####################################
-    # @staticmethod
-    # @lru_cache(maxsize=128)
-    # def get_corner_points(n, offset=0.5 * np.pi):
-    #     """Generate corner points of a equal sided ´n-eck´."""
-    #     angles = np.linspace(0, 2 * np.pi, n, endpoint=False) + offset
-    #     return np.array([np.cos(angles), np.sin(angles)]).T
-
-    # @staticmethod
-    # def fill_outside(polygon, color, ax=None):
-    #     """Fill the area outside the given polygon with ´color´.
-    #     Args:
-    #         polygon (np.array): The polygon corners in a numpy array.
-    #             shape: (n_corners, 2)
-    #         ax (plt.Axis): The pyplot axis.
-    #         color (str or tuple): The fill color.
-    #     """
-    #     if ax is None:
-    #         ax = plt.gca()
-    #
-    #     n_corners = polygon.shape[0]
-    #     if n_corners <= 2:
-    #         raise ValueError('Can only plot polygons with >2 corners')
-    #
-    #     i_left = np.argmin(polygon[:, 0])
-    #     i_right = np.argmax(polygon[:, 0])
-    #
-    #     # Find corners of bottom face
-    #     i = i_left
-    #     bot_x = [polygon[i, 0]]
-    #     bot_y = [polygon[i, 1]]
-    #     while i % n_corners != i_right:
-    #         i += 1
-    #         bot_x.append(polygon[i, 0])
-    #         bot_y.append(polygon[i, 1])
-    #
-    #     # Find corners of top face
-    #     i = i_left
-    #     top_x = [polygon[i, 0]]
-    #     top_y = [polygon[i, 1]]
-    #     while i % n_corners != i_right:
-    #         i -= 1
-    #         top_x.append(polygon[i, 0])
-    #         top_y.append(polygon[i, 1])
-    #
-    #     ymin, ymax = ax.get_ylim()
-    #     ax.fill_between(bot_x, ymin, bot_y, color=color)
-    #     ax.fill_between(top_x, ymax, top_y, color=color)
-
-    # Transform weights into needed format
-    # def transform_weights(self, feature, b_in):
-    #
-    #     universal_array = []
-    #     contact_array = []
-    #     inheritance_array = []
-    #     sample_dict = self.results['weights']
-    #     for key in sample_dict:
-    #         split_key = key.split("_")
-    #         if 'w' == split_key[0]:
-    #             if 'universal' == split_key[1] and str(feature) == split_key[2]:
-    #                 universal_array = sample_dict[key][b_in:]
-    #             elif 'contact' == split_key[1] and str(feature) == split_key[2]:
-    #                 contact_array = sample_dict[key][b_in:]
-    #             elif 'inheritance' == split_key[1] and str(feature) == split_key[2]:
-    #                 inheritance_array = sample_dict[key][b_in:]
-    #
-    #     sample = np.column_stack([universal_array, contact_array, inheritance_array]).astype(np.float)
-    #     # Shape: n_samples * 3
-    #     return sample
-    #
-    # def transform_probability_vectors(self, feature, parameter, b_in):
-    #
-    #     if "alpha" in parameter:
-    #         sample_dict = self.results['alpha']
-    #     elif "beta" in parameter:
-    #         sample_dict = self.results['beta']
-    #     elif "gamma" in parameter:
-    #         sample_dict = self.results['gamma']
-    #     else:
-    #         raise ValueError("parameter must be alpha, beta or gamma")
-    #
-    #     p_dict = {}
-    #     states = []
-    #
-    #     for key in sample_dict:
-    #         if key.startswith(parameter + '_' + feature + '_'):
-    #             state = str(key).rsplit('_', 1)[1]
-    #             p_dict[state] = sample_dict[key][b_in:]
-    #             states.append(state)
-    #
-    #     sample = np.column_stack([p_dict[s] for s in p_dict]).astype(np.float)
-    #     return sample, states
-    #
-    # # Get preferences or weights from relevant features
-    # def get_parameters(self, b_in, features, parameter="weights"):
-    #
-    #     par = {}
-    #     states = {}
-    #     # if features is empty, get parameters for all features
-    #     if not features:
-    #         feature_names = self.current_results.feature_names
-    #     else:
-    #         feature_names = list(self.current_results.feature_names[i-1] for i in features)
-    #
-    #     # get samples
-    #     for f in feature_names:
-    #
-    #         if parameter == "weights":
-    #             # p = self.transform_weights(feature=feat_name, b_in=b_in)
-    #             p = self.current_results.weights[f]
-    #             par[f] = p
-    #
-    #         elif "alpha" in parameter or "beta" in parameter or "gamma" in parameter:
-    #             p, state = self.transform_probability_vectors(feature=f, parameter=parameter, b_in=b_in)
-    #
-    #             par[f] = p
-    #             states[f] = state
-    #
-    #     return par, states
-    #
-    # def sort_by_weights(self, w):
-    #     sort_by = {}
-    #     for f in self.current_results.feature_names:
-    #         sort_by[f] = median(w[f][:, 1])
-    #     ordering = sorted(sort_by, key=sort_by.get, reverse=True)
-    #     return ordering
-
     @staticmethod
     def plot_weight(
         samples: NDArray[float],
@@ -1573,16 +1444,20 @@ class Plot:
                         bbox_inches='tight', dpi=resolution, format=file_format)
             plt.close(fig)
 
-    def plot_dic(self, models: dict, file_name: str):
+    def plot_dic(self, file_name: str):
         """This function plots the dics. What did you think?
         Args:
-            models: A dict of different models for which the DIC is evaluated
+            models: A dict with string identifiers as keys and logged sBayes likelihoods as values.
             file_name: name of the output file
         """
         print('Plotting DIC...')
 
-        cfg_dic = self.config['dic_plot']
+        if self.model_likelihoods is None:
+            # Just iterate over all models to load model_likelihoods
+            for _ in self.iterate_over_models():
+                pass
 
+        cfg_dic = self.config['dic_plot']
         width = cfg_dic['output']['width']
         height = cfg_dic['output']['height']
 
@@ -1590,7 +1465,7 @@ class Plot:
         resolution = cfg_dic['output']['resolution']
 
         fig, ax = plt.subplots(figsize=(width, height))
-        available_models = list(models.keys())
+        available_models = list(self.model_likelihoods.keys())
         if not cfg_dic['content']['model']:
             x = available_models
         else:
@@ -1603,7 +1478,7 @@ class Plot:
 
         # Compute the DIC for each model
         for m in x:
-            lh = models[m]['likelihood']
+            lh = self.model_likelihoods[m]
             dic = compute_dic(lh)
             y.append(dic)
 
@@ -2258,8 +2133,7 @@ def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
 
     # Plot DIC over all models
     if should_be_plotted(PlotType.dic_plot):
-        plot.iterate_over_models()
-        plot.plot_dic(plot.results, file_name='dic')
+        plot.plot_dic(file_name='dic')
 
 
 def plot_map(plot: Plot, results: Results, m: str):

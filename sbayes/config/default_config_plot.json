@@ -2,7 +2,8 @@
 	"results": {
 		"path_in": "<REQUIRED>",
 		"path_out": "./plots",
-		"burn_in": 0.2
+		"burn_in": 0.2,
+		"subsample_interval": 1
 	},
 	"data": {
 		"features": "<REQUIRED>",

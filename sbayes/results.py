@@ -123,10 +123,11 @@ class Results:
         cls: type[TResults],
         clusters_path: PathLike,
         parameters_path: PathLike,
-        burn_in: float = 0.1
+        burn_in: float = 0.1,
+        subsample_interval: int = 1,
     ) -> TResults:
-        clusters = cls.read_clusters(clusters_path)
-        parameters = cls.read_stats(parameters_path)
+        clusters = cls.read_clusters(clusters_path, subsample_interval=subsample_interval)
+        parameters = cls.read_stats(parameters_path, subsample_interval=subsample_interval)
         return cls(clusters, parameters, burn_in=burn_in)
 
     @staticmethod
@@ -142,13 +143,13 @@ class Results:
         return clusters, parameters
 
     @staticmethod
-    def read_clusters(txt_path: PathLike) -> NDArray[bool]:  # shape: (n_clusters, n_samples, n_sites)
+    def read_clusters(txt_path: PathLike, subsample_interval: int = 1) -> NDArray[bool]:  # shape: (n_clusters, n_samples, n_sites)
         """Read the cluster samples from the text file at `txt_path` and return as a
         boolean numpy array."""
         with open(txt_path, "r") as f_sample:
             samples_list = [
                 [list(c) for c in line.split('\t')]
-                for line in f_sample.read().split("\n")
+                for line in f_sample.read().split("\n")[::subsample_interval]
                 if line.strip()
             ]
             return np.array(samples_list, dtype=int).astype(bool).transpose((1, 0, 2))
@@ -184,17 +185,24 @@ class Results:
         # return np.array(clusters_list, dtype=bool)
 
     @staticmethod
-    def read_stats(txt_path: PathLike) -> pd.DataFrame:
+    def read_stats(txt_path: PathLike, subsample_interval: int = 1) -> pd.DataFrame:
         """Read stats for results files (<experiment_path>/stats_<scenario>.txt).
 
         Args:
             txt_path: path to results file
+            subsample_interval: subsample the rows in the csv files in this interval.
+                The default (1) includes all rows.
         """
+        read_args = dict(
+            delimiter="\t",
+            skiprows=lambda i: i % subsample_interval != 0,
+        )
+
         try:
-            return pd.read_csv(txt_path, delimiter="\t", engine="pyarrow")
+            return pd.read_csv(txt_path, engine="pyarrow", **read_args)
         except Exception as e:
             warnings.warn(str(e))
-            return pd.read_csv(txt_path, delimiter="\t")
+            return pd.read_csv(txt_path, **read_args)
 
     @staticmethod
     def read_dictionary(dataframe, search_key):

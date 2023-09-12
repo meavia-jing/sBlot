@@ -17,10 +17,9 @@ import pandas as pd
 import numpy as np
 from numpy.typing import NDArray
 
-from sbayes.preprocessing import ComputeNetwork, read_geo_cost_matrix
-from sbayes.util import PathLike, read_data_csv, encode_states
-from sbayes.config.config import SBayesConfig
-from sbayes.experiment_setup import Experiment
+from sblot.preprocessing import ComputeNetwork, read_geo_cost_matrix
+from sblot.util import PathLike, read_data_csv, encode_states
+
 
 # Type variables and constants
 S = TypeVar('S')  # Self type
@@ -228,58 +227,11 @@ class Data:
                 object_names=self.objects.id, file=geo_costs, logger=self.logger
             )
 
-    @classmethod
-    def from_config(cls: Type[S], config: SBayesConfig, logger=None) -> S:
-        if logger:
-            cls.log_loading(logger)
-
-        # Load objects, features, confounders
-        objects, features, confounders = read_features_from_csv(
-            data_path=config.data.features,
-            feature_states_path=config.data.feature_states,
-            groups_by_confounder=config.model.confounders,
-            logger=logger,
-        )
-
-        # Create a Data object using __init__
-        return cls(
-            objects=objects,
-            features=features,
-            confounders=confounders,
-            projection=config.data.projection,
-            geo_costs=config.model.prior.geo.costs,
-            logger=logger,
-        )
-
-    @classmethod
-    def from_experiment(cls: Type[S], experiment: Experiment) -> S:
-        return cls.from_config(experiment.config, logger=experiment.logger)
-
     @staticmethod
     def log_loading(logger):
         logger.info("\n")
         logger.info("DATA IMPORT")
         logger.info("##########################################")
-
-
-# @dataclass(frozen=True)
-# class PriorCounts:
-#     counts: NDArray[int]
-#     states: list[...]
-#
-#     def __getitem__(self, key: str):
-#         return getattr(self, key)
-#
-#
-# def parse_prior_counts(
-#     counts: dict[FeatureName, dict[StateName, int]],
-#     features: Features,
-# ) -> PriorCounts:
-#     ...
-#     return PriorCounts(
-#         counts=...,
-#         states=...,
-#     )
 
 
 def read_features_from_csv(

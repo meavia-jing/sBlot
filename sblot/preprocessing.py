@@ -15,7 +15,7 @@ import numpy as np
 from numpy.typing import NDArray
 import pyproj
 
-from sbayes.util import compute_delaunay, read_costs_from_csv, PathLike
+from sblot.util import compute_delaunay, read_costs_from_csv, PathLike
 
 
 def load_canvas(config, logger=None):

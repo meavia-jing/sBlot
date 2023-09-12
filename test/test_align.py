@@ -9,13 +9,13 @@ from collections import Counter
 
 import pandas as pd
 
-from sbayes.plot import Plot, main, PlotType
+from sblot.plot import Plot, main, PlotType
 from fnmatch import fnmatch
 import pandas
 
 class TestPlot(unittest.TestCase):
     """
-    Test cases of plotting functions in ´sbayes/plot.py´.
+    Test cases of plotting functions in ´sblot/plot.py´.
     """
 
     @classmethod

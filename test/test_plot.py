@@ -5,7 +5,7 @@ import os.path
 import numpy as np
 import unittest
 
-from sbayes.plot import Plot, main, PlotType
+from sblot.plot import Plot, main, PlotType
 from shapely import geometry
 
 from matplotlib import colors
@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 class TestPlot(unittest.TestCase):
 
     """
-    Test cases of plotting functions in ´sbayes/plot.py´.
+    Test cases of plotting functions in ´sblot/plot.py´.
     """
     @classmethod
     def setUpClass(cls) -> None:

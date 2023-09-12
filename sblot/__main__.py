@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from sbayes.cli import cli
+from sblot.cli import cli
 
 cli()

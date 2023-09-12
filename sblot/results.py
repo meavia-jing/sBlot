@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 import pandas as pd
 
-from sbayes.util import PathLike, parse_cluster_columns
+from sblot.util import PathLike
 
 
 TResults = TypeVar("TResults", bound="Results")

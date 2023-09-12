@@ -7,8 +7,8 @@ from tkinter import filedialog
 from numpy.typing import NDArray
 from scipy.optimize import linear_sum_assignment
 
-from sbayes.results import Results
-from sbayes.util import parse_cluster_columns, format_cluster_columns
+from sblot.results import Results
+from sblot.util import parse_cluster_columns, format_cluster_columns
 
 
 def load_clusters(filename=None) -> NDArray[int]:  # shape: (n_samples, n_clusters, n_objects)

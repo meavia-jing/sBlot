@@ -9,13 +9,13 @@ setup(
     keywords='data linguistics',
     license='GPLv3',
     url="https://github.com/maeva-jing/sBlot",
-    package_dir={'sbayes': 'sbayes'},
+    package_dir={'sblot': 'sblot'},
     packages=find_packages(),
     platforms='any',
     include_package_data=True,
     package_data={
-        'sbayes.config': ['default_config_plot.json'],
-        'sbayes.maps': ['land.geojson', 'rivers_lake.geojson']
+        'sblot.config': ['default_config_plot.json'],
+        'sblot.maps': ['land.geojson', 'rivers_lake.geojson']
     },
     install_requires=[
         "descartes",
@@ -37,7 +37,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'sblot = sbayes.plot:cli',
+            'sblot = sblot.plot:cli',
         ]
     }
 )

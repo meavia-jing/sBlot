@@ -28,9 +28,9 @@ from shapely.geometry import Polygon
 from shapely.prepared import prep
 from shapely.ops import cascaded_union, polygonize
 
-from sbayes.align_clusters_across_logs import write_clusters, cluster_agreement, get_permuted_params
-from sbayes.results import Results
-from sbayes.util import add_edge
+from sblot.align_clusters_across_logs import write_clusters, cluster_agreement, get_permuted_params
+from sblot.results import Results
+from sblot.util import add_edge
 
 
 def get_datapath(datapath: str | Path):

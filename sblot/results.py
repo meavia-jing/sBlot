@@ -185,7 +185,7 @@ class Results:
         # return np.array(clusters_list, dtype=bool)
 
     @staticmethod
-    def read_stats(txt_path: PathLike, subsample_interval: int = 1) -> pd.DataFrame:
+    def read_stats(txt_path: PathLike, subsample_interval: int = 1, use_pyarrow=True) -> pd.DataFrame:
         """Read stats for results files (<experiment_path>/stats_<scenario>.txt).
 
         Args:
@@ -193,16 +193,20 @@ class Results:
             subsample_interval: subsample the rows in the csv files in this interval.
                 The default (1) includes all rows.
         """
-        read_args = dict(
-            delimiter="\t",
-            skiprows=lambda i: i % subsample_interval != 0,
-        )
+        read_args = {"delimiter": "\t"}
+        if subsample_interval > 1:
+            read_args["skiprows"] = lambda i: i % subsample_interval != 0,
+            use_pyarrow = False  # Pyarrow currently does not support skiprows
 
-        try:
-            return pd.read_csv(txt_path, engine="pyarrow", **read_args)
-        except Exception as e:
-            warnings.warn(str(e))
+        if use_pyarrow:
+            try:
+                return pd.read_csv(txt_path, engine="pyarrow", **read_args)
+            except Exception as e:
+                warnings.warn(str(e))
+                return Results.read_stats(txt_path, subsample_interval, use_pyarrow=False)
+        else:
             return pd.read_csv(txt_path, **read_args)
+
 
     @staticmethod
     def read_dictionary(dataframe, search_key):

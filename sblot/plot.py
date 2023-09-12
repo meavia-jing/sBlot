@@ -397,9 +397,8 @@ class Plot:
                         cluster_color: list
  """
         if len(cfg_graphic['clusters']['color']) == 0:
-            print(f'No colors for clusters provided in map>graphic>clusters>color '
-                  f'in the config plot file ({self.config_file}). I am using default colors instead.')
-
+            # print(f'No colors for clusters provided in map>graphic>clusters>color '
+            #       f'in the config plot file ({self.config_file}). I am using default colors instead.')
             cluster_colors = get_cluster_colors(n_clusters=len(results.clusters))
 
         elif len(cfg_graphic['clusters']['color']) < len(results.clusters):
@@ -555,7 +554,7 @@ class Plot:
 
         # loop over triangles:
         # ia, ib, ic = indices of corner points of the triangle
-        for ia, ib, ic in tri.vertices:
+        for ia, ib, ic in tri.simplices:
             pa = points[ia]
             pb = points[ib]
             pc = points[ic]
@@ -597,7 +596,7 @@ class Plot:
     def darken_color(color, amount=0.2):
         if isinstance(color, str):
             color = hex_to_rgb(color)
-        # FUnction to lighten up colors
+        # Function to lighten up colors
         c = colorsys.rgb_to_hls(*color)
         return colorsys.hls_to_rgb(c[0], (1 - amount) * c[1], c[2])
 
@@ -608,8 +607,8 @@ class Plot:
         cm = plt.get_cmap('gist_rainbow')
 
         if len(cfg_graphic['families']['color']) == 0:
-            print(f'No colors for families provided in map>graphic>families>color '
-                  f'in the config plot file ({self.config_file}). I am using default colors instead.')
+            # print(f'No colors for families provided in map>graphic>families>color '
+            #       f'in the config plot file ({self.config_file}). I am using default colors instead.')
             family_colors = cm(np.linspace(0.0, 0.8, len(self.families)))
 
             # lighten colors up a bit
@@ -651,7 +650,6 @@ class Plot:
             # For languages with more than three members combine several languages in an alpha shape (a polygon)
             if np.count_nonzero(is_in_family) > 3:
                 try:
-
                     # alpha_shape = alphashape(family_locations, cfg_graphic['families']['shape'])
                     alpha_shape = self.compute_alpha_shapes(points=family_locations,
                                                             alpha_shape=cfg_graphic['families']['shape'])

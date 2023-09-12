@@ -40,17 +40,17 @@ from scipy.spatial import Delaunay
 from shapely import geometry, unary_union
 import seaborn as sns
 
-from sbayes.results import Results
-from sbayes.util import add_edge, compute_delaunay, set_defaults
-from sbayes.util import fix_relative_path
-from sbayes.util import gabriel_graph_from_delaunay
-from sbayes.util import read_data_csv
-from sbayes.util import PathLike
-from sbayes.load_data import Objects, Confounder
-from sbayes import config as config_package
-from sbayes import maps as maps_package
+from sblot.results import Results
+from sblot.util import add_edge, compute_delaunay, set_defaults
+from sblot.util import fix_relative_path
+from sblot.util import gabriel_graph_from_delaunay
+from sblot.util import read_data_csv
+from sblot.util import PathLike
+from sblot.load_data import Objects, Confounder
+from sblot import config as config_package
+from sblot import maps as maps_package
 
-from sbayes.helper_functions import (combine_files, decompose_config_path, get_datapath, min_and_max_with_padding,
+from sblot.helper_functions import (combine_files, decompose_config_path, get_datapath, min_and_max_with_padding,
                                      annotate_label, add_log_likelihood_legend, get_cluster_colors, get_cluster_freq,
                                      compute_bbox, get_corner_points, fill_outside, cal_idw, style_axes,
                                      get_family_shapes, rgb_color, compute_dic, kdeplot)
@@ -1058,6 +1058,9 @@ class Plot:
         if ax is None:
             ax = plt.gca()
 
+        valid = np.all(np.isfinite(samples), axis=1)
+        samples = samples[valid]
+
         n_samples, n_weights = samples.shape
         labels = cfg_legend['labels']
         title = cfg_legend['title']
@@ -1150,7 +1153,11 @@ class Plot:
         if color is None:
             color = '#005870'
 
+        valid = np.all(np.isfinite(samples), axis=1)
+        samples = samples[valid]
+
         n_samples, n_p = samples.shape
+
         # color map
         title = cfg_legend['title']
         labels = cfg_legend['labels']

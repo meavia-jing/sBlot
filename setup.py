@@ -34,11 +34,19 @@ setup(
         "pydantic",
         "ruamel.yaml",
         "rasterio",
-        "webcolors"
+        "webcolors",
+        "dash",
+        "jupyter_dash",
+        "plotly",
+        "Unidecode",
+        "gunicorn",
+        "dash-extensions",
+        "dash-daq",
     ],
     entry_points={
         'console_scripts': [
             'sblot = sblot.plot:cli',
+            'sbayes_dash = sbayes_dash.run:cli',
         ]
     }
 )

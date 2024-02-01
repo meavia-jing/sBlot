@@ -425,7 +425,7 @@ def add_log_likelihood_legend(likelihood_single_clusters: dict):
 
     return cluster_labels, [extra]
 
-@lru_cache(maxsize=128)
+
 def get_corner_points(n, offset=0.5 * np.pi):
     """
     Generate corner points of a equal sided ´n-eck´.

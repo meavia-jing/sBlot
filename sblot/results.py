@@ -205,7 +205,7 @@ class Results:
                 warnings.warn(str(e))
                 return Results.read_stats(txt_path, subsample_interval, use_pyarrow=False)
         else:
-            return pd.read_csv(txt_path, **read_args)
+            return pd.read_csv(txt_path, engine="python", **read_args)
 
 
     @staticmethod

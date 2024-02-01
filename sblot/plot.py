@@ -112,7 +112,6 @@ class Plot:
 
     def load_config(self, config_file):
         # Get parameters from config_custom (for particular experiment)
-
         self.base_directory, self.config_file = decompose_config_path(config_file)
 
         # Read the user specified config file
@@ -227,7 +226,7 @@ class Plot:
                 clusters_path=clusters_path,
                 parameters_path=stats_path,
                 burn_in=self.burn_in,
-                subsample_interval=self.config["results"]["subsample_interval"],
+                subsample_interval= int(self.config["results"]["subsample_interval"]),
             )
 
             # Remember the model likelihood for DIC plots
@@ -1203,8 +1202,8 @@ class Plot:
         elif n_p > 2:
             # Compute corners
             corners = get_corner_points(n_p)
-            # Bounding box
 
+            # Bounding box
             xmin, ymin = np.min(corners, axis=0)
             xmax, ymax = np.max(corners, axis=0)
 
@@ -1252,7 +1251,7 @@ class Plot:
                             fontdict={'fontsize': labels['font_size']})
 
             ax.set_xlim([xmin - 0.1, xmax + 0.1])
-            ax.set_ylim([ymin - 0.1, ymax + 0.1])
+            ax.set_ylim([ymin - 0.1, ymax + 0.1 + 0.3])
             ax.axis('off')
 
     def plot_weights(self, results: Results, file_name: PathLike):
@@ -1312,7 +1311,7 @@ class Plot:
         max_groups = max(len(groups) for groups in results.groups_by_confounders.values())
         max_groups = max(max_groups, results.n_clusters)
         fig, axes = plt.subplots(nrows=n_components, ncols=2 + max_groups,
-                                 figsize=(4 + max_groups, 2 + n_components),
+                                 figsize=(4 + 1.3 * max_groups, 2 + n_components),
                                  gridspec_kw={'width_ratios': [1.8, .8] + [1] * max_groups})
 
         plt.tight_layout()
@@ -1355,8 +1354,7 @@ class Plot:
             axes[i, 1].set_ylim([-2, 3])
 
             for j, (group, pref_by_feat) in enumerate(prefs_by_group.items()):
-                axes[i, j + 2].get_shared_y_axes().join(axes[i, 2], axes[i, j + 2])
-
+                axes[i, j + 2].sharey(axes[i, 2])
                 if component == "cluster":
                     group = "Area " + group[1:]
                 self.plot_preference(
@@ -2134,7 +2132,7 @@ def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
                 features = results.feature_names
 
             for f in features:
-                plot.plot_weights_and_prefs(results, f, file_name=f'feature_plot_{m}_{f}')
+                plot.plot_weights_and_prefs(results, f, file_name=f'feature_plot_{m}_{f}'.replace("/", ""))
 
     # Plot DIC over all models
     if should_be_plotted(PlotType.dic_plot):

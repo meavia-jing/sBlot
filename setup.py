@@ -34,6 +34,7 @@ setup(
         "pydantic",
         "ruamel.yaml",
         "rasterio",
+        "webcolors"
     ],
     entry_points={
         'console_scripts': [

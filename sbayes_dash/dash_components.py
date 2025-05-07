@@ -43,6 +43,7 @@ all_tab_styles = {
     "disabled_style": tab_style,
 }
 
+
 def get_base_layout() -> html.Div:
     return html.Div(
         children=[

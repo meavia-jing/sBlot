@@ -113,7 +113,7 @@ def get_neighbours(cluster, already_in_cluster, adjacency_matrix):
     return neighbours
 
 
-def compute_delaunay(locations):
+def compute_delaunay(locations: NDArray[float]) -> csr_matrix:
     """Computes the Delaunay triangulation between a set of point locations
 
     Args:
@@ -483,6 +483,11 @@ def warn_with_traceback(message, category, filename, lineno, file=None, line=Non
 def activate_verbose_warnings():
     warnings.showwarning = warn_with_traceback
 
+def set_opacity(color, opacity: float | Sequence[float]) -> str | list[str]:
+    if hasattr(opacity, '__iter__'):
+        return [set_opacity(color, o) for o in opacity]
+    else:
+        return color[:7] + hex(int(255 * opacity))[-2:]
 
 if __name__ == "__main__":
     import doctest

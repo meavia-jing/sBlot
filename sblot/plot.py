@@ -229,8 +229,8 @@ class Plot:
                 subsample_interval= int(self.config["results"]["subsample_interval"]),
             )
 
-            # Remember the model likelihood for DIC plots
-            self.model_likelihoods[model_name] = results["likelihood"]
+            # # Remember the model likelihood for DIC plots
+            # self.model_likelihoods[model_name] = results["likelihood"]
 
             yield model_name, results
 
@@ -297,15 +297,10 @@ class Plot:
             else:
                 return in_graph, [], []
 
-        lines = []
-        line_weights = []
-
-        for index in graph_connections:
-            # count how often p0 and p1 are together in the posterior of the cluster
-            p = [cluster_indices[index[0]][0], cluster_indices[index[1]][0]]
-            together_in_cluster = np.sum(np.all(cluster[:, p], axis=1)) / n_samples
-            lines.append(locations_map_crs[[*p]])
-            line_weights.append(together_in_cluster)
+        starts = cluster_indices[graph_connections[:, 0]].ravel()
+        ends = cluster_indices[graph_connections[:, 1]].ravel()
+        lines = np.array([locations_map_crs[starts], locations_map_crs[ends]]).transpose((1, 0, 2))
+        line_weights = np.sum(cluster[:, starts] & cluster[:, ends], axis=0) / n_samples
 
         return in_graph, lines, line_weights
 
@@ -468,7 +463,6 @@ class Plot:
                     alpha = line_w[li]
 
                 ax.plot(*lines[li].T, color=current_color, lw=lineweight, alpha=alpha)
-
             line_legend = Line2D([0, 100], [0, 0], color=current_color, lw=6, linestyle='-')
             legend_clusters.append(line_legend)
             if cfg_graphic['languages']['label']:
@@ -518,6 +512,7 @@ class Plot:
                     alpha = line_w[li]
 
                 ax.plot(*lines[li].T, color=current_color, lw=lineweight, alpha=alpha)
+
             line_legend = Line2D([0], [0], color=current_color, lw=6, linestyle='-')
 
             legend_clusters.append(line_legend)
@@ -1170,7 +1165,8 @@ class Plot:
 
             # if cfg_legend['rug']:     # TODO Make the rug plot option?
             #     sns.rugplot(x, color="k", alpha=0.02, height=-0.03, ax=ax, clip_on=False)
-            ymax = 1.3 * ax.get_ylim()[1]
+
+            # ymax = 1.3 * ax.get_ylim()[1]
 
             if reference_samples is not None:
                 x_reference = reference_samples.T[1]
@@ -1194,7 +1190,7 @@ class Plot:
 
             ax.plot([0, 1], [0, 0], lw=1, color=color, clip_on=False)
 
-            ax.set_ylim([0, ymax])
+            ax.set_ylim([0, None])
             ax.set_xlim([-0.01, 1.01])
 
             ax.axis('off')
@@ -1389,7 +1385,7 @@ class Plot:
 
         # todo: spacing in config?
         width_spacing = 0.2
-        height_spacing = 0.2
+        height_spacing = 0.3
 
         n_plots = results.n_features
         n_col = cfg_preference['output']['n_columns']

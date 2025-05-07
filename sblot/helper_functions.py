@@ -26,7 +26,7 @@ import seaborn as sns
 from shapely import geometry
 from shapely.geometry import Polygon
 from shapely.prepared import prep
-from shapely.ops import cascaded_union, polygonize
+from shapely.ops import unary_union, polygonize
 
 from sblot.align_clusters_across_logs import write_clusters, cluster_agreement, get_permuted_params
 from sblot.results import Results
@@ -664,7 +664,7 @@ def compute_alpha_shapes(points, alpha_shape):
     m = geometry.MultiLineString(edge_nodes)
 
     triangles = list(polygonize(m))
-    polygon = cascaded_union(triangles)
+    polygon = unary_union(triangles)
 
     return polygon
 

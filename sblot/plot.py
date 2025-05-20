@@ -1471,7 +1471,7 @@ class Plot:
             x = [available_models[i - 1] for i in cfg_dic['content']['model']]
         y = []
 
-        if len(x) < 0:
+        if len(x) < 2:
             print('Need at least 2 models for DIC plot.')
             return
 

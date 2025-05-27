@@ -229,8 +229,8 @@ class Plot:
                 subsample_interval= int(self.config["results"]["subsample_interval"]),
             )
 
-            # # Remember the model likelihood for DIC plots
-            # self.model_likelihoods[model_name] = results["likelihood"]
+            # Remember the model likelihood for DIC plots
+            self.model_likelihoods[model_name] = results["likelihood"]
 
             yield model_name, results
 

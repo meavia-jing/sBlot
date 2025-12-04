@@ -490,12 +490,46 @@ class Plot:
         ## plot the point
         max_size = 50
         point_size = cfg_graphic['clusters']['point_size']
-        # in_cluster_point = cluster_freq > cfg_content['min_posterior_frequency']
-        if cfg_graphic['clusters']['point_size'] == "frequency":
-            point_size = cluster_freq[cluster_freq > cfg_content['min_posterior_frequency']] * max_size
+        # Build per-point posterior over clusters
+        freq_matrix = np.array([get_cluster_freq(cluster) for cluster in results.clusters])  # (n_clusters, n_points)
+        point_indices = np.where(in_cluster_point)[0]
 
-        colors = color_for_freq[in_cluster_point]
-        ax.scatter(*locations_map_crs[in_cluster_point].T, s=point_size, color=colors)
+        # Choose pie radius in data units
+        x_span = np.ptp(locations_map_crs[:, 0])
+        y_span = np.ptp(locations_map_crs[:, 1])
+        r_base = 0.008 * min(x_span, y_span)
+        if cfg_graphic['clusters']['point_size'] == "frequency":
+            # scale by max posterior per point
+            radii = r_base * (0.5 + cluster_freq[in_cluster_point])
+        else:
+            radii = np.full(len(point_indices), r_base, dtype=float)
+
+        # Draw a pie at each selected location
+        for k, idx in enumerate(point_indices):
+            vals = freq_matrix[:, idx].astype(float)
+            vals = np.clip(vals, 0.0, 1.0)
+            remainder = max(0.0, 1.0 - float(vals.sum()))
+            vals_full = list(vals) + [remainder]
+            cols_full = list(cluster_colors) + ['lightgrey']
+
+            start = 0.0
+            for v, col in zip(vals_full, cols_full):
+                if v <= 0.0:
+                    continue
+                theta1 = start * 360.0
+                theta2 = (start + v) * 360.0
+                wedge = patches.Wedge(
+                    center=(locations_map_crs[idx, 0], locations_map_crs[idx, 1]),
+                    r=radii[k],
+                    theta1=theta1,
+                    theta2=theta2,
+                    facecolor=col,
+                    edgecolor='black',
+                    linewidth=0.2
+                )
+                wedge.set_zorder(10)
+                ax.add_patch(wedge)
+                start += v
 
         ## plot the line map accroding to the cgf_content['type']
         for i, cluster in enumerate(results.clusters):
@@ -1470,10 +1504,6 @@ class Plot:
         else:
             x = [available_models[i - 1] for i in cfg_dic['content']['model']]
         y = []
-
-        if len(x) < 2:
-            print('Need at least 2 models for DIC plot.')
-            return
 
         # Compute the DIC for each model
         for m in x:

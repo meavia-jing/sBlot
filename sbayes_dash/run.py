@@ -254,7 +254,7 @@ def main(port=8050, crs="epsg:4326", data_path: Path = None):
 
     # Set up the layout
     app.layout = components.get_base_layout()
-    app.run_server(debug=True, port=port)
+    app.run(debug=True, port=port)
 
 
 def cli():

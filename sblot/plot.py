@@ -2168,7 +2168,7 @@ def cli():
     plot_types = None
     if args.type is not None:
         if args.type not in PlotType.values():
-            raise ValueError(f"Unknown plot type: '{args.type}'. Choose from {PlotType.values()}.")
+            raise ValueError(f"Unknown plot type: '{args.type}'. Choose from:\n\t{'\n\t'.join(PlotType.values())}")
         plot_types = [PlotType(args.type)]
 
     main(args.config, plot_types=plot_types, feature_name=args.feature_name)

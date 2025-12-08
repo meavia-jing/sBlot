@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sBlot"
+version = "1.0"
+description = "Python library for visualization of sBayes results."
+authors = [
+    {name = "Anjing Zhang"},
+    {name = "Nico Neureiter", email = "nico.neureiter@gmail.com"},
+    {name = "Peter Ranacher"},
+]
+keywords = ["data", "linguistics"]
+license = {text = "GPLv3"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "descartes",
+    "geopandas",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "pyproj",
+    "scipy",
+    "seaborn",
+    "setuptools",
+    "cartopy",
+    "typing_extensions",
+    "pydantic",
+    "ruamel.yaml",
+    "rasterio",
+    "webcolors",
+    "dash",
+    "jupyter_dash",
+    "plotly",
+    "Unidecode",
+    "gunicorn",
+    "dash-extensions",
+    "dash-daq",
+]
+
+[project.urls]
+Homepage = "https://github.com/maeva-jing/sBlot"
+
+[project.scripts]
+sblot = "sblot.plot:cli"
+sbayes_dash = "sbayes_dash.run:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["build", "test*"]
+
+[tool.setuptools.package-data]
+"sblot.config" = ["default_config_plot.json"]
+"sblot.maps" = ["*.geojson"]
+

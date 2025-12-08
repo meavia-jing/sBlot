@@ -2117,6 +2117,10 @@ class PlotType(Enum):
     def values(cls) -> list[str]:
         return [str(e.value) for e in cls]
 
+    @classmethod
+    def list_values(cls, sep='\n\t') -> list[str]:
+        return sep.join(cls.values())
+
 
 def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
     if plot_types is None:
@@ -2198,7 +2202,7 @@ def cli():
     plot_types = None
     if args.type is not None:
         if args.type not in PlotType.values():
-            raise ValueError(f"Unknown plot type: '{args.type}'. Choose from:\n\t{'\n\t'.join(PlotType.values())}")
+            raise ValueError(f"Unknown plot type: '{args.type}'. Choose from:\n\t{PlotType.list_values()}")
         plot_types = [PlotType(args.type)]
 
     main(args.config, plot_types=plot_types, feature_name=args.feature_name)

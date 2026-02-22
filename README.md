@@ -24,9 +24,3 @@ for name, result in plot.iterate_over_models():
 	plot.posterior_map(results=result, file_name=f'map_{name}')
 	plot.get_idw_map(result,name)
 ```
- 
-
-
-
-
-

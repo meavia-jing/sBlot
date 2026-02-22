@@ -31,7 +31,6 @@
 			"min_posterior_frequency": 0.95,
 			"burn_in": 0.2
 		},
-
 		"graphic": {
 				"languages": {
 				"size": 5,

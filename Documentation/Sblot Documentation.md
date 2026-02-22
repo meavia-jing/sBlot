@@ -303,6 +303,10 @@ expected data types.</div>
 #### 2.3.2 config_plot.JSON :  map > content  <a name="mapcontent"></a>
 The key content defines the map type and all map items. User can choose to draw Distance Weighting map("idw\_map"), or line and dot map("density\_map", or "consensus\_map").For the line and dot map, users can either visualize the full posterior density of all contact areas ("density\_map") , a high-level summary of the posterior--the consensus areas ("consensus\_map"). The density map shows all languages that are in the posterior. Line width indicates how often two languages appear together in the same area in the posterior. For consensus areas, the map is generalized. "min\_posterior\_frequency" defines the degree of generalization. For example, a "min\_posterior\_frequency" of 1 retains only those language which are in all posterior contact areas, while a value of 0.3 retains languages which appear in at least 30% of the posterior, preserving more of the posterior uncertainty. After generalization, all remaining languages are connected with a Gabriel graph.With plot\_families users can visualize the language families, burn_in specifies which part of the posterior is discarded as burn-in.
 
+By default, all clusters are displayed together on a single map. However, users can set "map\_per\_cluster" to true to generate separate PDF files for each cluster. This is useful when analyzing many clusters or when you want to focus on individual contact areas. When enabled, each cluster is saved to a separate file named with the pattern `posterior_map_<model>_cluster_<index>.pdf`, where the index starts from 0.
+
+When using "map\_per\_cluster", you can additionally enable "normalize\_frequency\_per\_cluster" to rescale the posterior frequencies within each cluster so that the maximum frequency is always 1.0. This normalization applies to the point/pie chart frequencies, and edge (line) weights are computed as the product of the normalized node frequencies at each end of the edge, making it easier to visualize the spatial distribution of objects within each cluster, regardless of the cluster's overall posterior support. When normalization is enabled, a small pie chart appears in the upper right corner of each map, showing the original maximum posterior frequency (the normalization factor). The filled portion of the pie represents this value, helping you compare the relative importance of different clusters. For example, a cluster with a 40% pie chart had a maximum posterior frequency of 0.4 before normalization, indicating weaker overall support than a cluster with an 80% pie chart.
+
 <br/>
 The following code snippet creates a consensus map showing languages which are at least in 90% of the posterior contact areas. The map don't visualizes language families and uses a shorthand labels the languages. The first 20% of all samples are discarded as burn-in.
 
@@ -321,13 +325,15 @@ The following code snippet creates a consensus map showing languages which are a
 <center>Table 4: The config_plot.JSON file: keys in map > content
 </center>
 
-|Key| data type|default value| description
-|:-----------:|:---------:|:-----:|:----:|
-|type|string|consensus_map| type of plot: "density\_map", "consensus\_map",or "idw\_map"| 
-|plot_families|boolean|false| Plot the language families?|
-|label|string|all| add the language lable? |
-|min\_posterior<br>\_frequency| number|0.9|degree of generalization (only for consensus maps)|
-|burn_in|number|0.2| fraction of posterior samples discarded as burn-in|
+|Key| data type|default value|                                                             description                                                              
+|:-----------:|:---------:|:-----:|:------------------------------------------------------------------------------------------------------------------------------------:|
+|type|string|consensus_map|                                     type of plot: "density\_map", "consensus\_map",or "idw\_map"                                     | 
+|plot_families|boolean|false|                                                     Plot the language families?                                                      |
+|label|string|all|                                                       add the language lable?                                                        |
+|min\_posterior<br>\_frequency| number|0.9|                                          degree of generalization (only for consensus maps)                                          |
+|burn_in|number|0.2|                                          fraction of posterior samples discarded as burn-in                                          |
+|map\_per\_cluster|boolean|false|                          Generate separate map files for each cluster instead of combining them on one map                           |
+|normalize\_frequency<br>\_per\_cluster|boolean|false| When using map\_per\_cluster, scale frequencies so the maximum in each cluster is 1.0. Point/pie charts show normalized frequencies  |
 
 
 #### 2.3.3 config_plot.JSON : map > graphic  <a name="mapgraphic"></a>

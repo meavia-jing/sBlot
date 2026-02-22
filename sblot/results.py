@@ -347,7 +347,7 @@ class Results:
             _, conf, _ = key.split("_", maxsplit=2)
 
             # Skip areal effects
-            if conf == "areal":
+            if conf in ["areal", "cluster"]:
                 continue
 
             # Skip already added

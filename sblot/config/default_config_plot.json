@@ -19,7 +19,9 @@
 			"idw_resolution": 2000,
 			"idw_power": 4,
 			"idw_background_weight": 1,
-			"confounder": null
+			"confounder": null,
+			"map_per_cluster": false,
+			"normalize_frequency_per_cluster": false
 		},
 		"geo": {
 			"map_projection": "epsg:4326",

@@ -259,12 +259,19 @@ class Plot:
         cluster = np.asarray(cluster)
         n_samples = cluster.shape[0]
 
+        normalize_per_cluster = cfg_content.get('normalize_frequency_per_cluster', False)
+
+        # Compute scale factor for psoterior frequency normalization
+        freq_scaler = 1.0
+        cluster_freq = np.sum(cluster, axis=0) / n_samples
+        if normalize_per_cluster and cluster_freq.max() > 0:
+            freq_scaler = 1. / cluster_freq.max()
+            cluster_freq *= freq_scaler
+
         # Plot a density map or consensus map?
         if cfg_content['type'] == 'density_map':
             in_graph = np.ones(cluster.shape[1], dtype=bool)
-
         else:
-            cluster_freq = np.sum(cluster, axis=0) / n_samples
             in_graph = cluster_freq >= cfg_content['min_posterior_frequency']
 
         locations = locations_map_crs[in_graph]
@@ -301,6 +308,9 @@ class Plot:
         ends = cluster_indices[graph_connections[:, 1]].ravel()
         lines = np.array([locations_map_crs[starts], locations_map_crs[ends]]).transpose((1, 0, 2))
         line_weights = np.sum(cluster[:, starts] & cluster[:, ends], axis=0) / n_samples
+
+        if normalize_per_cluster:
+            line_weights *= freq_scaler * freq_scaler
 
         return in_graph, lines, line_weights
 
@@ -1059,6 +1069,247 @@ class Plot:
                     dpi=cfg_output['resolution'], format=file_format)
 
         plt.close(fig)
+
+    def posterior_map_per_cluster(self, results: Results, file_name='mst_posterior'):
+        """ This function creates separate scatter plots for each cluster in the posterior distribution.
+            Each cluster is saved to a separate PDF file.
+
+            Args:
+                file_name (str): base name for the output files.
+            """
+
+        print('Plotting maps per cluster...')
+
+        cfg_content = self.config['map']['content']
+        cfg_geo = self.config['map']['geo']
+        cfg_graphic = self.config['map']['graphic']
+        cfg_legend = self.config['map']['legend']
+        cfg_output = self.config['map']['output']
+
+        # Get cluster information
+        cluster_labels_legend, _ = self.cluster_legend(results, cfg_legend)
+        all_cluster_colors = self.cluster_color(results, cfg_graphic)
+        normalize_per_cluster = cfg_content.get('normalize_frequency_per_cluster', False)
+
+        locations_map_crs = self.reproject_to_map_crs(cfg_geo['map_projection'])
+        extent = self.get_extent(cfg_geo, locations_map_crs)
+
+        # Iterate over each cluster and create a separate map
+        for cluster_idx, cluster in enumerate(results.clusters):
+            for f in plt.get_fignums():
+                plt.close(f)
+
+            # Initialize the plot
+            fig, ax = plt.subplots(figsize=(cfg_output['width'],
+                                            cfg_output['height']), constrained_layout=True)
+
+            # Initialize the map
+            self.initialize_map(locations_map_crs, cfg_graphic, ax)
+
+            # Style the axes
+            style_axes(extent, ax)
+
+            # Add a base map
+            self.visualize_base_map(extent, cfg_geo, cfg_graphic, ax)
+
+            # Get the current cluster's color
+            current_color = all_cluster_colors[cluster_idx]
+
+            # Track the normalization factor for the pie chart
+            normalization_factor = 1.0
+
+            # Plot the current cluster based on type
+            if cfg_content['type'] == "density_map":
+                # Plot points for the cluster
+                cluster_freq_single = get_cluster_freq(cluster)
+
+                # Normalize frequencies if requested
+                if normalize_per_cluster:
+                    max_freq = np.max(cluster_freq_single)
+                    if max_freq > 0:
+                        normalization_factor = max_freq
+                        cluster_freq_single = cluster_freq_single / max_freq
+
+                in_cluster_point = cluster_freq_single > 0
+
+                max_size = 50
+                point_size = cfg_graphic['clusters']['point_size']
+                if point_size == "frequency":
+                    point_size = cluster_freq_single[in_cluster_point] * max_size
+
+                ax.scatter(*locations_map_crs[in_cluster_point].T, s=point_size, color=current_color)
+
+                # Plot lines for the cluster
+                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+                for li in range(len(lines)):
+                    lineweight = cfg_graphic['clusters']['line_width']
+                    if lineweight == "frequency":
+                        lineweight = cfg_graphic['clusters']['line_max_width'] * line_w[li]
+
+                    alpha = cfg_graphic['clusters']['alpha']
+                    if alpha == "frequency":
+                        alpha = line_w[li]
+
+                    ax.plot(*lines[li].T, color=current_color, lw=lineweight, alpha=alpha)
+
+                cluster_labels = [list(compress(self.objects.indices, in_cluster))] if cfg_graphic['languages']['label'] else [[]]
+
+            else:  # consensus_map
+                # Plot pie charts for points in the cluster
+                cluster_freq_single = get_cluster_freq(cluster)
+
+                # Normalize frequencies if requested
+                if normalize_per_cluster:
+                    max_freq = np.max(cluster_freq_single)
+                    if max_freq > 0:
+                        normalization_factor = max_freq
+                        cluster_freq_single = cluster_freq_single / max_freq
+
+                in_cluster_point = cluster_freq_single >= cfg_content['min_posterior_frequency']
+
+                # Build per-point posterior
+                # # freq_matrix = np.array([get_cluster_freq(cluster)])  # Only this cluster
+                # freq_matrix = np.array([cluster_freq_single])  # Only this cluster
+                point_indices = np.where(in_cluster_point)[0]
+
+                # Choose pie radius in data units
+                x_span = np.ptp(locations_map_crs[:, 0])
+                y_span = np.ptp(locations_map_crs[:, 1])
+                r_base = 0.008 * min(x_span, y_span)
+                if cfg_graphic['clusters']['point_size'] == "frequency":
+                    radii = r_base * (0.5 + cluster_freq_single[in_cluster_point])
+                else:
+                    radii = np.full(len(point_indices), r_base, dtype=float)
+
+                # Draw a pie at each selected location
+                for k, idx in enumerate(point_indices):
+                    val = cluster_freq_single[idx]
+                    val = np.clip(val, 0.0, 1.0)
+                    remainder = max(0.0, 1.0 - float(val))
+
+                    # Draw cluster portion
+                    if val > 0.0:
+                        wedge = patches.Wedge(
+                            center=(locations_map_crs[idx, 0], locations_map_crs[idx, 1]),
+                            r=radii[k],
+                            theta1=0.0,
+                            theta2=val * 360.0,
+                            facecolor=current_color,
+                            edgecolor='black',
+                            linewidth=0.2
+                        )
+                        wedge.set_zorder(10)
+                        ax.add_patch(wedge)
+
+                    # Draw remainder
+                    if remainder > 0.0:
+                        wedge = patches.Wedge(
+                            center=(locations_map_crs[idx, 0], locations_map_crs[idx, 1]),
+                            r=radii[k],
+                            theta1=val * 360.0,
+                            theta2=360.0,
+                            facecolor='lightgrey',
+                            edgecolor='black',
+                            linewidth=0.2
+                        )
+                        wedge.set_zorder(10)
+                        ax.add_patch(wedge)
+
+                # Plot lines for the cluster
+                in_cluster, lines, line_w = self.clusters_to_graph(cluster, locations_map_crs, cfg_content)
+                for li in range(len(lines)):
+                    lineweight = cfg_graphic['clusters']['line_width']
+                    if lineweight == "frequency":
+                        lineweight = cfg_graphic['clusters']['line_max_width'] * line_w[li]
+
+                    alpha = cfg_graphic['clusters']['alpha']
+                    if alpha == "frequency":
+                        alpha = line_w[li]
+
+                    ax.plot(*lines[li].T, color=current_color, lw=lineweight, alpha=alpha)
+
+                cluster_labels = [list(compress(self.objects.indices, in_cluster))] if cfg_graphic['languages']['label'] else [[]]
+
+            # Add labels if requested
+            color_on = True
+            if cfg_content['labels'] == 'all' or cfg_content['labels'] == 'in_cluster':
+                self.add_labels(cfg_content, locations_map_crs, cluster_labels, [current_color], extent, color_on, ax,
+                                label_size=cfg_graphic['languages']['font_size'])
+
+            # Visualize language families
+            if cfg_content['plot_families']:
+                self.color_families(locations_map_crs, cfg_graphic, cfg_legend, ax)
+
+            # Add legend for this cluster
+            if cfg_legend['clusters']['add']:
+                legend_clusters = [Line2D([0, 100], [0, 0], color=current_color, lw=6, linestyle='-')]
+                cluster_legend_label = cluster_labels_legend[cluster_idx] if cluster_idx < len(cluster_labels_legend) else f'Cluster {cluster_idx}'
+                legend = ax.legend(legend_clusters, [cluster_legend_label], title_fontsize=18,
+                                   title='Contact cluster',
+                                   frameon=False, edgecolor='#000000', framealpha=0,
+                                   fontsize=16, ncol=1, columnspacing=1, loc='upper left',
+                                   bbox_to_anchor=cfg_legend['clusters']['position'])
+                legend._legend_box.align = "left"
+                ax.add_artist(legend)
+
+            # Add main legend
+            if cfg_legend['lines']['add']:
+                self.add_legend_lines(cfg_graphic, cfg_legend, ax)
+
+            # Add overview map
+            if cfg_legend['overview']['add']:
+                self.add_overview_map(locations_map_crs, extent, cfg_geo, cfg_graphic, cfg_legend, ax)
+
+            if cfg_legend['correspondence']['add'] and cfg_graphic['languages']['label']:
+                if any(len(labels) > 0 for labels in cluster_labels):
+                    self.add_correspondence_table(cluster_labels, [current_color], cfg_legend, ax)
+
+            # Add normalization factor pie chart if normalization is enabled
+            if normalize_per_cluster and normalization_factor < 1.0:
+                # Create an inset axis for the pie chart in the upper right corner
+                # Position: [left, bottom, width, height] in axes coordinates
+                ax_pie = inset_axes(ax, width="8%", height="8%", loc='upper right',
+                                   bbox_to_anchor=(0.0, 0.0, 0.98, 0.98),
+                                   bbox_transform=ax.transAxes, borderpad=0)
+
+                # Create a pie chart showing the normalization factor
+                # The filled portion represents the max posterior frequency
+                sizes = [normalization_factor, 1.0 - normalization_factor]
+                colors = [current_color, 'lightgrey']
+
+                # Only show the wedges if there's something to show
+                wedges, _ = ax_pie.pie(sizes, colors=colors, startangle=90, counterclock=False,
+                                       wedgeprops={'edgecolor': 'black', 'linewidth': 1.5})
+
+                # Add text showing the percentage
+                # ax_pie.text(0, 0, f'{normalization_factor:.0%}',
+                #            ha='center', va='center', fontsize=20, fontweight='bold')
+                from matplotlib import patheffects as path_effects
+
+                ax_pie.text(
+                    0, 0,
+                    f"{normalization_factor:.0%}",
+                    ha="center", va="center",
+                    fontsize=20,
+                    fontweight="bold",
+                    color="black",
+                    path_effects=[
+                        # path_effects.Stroke(linewidth=3, foreground="white"),
+                        path_effects.Stroke(linewidth=3, foreground="lightgrey"),
+                        path_effects.Normal(),
+                    ],
+                )
+
+                ax_pie.set_aspect('equal')
+
+            # Save the plot with cluster index in filename
+            file_format = cfg_output['format']
+            output_filename = f"{file_name}_cluster_{cluster_idx}.{file_format}"
+            fig.savefig(self.path_plots['map'] / output_filename, bbox_inches='tight',
+                        dpi=cfg_output['resolution'], format=file_format)
+
+            plt.close(fig)
+            print(f"  Saved cluster {cluster_idx} to {output_filename}")
 
     @staticmethod
     def plot_weight(
@@ -2172,6 +2423,12 @@ def main(config, plot_types: list[PlotType] = None, feature_name: str = None):
 def plot_map(plot: Plot, results: Results, m: str):
     config_map = plot.config['map']
     map_type = config_map['content']['type']
+    map_per_cluster = config_map['content'].get('map_per_cluster', False)
+
+    # Check if we should plot separate maps per cluster
+    if map_per_cluster:
+        plot.posterior_map_per_cluster(results, file_name='posterior_map_' + m)
+        return
 
     if map_type == 'density_map':
         plot.posterior_map(results, file_name='posterior_map_' + m)
